@@ -12,6 +12,7 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
+# sbatch --array=1-61 ~/home/aob2x/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
 
 
 ### define jobs
