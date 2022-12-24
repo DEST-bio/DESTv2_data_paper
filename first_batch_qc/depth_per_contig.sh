@@ -12,15 +12,15 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
-# sbatch --array=1-54 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
-# sacct -j 45832041
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45832041_5.err
+# sbatch --array=2 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
+# sacct -j 45832284
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45832284_3.out
 
 ### define jobs
   # ls -l /project/berglandlab/DEST/dest_mapped/DESTv2/ | cut -d' ' -f9 > /scratch/aob2x/depth/jobs.csv
   # sed -i '/^$/d' /scratch/aob2x/depth/jobs.csv
 
-  jobN=${1}
+  jobN=${SLURM_ARRAY_TASK_ID}
   job=$( sed "${jobN}q;d" /scratch/aob2x/depth/jobs.csv )
   echo $job
 
