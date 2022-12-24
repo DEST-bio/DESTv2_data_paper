@@ -3,6 +3,8 @@
   library(patchwork)
   library(ggplot2)
   library(googlesheets4)
+  library(ggrepel)
+
 
 ### mapping data
   setwd("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper")
