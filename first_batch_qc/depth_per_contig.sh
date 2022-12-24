@@ -12,17 +12,19 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
-# sbatch --array=1-61 ~/home/aob2x/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
-
+# sbatch --array=1-54 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
+# sacct -j 45832041
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45832041_5.err
 
 ### define jobs
   # ls -l /project/berglandlab/DEST/dest_mapped/DESTv2/ | cut -d' ' -f9 > /scratch/aob2x/depth/jobs.csv
-  # ls -l /project/berglandlab/DEST/dest_mapped/pipeline_output | cut -d' ' -f9 >> /scratch/aob2x/depth/jobs.csv
   # sed -i '/^$/d' /scratch/aob2x/depth/jobs.csv
 
   jobN=${1}
   job=$( sed "${jobN}q;d" /scratch/aob2x/depth/jobs.csv )
   echo $job
+
+  # job=CH_Ors_23_Aug_2020
 
 ### load modules
   module load samtools
