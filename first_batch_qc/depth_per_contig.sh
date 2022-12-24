@@ -12,7 +12,7 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
-# sbatch --array=1-54 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
+# sbatch --array=1-7 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
 # sacct -j 45833544
 # cat /scratch/aob2x/dest/slurmOutput/bam_qc.45832284_3.out
 
