@@ -3,8 +3,8 @@
 #SBATCH -J nasa # A single job name for the array
 #SBATCH --ntasks-per-node=1 # one core
 #SBATCH -N 1 # on one node
-#SBATCH -t 24:00:00 ###
-#SBATCH --mem 40G
+#SBATCH -t 00:10:00 ###
+#SBATCH --mem 2G
 #SBATCH -o /scratch/aob2x/dest/slurmOutput/bam_qc.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/dest/slurmOutput/bam_qc.%A_%a.err # Standard error
 #SBATCH -p largemem
