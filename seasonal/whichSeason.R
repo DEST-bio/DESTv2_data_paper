@@ -55,43 +55,6 @@
 			daily_single_ag
 	}
 
-	getLCD <- function(i) {
-		tmp <- nearest_stations_nooa(country = (samps[i]$COUNTRY),
-		  date = Sys.Date(),
-		  add_map = F,
-		  point = c(samps[i]$long, samps[i]$lat),
-		  no_of_stations = 5
-		)
-		tmp <- as.data.table(tmp)
-		setnames(tmp, "distance [km]", "dist")
-		tmp[,begin:=ymd(BEGIN)]
-		tmp[,end:=ymd(END)]
-		tmp <- tmp[begin<=samps[i]$Date][end >=samps[i]$Date][order(dist)]
-
-
-		station <- paste(tmp$USAF, tmp$WBAN, sep="")
-		message(paste(samps[i]$sampleId, samps[i]$year, i, dim(samps)[1], sep=" / "))
-		lcd.dt <- foreach(j=1:length(station), .errorhandling="remove")%do%{
-			#lcd.tmp <- as.data.table(lcd(station=station[j], year=samps[j]$year))
-
-			path <- rnoaa:::lcd_get(station=station[j], year=samps[i]$year)
-			lcd.tmp <- fread(path)
-			setnames(lcd.tmp, names(lcd.tmp), tolower(names(lcd.tmp)))
-			lcd.dt <- lcd.tmp[,c("date", "hourlydrybulbtemperature", "hourlyrelativehumidity", "hourlyprecipitation", "hourlywindspeed"), with=F]
-			lcd.dt[,station:=station[j]]
-			lcd.dt
-		}
-		lcd.dt <- rbindlist(lcd.dt)
-		lcd.dt[,date:=ymd_hms(gsub("T", " ", date))]
-		lcd.dt[,temp:=as.numeric(as.character(hourlydrybulbtemperature))]
-		lcd.dt[,humidity:=as.numeric(as.character(hourlyrelativehumidity))]
-		lcd.dt[,precip:=as.numeric(as.character(hourlyprecipitation))]
-		lcd.dt[,wind:=as.numeric(as.character(hourlywindspeed))]
-		lcd.dt[,sampleId:=samps[i]$sampleId]
-		lcd.dt
-
-	}
-
 ### use NASA power
 	power.dt <- list()
 
@@ -107,10 +70,10 @@
 
 	power.dt <- rbindlist(power.dt)
 
-	save(power.dt, file="~/DESTv2_data_paper/dest_v2.nasa_power_weather.raw.Rdata")
+	save(power.dt, file="~/DESTv2_data_paper/seasonal/dest_v2.nasa_power_weather.raw.Rdata")
 
 ### summarize in two weeks prior to sampling
-  load(file="~/DESTv2_data_paper/dest_v2.nasa_power_weather.raw.Rdata")
+  load(file="~/DESTv2_data_paper/seasonal/dest_v2.nasa_power_weather.raw.Rdata")
 
   power.dt.ag <- power.dt[,list(max_temp=max(T2M), min_temp=min(T2M), ave_temp=mean(T2M)), list(year, sampleId, yday=yday(ymd(paste(YEAR, MO, DY, sep="-"))))]
 
@@ -122,14 +85,14 @@
   samps <- merge(samps, m.ag, by="sampleId")
 
 ### save
-  save(samps, file="~/DESTv2_data_paper/samps_weather_summary.Rdata")
+  save(samps, file="~/DESTv2_data_paper/seasonal/samps_weather_summary.Rdata")
 
 
 ### library
   library(data.table)
   library(ggplot2)
 
-  load("DESTv2_data_paper/samps_weather_summary.Rdata")
+  load("DESTv2_data_paper/seasonal/samps_weather_summary.Rdata")
   samps[,sr_season:=factor(sr_season, levels=c("spring", "fall", "winter", "frost"))]
 
 
