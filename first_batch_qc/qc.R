@@ -1,6 +1,10 @@
 ### libraries
+  library(data.table)
+  library(patchwork)
   library(ggplot2)
   library(googlesheets4)
+  library(ggrepel)
+
 
 ### mapping data
   setwd("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper")
@@ -34,6 +38,9 @@
   qual.dt[,totalreads:=as.numeric(as.character(totalreads))]
 
   qual.dt[,exp_coverage:=totalreads*(1-PERCENT_DUPLICATION) * 200/(180000000)]
+
+### save
+  save(qual.dt, file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/first_batch_qc/qc.Rdata")
 
 ### basic pllot
   ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=Result_Original)) + geom_point()

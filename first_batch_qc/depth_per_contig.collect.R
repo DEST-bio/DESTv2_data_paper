@@ -15,3 +15,5 @@
     dt <- fread(paste("/scratch/aob2x/depth/", fl.i, sep=""))
     dt[,samp:=gsub(".mosdepth.summary.txt", "", fl.i)]
   }
+
+  save(o, file="~/DESTv2_data_paper/first_batch_qc/depth_per_contig.Rdata")
