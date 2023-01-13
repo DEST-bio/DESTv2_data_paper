@@ -42,10 +42,13 @@
 ### save
   save(qual.dt, file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/first_batch_qc/qc.Rdata")
 
+  load(file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/first_batch_qc/qc.Rdata")
+
+
 ### basic pllot
   ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=Result_Original)) + geom_point()
-  ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=Status)) + geom_point()
-  ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=result)) + geom_point() + facet_grid(~Result_Original)
+  ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=Result_Original)) + geom_point()
+  ggplot(data=qual.dt, aes(y=coverage_across_reference_Dmel, x=totalreads, color=Result_Original)) + geom_point() + facet_grid(~Result_Original)
 
   ggplot(data=qual.dt, aes(y=coverage_across_reference_Holo, x=totalreads, color=result)) + geom_point() + facet_grid(~Result_Original)
 

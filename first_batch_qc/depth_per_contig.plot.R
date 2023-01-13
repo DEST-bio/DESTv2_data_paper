@@ -27,7 +27,7 @@
 
 
  melsim_hist <- ggplot(data=dt.sim, aes(mel_rate)) + geom_histogram()
- melsim <- ggplot(data=dt.sim, aes(y=coverage_across_reference_Dmel, x=totalreads*(1-PERCENT_DUPLICATION),
+ melsim <- ggplot(data=dt.sim, aes(y=coverage_across_reference_Dmel, x=totalreads*(1-PERCENT_DUPLICATION)*mel_rate,
                   color=as.factor(mel_rate<.75))) +
  geom_point() +
  geom_text_repel(
@@ -45,3 +45,8 @@
  )
 
  melsim_hist + melsim
+
+
+
+
+ggplot(data=dt[chrom=="2L"], aes(x=coverage_across_reference_Dmel, y=mean)) + geom_point()
