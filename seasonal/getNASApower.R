@@ -17,6 +17,7 @@
 	args <- commandArgs()
 	jobID <- as.numeric(args[1])
 	# jobID <- 24
+	message(jobID)
 
 ### load in samps
   setwd("~")
@@ -25,6 +26,8 @@
 	samps <- samps[!is.na(jday)]
 	samps <- samps[jobID]
 
+	samps
+	
 ### power function
 	getPower <- function(i, yearOffset=0) {
 			daily_single_ag <- get_power(
