@@ -13,9 +13,9 @@
 # module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 
-# sbatch ~/DESTv2_data_paper/seasonal/getNASApower.sh
-# sacct -j 45971425
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45971425
+# sbatch --array=1-745%%10 ~/DESTv2_data_paper/seasonal/getNASApower.sh
+# sacct -j 45971429
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45971429
 
 
 Rscript ~/DESTv2_data_paper/seasonal/getNASApower.R

@@ -13,10 +13,17 @@
   library(readxl)
   library(nasapower)
 
+### cli
+	args <- commandArgs()
+	jobID <- as.numeric(args[1])
+	# jobID <- 24
+
 ### load in samps
   setwd("~")
   #setwd("/Users/alanbergland/Documents/GitHub")
 	samps <- fread("DESTv2/populationInfo/dest_v2.samps_13Jan2023.csv")
+	samps <- samps[!is.na(jday)]
+	samps <- samps[jobID]
 
 ### power function
 	getPower <- function(i, yearOffset=0) {
@@ -52,4 +59,5 @@
 
 	power.dt <- rbindlist(power.dt)
 
-	save(power.dt, file="~/DESTv2_data_paper/seasonal/dest_v2.nasa_power_weather.raw.allPops.Rdata")
+
+	save(power.dt, file=paste("~/DESTv2_data_paper/seasonal/nasapower_sampleId/", jobID, ".Rdata", sep=""))
