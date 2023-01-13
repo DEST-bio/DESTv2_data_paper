@@ -14,8 +14,8 @@
 
 
 # sbatch --array=1-745%%10 ~/DESTv2_data_paper/seasonal/getNASApower.sh
-# sacct -j 45971429
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45971429
+# sacct -j 45971541
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45971541_2.err
 
 
-Rscript ~/DESTv2_data_paper/seasonal/getNASApower.R
+Rscript ~/DESTv2_data_paper/seasonal/getNASApower.R ${SLURM_ARRAY_TASK_ID}
