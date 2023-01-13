@@ -60,4 +60,4 @@
 	power.dt <- rbindlist(power.dt)
 
 
-	save(power.dt, file=paste("~/DESTv2_data_paper/seasonal/nasapower_sampleId/", jobID, ".Rdata", sep=""))
+	save(power.dt, file=paste("~/DESTv2_data_paper/seasonal/nasapower_sampleId/", samps$sampleId, ".Rdata", sep=""))
