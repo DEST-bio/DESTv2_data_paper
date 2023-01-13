@@ -15,7 +15,7 @@
 
 ### cli
 	args <- commandArgs()
-	message(pasge("args: ", args, sep=""))
+	message(paste("args: ", args, sep=""))
 	jobID <- as.numeric(args[1])
 	# jobID <- 24
 	message(jobID)
