@@ -14,7 +14,7 @@
   library(nasapower)
 
 ### cli
-	args <- commandArgs()
+	args <- commandArgs(trailingOnly = TRUE)
 	message(paste("args: ", args, sep=""))
 	jobID <- as.numeric(args[1])
 	# jobID <- 24
