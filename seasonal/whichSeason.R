@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c1 -p standard --mem=20G
+# ijob -A berglandlab_standard -c1 -p dev --mem=20G
 # module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 ### libraries
@@ -15,14 +15,15 @@
 
 ### load in samps
   setwd("~")
+  #setwd("/Users/alanbergland/Documents/GitHub")
 	samps <- fread("DESTv2/populationInfo/dest_v2.samps_13Jan2023.csv")
 
-### only use samps with exact collection date
-  samps <- samps[exactDate==T]
+### only use samps collected in a small period
+  samps <- samps
   table(samps$set)
 
 ### only use localities with more than one sample per year
-  samps.ag <- samps[,list(.N, daysDelta=max(jday) - min(jday)), list(locality, year)][N>1][daysDelta>60]
+  samps.ag <- samps[,list(.N, daysDelta=max(jday) - min(jday)), list(locality, year)]
 
   setkey(samps, locality, year)
   setkey(samps.ag, locality, year)
@@ -32,6 +33,7 @@
 
 ### which samples were in the core20
   drosrtec <- as.data.table(read_excel("DESTv2/populationInfo/OriginalMetadata/elife-67577-supp1-v2.xlsx"))
+  drosrtec[,Sample:=gsub("PA_sc", "PA_st", Sample)]
 
   samps <- merge(samps, drosrtec[,c("Sample", "Core20")], by.x="sampleId_orig", by.y="Sample", all.x=T)
   samps[Core20=="yes", Core20:=T]
@@ -40,6 +42,12 @@
   unique(samps$Core20)
 
   table(samps$Core20, samps$set)
+  table(samps[N>1]$Core20, samps[N>1]$set)
+  table(samps[N>1 & daysDelta>30]$Core20, samps[N>1 & daysDelta>30]$set)
+  samps.ag[N>1 & daysDelta>30]
+
+### samp
+
 
 ### test two weather stats
 	getPower <- function(i) {
@@ -96,13 +104,25 @@
   samps[,sr_season:=factor(sr_season, levels=c("spring", "fall", "winter", "frost"))]
 
 
-  ggplot(data=samps[sr_season%in%c("spring", "fall")], aes(x=sr_season, y=jday, group=interaction(year, locality))) +
-  geom_point() +
-  geom_line() +
-  facet_grid(~Core20)
-
-
   ggplot(data=samps) +
   geom_line(aes(x=jday, y=locality, group=locality)) +
   geom_point(aes(x=jday, y=locality)) +
   facet_grid(Core20~year)
+
+
+  samps.ag <- samps[,list(sampleId=c(sampleId[which.min(jday)], sampleId[which.max(jday)]), class=c("first", "last")), list(locality, year)]
+  samps.ag <- merge(samps.ag, samps[,c("sampleId", "ave", "prMax", "prMin", "Core20")])
+
+
+
+    ggplot(data=samps.ag) +
+    geom_point(aes(x=class, y=ave, group=interaction(locality, year))) +
+    geom_line(aes(x=class, y=ave, group=interaction(locality, year))) +
+    facet_grid(~Core20)
+
+
+
+      ggplot(data=samps.ag) +
+      geom_point(aes(x=class, y=prMin, group=interaction(locality, year))) +
+      geom_line(aes(x=class,  y=prMin, group=interaction(locality, year))) +
+      facet_grid(~Core20)
