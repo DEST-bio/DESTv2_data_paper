@@ -17,5 +17,6 @@
 # sacct -j 45971541
 # cat /scratch/aob2x/dest/slurmOutput/bam_qc.45971541_2.err
 
+# SLURM_ARRAY_TASK_ID=1
 
 Rscript ~/DESTv2_data_paper/seasonal/getNASApower.R ${SLURM_ARRAY_TASK_ID}

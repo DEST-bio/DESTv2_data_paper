@@ -15,6 +15,7 @@
 
 ### cli
 	args <- commandArgs()
+	message(pasge("args: ", args, sep=""))
 	jobID <- as.numeric(args[1])
 	# jobID <- 24
 	message(jobID)
@@ -27,7 +28,7 @@
 	samps <- samps[jobID]
 
 	samps
-	
+
 ### power function
 	getPower <- function(i, yearOffset=0) {
 			daily_single_ag <- get_power(
