@@ -14,8 +14,9 @@
 
 
 # sbatch --array=1-745%10 ~/DESTv2_data_paper/seasonal/getNASApower.sh
-# sacct -j 45972442
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45972442_1.err
+# sacct -j 45972444 | grep "FAILED"
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45972444_329.err
+
 
 # SLURM_ARRAY_TASK_ID=1
 
