@@ -12,13 +12,13 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
-# sbatch --array=1-724 ~/DESTv2_data_paper/1.Quality_Control/first_batch_qc/depth_per_contig.sh
-# sacct -j 46190555
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.46190555_40.err
+# sbatch --array=1-687 ~/DESTv2_data_paper/1.Quality_Control/first_batch_qc/depth_per_contig.sh
+# sacct -j 46190662
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.46190662_77.err
 
 ### define jobs
   # ls -l /project/berglandlab/DEST/dest_mapped/* | cut -d' ' -f9 > /scratch/aob2x/depth/jobs.csv
-find /project/berglandlab/DEST/dest_mapped/ -name '*.original.bam' > /scratch/aob2x/depth/jobs.csv
+  # find /project/berglandlab/DEST/dest_mapped/ -name '*.original.bam' > /scratch/aob2x/depth/jobs.csv
 
   #wc -l /scratch/aob2x/depth/jobs.csv
   #SLURM_ARRAY_TASK_ID=1
@@ -47,5 +47,5 @@ find /project/berglandlab/DEST/dest_mapped/ -name '*.original.bam' > /scratch/ao
   /scratch/aob2x/depth/${samp} \
   /scratch/aob2x/depth/${samp}
 
-  rm /scratch/aob2x/depth/${job}
-  rm /scratch/aob2x/depth/${job}.bai
+  rm /scratch/aob2x/depth/${samp}
+  rm /scratch/aob2x/depth/${samp}.bai
