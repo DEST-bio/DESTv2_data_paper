@@ -11,7 +11,6 @@
 	library(climate)
   registerDoMC(1)
   library(readxl)
-  library(nasapower)
 
 ### load in samps
   setwd("~")
@@ -44,6 +43,8 @@
   table(samps$Core20, samps$set)
   table(samps[N>1]$Core20, samps[N>1]$set)
   table(samps[N>1 & daysDelta>30]$Core20, samps[N>1 & daysDelta>30]$set)
+	table(samps[N>1 & daysDelta>30]$locality, samps[N>1 & daysDelta>30]$year, samps[N>1 & daysDelta>30]$Core20)
+
   samps.ag[N>1 & daysDelta>30]
 
 ### samp

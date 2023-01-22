@@ -12,25 +12,31 @@
 
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
-# sbatch --array=1-7 ~/DESTv2_data_paper/first_batch_qc/depth_per_contig.sh
-# sacct -j 45833820
-# cat /scratch/aob2x/dest/slurmOutput/bam_qc.45832284_3.out
+# sbatch --array=1-724 ~/DESTv2_data_paper/1.Quality_Control/first_batch_qc/depth_per_contig.sh
+# sacct -j 46190508
+# cat /scratch/aob2x/dest/slurmOutput/bam_qc.46190508_3.err
 
 ### define jobs
-  # ls -l /project/berglandlab/DEST/dest_mapped/pipeline_output/ | cut -d' ' -f9 > /scratch/aob2x/depth/jobs.csv
-  # sed -i '/^$/d' /scratch/aob2x/depth/jobs.csv
+  # ls -l /project/berglandlab/DEST/dest_mapped/* | cut -d' ' -f9 > /scratch/aob2x/depth/jobs.csv
+  # head -n3 /scratch/aob2x/depth/jobs.csv
+  # sed -i '1,3d' /scratch/aob2x/depth/jobs.csv
+  # head -n1 /scratch/aob2x/depth/jobs.csv
+#
+#
+  #wc -l /scratch/aob2x/depth/jobs.csv
+  #SLURM_ARRAY_TASK_ID=1
 
   jobN=${SLURM_ARRAY_TASK_ID}
   job=$( sed "${jobN}q;d" /scratch/aob2x/depth/jobs.csv )
   echo $job
 
   # job=CH_Ors_23_Aug_2020
-
+  ### fo 
 ### load modules
   module load samtools
 
 ### iterate
-  cp /project/berglandlab/DEST/dest_mapped/pipeline_output/${job}/${job}.original.bam \
+  cp /project/berglandlab/DEST/*/*/${job}/${job}.original.bam \
   /scratch/aob2x/depth/.
 
   samtools index -@ 20 /scratch/aob2x/depth/${job}.original.bam
