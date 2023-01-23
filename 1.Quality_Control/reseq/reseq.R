@@ -6,15 +6,15 @@
   library(patchwork)
 
 ### get PCR dup rates for all libraries
-  # fns <- system("find /project/berglandlab/DEST/dest_mapped/ -name '*duplicates_report.txt'", intern=T)
-  # pcr <- foreach(fn=fns)%dopar%{
-  #   #fn <- fns[1]
-  #   message(fn)
-  #   tmp <- fread(fn, skip="LIBRARY", nrows=1)
-  #   data.table(pcrDup=tmp$PERCENT_DUPLICATION, READ_PAIRS_EXAMINED=tmp$READ_PAIRS_EXAMINED, sampleId=tstrsplit(fn, "/")[[7]])
-  # }
-  # pcr <- rbindlist(pcr)
-  # save(pcr, file="~/pcr_destV2.Rdata")
+#   fns <- system("find /project/berglandlab/DEST/dest_mapped/ -name '*duplicates_report.txt'", intern=T)
+#   pcr <- foreach(fn=fns)%dopar%{
+#     #fn <- fns[1]
+#     message(fn)
+#     tmp <- fread(fn, skip="LIBRARY", nrows=1)
+#     data.table(pcrDup=tmp$PERCENT_DUPLICATION, READ_PAIRS_EXAMINED=tmp$READ_PAIRS_EXAMINED, sampleId#=tstrsplit(fn, "/")[[7]])
+#   }
+#   pcr <- rbindlist(pcr)
+#   save(pcr, file="./pcr_destV2.Rdata")
 
   # scp aob2x@rivanna.hpc.virginia.edu:~/pcr_destV2.Rdata ~/.
 ### load precomputed data
@@ -22,7 +22,9 @@
   ### pcr dup
     # load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/dup.rate.DEST2.Rdata")
     # dup <- as.data.table(dup.rate)
-    load("~/pcr_destV2.Rdata")
+    # 
+    # 
+    load("./pcr_destV2.Rdata")
     dup <- pcr
 
     dup[sampleId=="AU_Que_Inn_1_NA", sampleId:="AU_Que_Inn_NA-MM-DD"]
@@ -36,7 +38,7 @@
 
 
   ### simulans
-    load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/sim.contam.joint.Rdata")
+    load("./sim.contam.joint.Rdata")
     sim <- as.data.table(sim.cont)
 
   ### coverage
