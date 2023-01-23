@@ -60,8 +60,8 @@
 
 
   ### samps
-    samps <- fread("/Users/alanbergland/Documents/GitHub/DESTv2/populationInfo/dest_v2.samps_19Jan2023.csv")
-
+    samps <- fread("/scratch/yey2sn/DESTv2/populationInfo/dest_v2.samps_19Jan2023.csv")
+   
   ### merge all together
     dim(samps)
     dim(dup)
