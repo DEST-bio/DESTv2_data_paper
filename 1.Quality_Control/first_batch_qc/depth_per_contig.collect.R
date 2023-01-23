@@ -16,4 +16,7 @@
     dt[,samp:=gsub(".mosdepth.summary.txt", "", fl.i)]
   }
 
-  save(o, file="~/DESTv2_data_paper/first_batch_qc/depth_per_contig.Rdata")
+  setkey(o, chrom)
+  o <- o[J(c(c("2L", "2R", "3L", "3R"), paste("sim", c("2L", "2R", "3L", "3R"), sep="_")))]
+
+  save(o, file="~/depth_per_contig.Rdata")
