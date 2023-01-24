@@ -22,8 +22,8 @@
   ### pcr dup
     # load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/dup.rate.DEST2.Rdata")
     # dup <- as.data.table(dup.rate)
-    # 
-    # 
+    #
+    #
     load("./pcr_destV2.Rdata")
     dup <- pcr
 
@@ -61,7 +61,7 @@
 
   ### samps
     samps <- fread("/scratch/yey2sn/DESTv2/populationInfo/dest_v2.samps_19Jan2023.csv")
-   
+
   ### merge all together
     dim(samps)
     dim(dup)
