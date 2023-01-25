@@ -13,7 +13,7 @@
 #ijob -c20 --mem=20G -p standard -A berglandlab
 
 # sbatch --array=1-687 ~/DESTv2_data_paper/1.Quality_Control/first_batch_qc/depth_per_contig.sh
-# sacct -j 46190662
+# sacct -j 46190766
 # cat /scratch/aob2x/dest/slurmOutput/bam_qc.46190662_77.err
 
 ### define jobs

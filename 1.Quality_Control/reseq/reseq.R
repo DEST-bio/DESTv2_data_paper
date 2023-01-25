@@ -6,15 +6,15 @@
   library(patchwork)
 
 ### get PCR dup rates for all libraries
-#   fns <- system("find /project/berglandlab/DEST/dest_mapped/ -name '*duplicates_report.txt'", intern=T)
-#   pcr <- foreach(fn=fns)%dopar%{
-#     #fn <- fns[1]
-#     message(fn)
-#     tmp <- fread(fn, skip="LIBRARY", nrows=1)
-#     data.table(pcrDup=tmp$PERCENT_DUPLICATION, READ_PAIRS_EXAMINED=tmp$READ_PAIRS_EXAMINED, sampleId#=tstrsplit(fn, "/")[[7]])
-#   }
-#   pcr <- rbindlist(pcr)
-#   save(pcr, file="./pcr_destV2.Rdata")
+  # fns <- system("find /project/berglandlab/DEST/dest_mapped/ -name '*duplicates_report.txt'", intern=T)
+  # pcr <- foreach(fn=fns)%dopar%{
+  #   #fn <- fns[1]
+  #   message(fn)
+  #   tmp <- fread(fn, skip="LIBRARY", nrows=1)
+  #   data.table(pcrDup=tmp$PERCENT_DUPLICATION, READ_PAIRS_EXAMINED=tmp$READ_PAIRS_EXAMINED, sampleId=tstrsplit(fn, "/")[[7]])
+  # }
+  # pcr <- rbindlist(pcr)
+  # save(pcr, file="~/pcr_destV2.Rdata")
 
   # scp aob2x@rivanna.hpc.virginia.edu:~/pcr_destV2.Rdata ~/.
 ### load precomputed data
@@ -22,9 +22,7 @@
   ### pcr dup
     # load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/dup.rate.DEST2.Rdata")
     # dup <- as.data.table(dup.rate)
-    #
-    #
-    load("./pcr_destV2.Rdata")
+    load("~/pcr_destV2.Rdata")
     dup <- pcr
 
     dup[sampleId=="AU_Que_Inn_1_NA", sampleId:="AU_Que_Inn_NA-MM-DD"]
@@ -38,7 +36,7 @@
 
 
   ### simulans
-    load("./sim.contam.joint.Rdata")
+    load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/sim.contam.joint.Rdata")
     sim <- as.data.table(sim.cont)
 
   ### coverage
@@ -60,7 +58,7 @@
 
 
   ### samps
-    samps <- fread("/scratch/yey2sn/DESTv2/populationInfo/dest_v2.samps_19Jan2023.csv")
+    samps <- fread("/Users/alanbergland/Documents/GitHub/DESTv2/populationInfo/dest_v2.samps_19Jan2023.csv")
 
   ### merge all together
     dim(samps)
@@ -118,7 +116,9 @@
   seqStats.mega <-
   simrate_plot + pcr_plot + cov_plot +
   plot_annotation(tag_levels="A") + plot_layout(design=layout)
-seqStats.mega
+
+  seqStats.mega
+
 ### seaonsal set
   load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/frost.final.set.Rdata")
   load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/DEST2.seasonals.plusCore20.flip.met.Rdata")
@@ -155,24 +155,15 @@ seqStats.mega
 
   m2[sampleId=="MA_Tan_Lar_1_2021-09-06", reseq:="need_pair_seasonal_questionableSim"]
   write.csv(m2[!is.na(reseq), c("sampleId", "SequencingId", "reseq"), with=F], file="~/reseq.csv", quote=F)
-table(m2$reseq)
-
-  sum(table(m2$reseq))
 
 
-  m2[!is.na(reseq), c("sampleId", "SequencingId", "reseq"), with=F]
-
-
-  m2[locality%in%m2[reseq=="need_pair_seasonal"]$locality]$sim_alan
-
-### output figures
   dbl.plot <- ggplot(data=m2[set=="DrosEU_3"], aes(x=effCov, y=dbl_effCov, color=reseq)) +
   geom_point() +
   geom_abline(intercept=0, slope=1) + ylim(0, 42) + xlim(0, 42)
 
-
-### plots
-
+### save
+  save(m, m2, file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/1.Quality_Control/reseq/reseq.Rdata")
+  
 
 
 
