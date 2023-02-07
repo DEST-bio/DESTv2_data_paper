@@ -13,7 +13,7 @@
 module load samtools/1.9
 
 ### sbatch --array=1-687 ~/DESTv2_data_paper/freebayes/getSmallBams.sh
-# sacct -j 46215357
+# sacct -j 46215550
 # cat /scratch/aob2x/DESTv2_output/logs/runSnakemake.46215357_50.err
 
 
