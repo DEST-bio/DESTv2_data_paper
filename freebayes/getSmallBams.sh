@@ -17,6 +17,8 @@ module load samtools/1.9
 # cat /scratch/aob2x/DESTv2_output/logs/runSnakemake.46215357_50.err
 
 
+find /project/berglandlab/DEST/dest_mapped/ -name '*.original.bam' | sed 's/\/project\/berglandlab\/DEST/http:\/\/berglandlab.uvadcos.io/g' | gzip -c > ~/bam_paths.txt.gz
+1
 # find /project/berglandlab/DEST/dest_mapped/ -name '*.mel.bam' > /scratch/aob2x/smallBam/jobs.csv
 # SLURM_ARRAY_TASK_ID=1
 
