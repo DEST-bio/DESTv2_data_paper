@@ -1,7 +1,7 @@
 #!/bin/bash
 ######## Install seqTk
-git clone https://github.com/lh3/seqtk.git;
-cd seqtk; make
+#=======#   git clone https://github.com/lh3/seqtk.git;
+#=======#   cd seqtk; make
 
 ######## Get the RunInfo tables for D. simulans and D. melanogaster reads for mapping simulation
     #### simalans SRA data
