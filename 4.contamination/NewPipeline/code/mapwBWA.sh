@@ -24,11 +24,11 @@ module load picard
 ###############
 
 #cp /project/berglandlab/DEST/paramTest/holo_dmel_6.12.tar.gz ./
-tar -xvf holo_dmel_6.12.tar.gz
+#tar -xvf holo_dmel_6.12.tar.gz
 
 ####
 samplei=$( cat reads.file.txt | sed "${SLURM_ARRAY_TASK_ID}q;d" )
-
+echo $samplei
 
 ##
 CPU=$SLURM_CPUS_ON_NODE
@@ -72,14 +72,28 @@ java -Xmx$JAVAMEM \
  VALIDATION_STRINGENCY=SILENT \
  REMOVE_DUPLICATES=true
 
+#####
+samtools index $WORKING_FOLDER/$samplei/$samplei.srt.rmdp.bam
+
+
 ###
 #Filter out the simulans contaminants
 mel_chromosomes="2L 2R 3L 3R 4 X Y mitochondrion_genome"
 sim_chromosomes="sim_2L sim_2R sim_3L sim_3R sim_4 sim_X sim_mtDNA"
 
+
 #create species specific bamfiles
 samtools view -@ $CPU $WORKING_FOLDER/$samplei/$samplei.srt.rmdp.bam $mel_chromosomes -b > $WORKING_FOLDER/$samplei/$samplei.mel.bam
 samtools view -@ $CPU $WORKING_FOLDER/$samplei/$samplei.srt.rmdp.bam $sim_chromosomes -b > $WORKING_FOLDER/$samplei/$samplei.sim.bam
+
+###
+samtools index $WORKING_FOLDER/$samplei/$samplei.mel.bam
+samtools index $WORKING_FOLDER/$samplei/$samplei.sim.bam
+
+
+
+
+
 
 
  
