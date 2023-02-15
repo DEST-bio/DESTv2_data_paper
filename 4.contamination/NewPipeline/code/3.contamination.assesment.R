@@ -39,8 +39,8 @@ simContam <- foreach(samp.i=samps$V1, .errorhandling="remove")%do%{
   
   
   
-  
   simidx.out <- as.data.table(idxstatsBam(file=simBam, index=simIdx))[grepl("2L|2R|3L|3R|X|^4$|Y", seqnames)][!grepl("Het|het|Sac|Sca", seqnames)]
+  
   melidx.out <- as.data.table(idxstatsBam(file=melBam, index=melIdx))[grepl("2L|2R|3L|3R|X|^4$|Y", seqnames)][!grepl("Het|het|Sac|Sca", seqnames)]
   
   idx.out <- merge(melidx.out, simidx.out, by="seqnames")
@@ -67,13 +67,13 @@ simContam <- rbindlist(simContam)
 simContam.ag <- simContam[chr%in%c("2L", "2R", "3L", "3R", "X"), list(propSimNorm=mean(propSimNorm, na.rm=T)), list(auto=chr=="X", sampleId)]
 
 ###
-simContam.ag %>%
-  filter(auto == TRUE) %>%
+simContam %>%
   separate(sampleId, remove = F, into = c("sim","TrueSim","mel","TrueMel","tot","MixedTot","reads")) %>%
   mutate(TrueSim = as.numeric(TrueSim)/as.numeric(MixedTot) ) %>%
   ggplot(aes(
     x=TrueSim,
-    y=propSimNorm,
+    y=propSim,
+    color = chr
   )) +
   ylim(0,1) + 
   xlim(0,1) +
