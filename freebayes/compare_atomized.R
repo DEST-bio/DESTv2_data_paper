@@ -3,28 +3,21 @@
   library(SeqArray)
 
 ### convert Freebayes to GDS
-  vcf.fn="/Users/alanbergland/tst.atomized.vcf"
-  gds.fn=gsub(".vcf", ".gds", vcf.fn)
+  grep -v "#" ~/tst.atomized.vcf | cut -f1,2,3,4,5 > ~/sites.delim
 
-  seqVCF2GDS(vcf.fn, gds.fn, storage.option="ZIP_RA", verbose=T, optimize=T)
-
-###
 
 
 ### dl
   #system("scp aob2x@rivanna.hpc.virginia.edu:/project/berglandlab/DEST/paramTest/snpcaller/dest.PoolSeq.PoolSNP.001.5.test.norep.ann.gds ~/.")
+  #system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DESTv2_output/dest.PoolSeq.SNAPE.001.5.test.norep.ann.gds ~/.")
+
 
 ### open GDS files
-  geno_fb <- seqOpen("/Users/alanbergland/bam.tst.2L_13600000-13700000.freebayes.gds")
-  geno_ps <- seqOpen("~/dest.PoolSeq.PoolSNP.001.5.test.norep.ann.gds")
+  geno_ps <- seqOpen("~/dest.PoolSeq.SNAPE.001.5.test.norep.ann.gds")
 
 ### load freebayes snp table
-  seqResetFilter(geno_fb)
   seqResetFilter(geno_ps)
-  snp.fb <- data.table(chr=seqGetData(geno_fb, "chromosome"),
-                        pos=seqGetData(geno_fb, "position"),
-                        nAlleles=seqGetData(geno_fb, "$num_allele"),
-                        fb_id=seqGetData(geno_fb, "variant.id"))
+
 
   snp.ps <- data.table(chr=seqGetData(geno_ps, "chromosome"),
                         pos=seqGetData(geno_ps, "position"),
@@ -35,12 +28,20 @@
   seqSetFilter(geno_ps, snp.ps$ps_id)
   snp.ps[,ps_af:=seqGetData(geno_ps, "annotation/info/AF")$data]
 
-### merge
-  setkey(snp.fb, chr, pos)
-  setkey(snp.ps, chr, pos)
-  m <- merge(snp.fb, snp.ps, all=T)
+### atomized
+  atom <- fread("~/sites.delim")
+  setnames(atom, names(atom), c("chr", "pos", "class", "ref", "alt"))
+  atom2 <- atom[!grep(",", alt)]
 
-  table(m$nAlleles.x, m$nAlleles.y)
+  atom[,nAlleles_fb:=str_count(alt, ",")+1]
+
+
+### merge
+  setkey(atom, chr, pos)
+  setkey(snp.ps, chr, pos)
+  m <- merge(atom, snp.ps, all=T)
+
+  table(is.na(m$class), is.na(m$nAlleles))
 
 
 ### get data
