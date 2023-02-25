@@ -74,3 +74,7 @@
    CD"
 
    mel + sim + tot + corPlot +plot_layout(design=layout)
+
+
+
+   summary(lm(simRate~I(nSim/(nSim+nMel)), idx.ag[muller=="all"]))
