@@ -55,29 +55,17 @@
 
 
 
-  real.idx.ag <- rbind(
-            dat[muller==T,list(nReads=sum(nReads, na.rm=T),
-                      mel_mapped=sum(nReads[species=="melanogaster"], na.rm=T),
-                      sim_mapped=sum(nReads[species=="simulans"], na.rm=T),
-                      muller="muller"),
-                 list(samp=tstrsplit(samp, "/")[[3]])],
+  real.idx.ag <-
            dat[,list(nReads=sum(nReads, na.rm=T),
                      mel_mapped=sum(nReads[species=="melanogaster"], na.rm=T),
                      sim_mapped=sum(nReads[species=="simulans"], na.rm=T),
                      muller="all"),
-                list(samp=tstrsplit(samp, "/")[[3]])],
-          dat[X==T,list(nReads=sum(nReads, na.rm=T),
-                    mel_mapped=sum(nReads[species=="melanogaster"], na.rm=T),
-                    sim_mapped=sum(nReads[species=="simulans"], na.rm=T),
-                    muller="X"),
-               list(samp=tstrsplit(samp, "/")[[3]])],
-         dat[Y==T,list(nReads=sum(nReads, na.rm=T),
-                   mel_mapped=sum(nReads[species=="melanogaster"], na.rm=T),
-                   sim_mapped=sum(nReads[species=="simulans"], na.rm=T),
-                   muller="Y"),
-              list(samp=tstrsplit(samp, "/")[[3]])]
+                list(samp=tstrsplit(samp, "/")[[3]])]
 
-            )
+  
+
+
+
 
   real.idx.ag[,simRate:=sim_mapped/nReads]
   real.idx.ag[,samp:=gsub(".original.bam", "", samp)]

@@ -8,6 +8,9 @@
 #SBATCH -p standard
 #SBATCH --account berglandlab_standard
 
+### sbatch ~/DESTv2_data_paper/misc/cp_dest.sh
+### sacct -j 47128513
+
 cp /scratch/aob2x/DESTv2_output/dest.all.PoolSNP.001.5.test.norep.ann.gds \
 /project/berglandlab/DEST/gds/dest.all.PoolSNP.001.5.25Feb2023.norep.ann.gds
 
