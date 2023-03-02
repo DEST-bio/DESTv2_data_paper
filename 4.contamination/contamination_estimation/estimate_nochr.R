@@ -101,7 +101,7 @@
 
   #real.idx.ag[!is.na(chr),auto:=chr%in%c("2L", "2R", "3L", "3R")]
 
-
+save(real.idx.ag, file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/contamination_estimation/simulans_rates.Rdata")
 ### filter
 
   model_plot <-
