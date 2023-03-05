@@ -1,4 +1,4 @@
-# ijob -c 4 --mem=8G -p dev -A berglandlab_standard
+# ijob -c 4 --mem=20G -p standard -A berglandlab_standard
 
 # module load gcc/7.1.0 openmpi/3.1.4 R/4.1.1; R
 
@@ -17,17 +17,21 @@
   setwd("/scratch/aob2x/DESTv2/")
   samps <- fread("populationInfo/dest_v2.samps_25Feb2023.csv")
 
-### define test pops
-  af_pop <- samps[continent=="Africa"][nFlies>100]$sampleId
-  eu_pop <- sample(samps[continent=="Europe"]$sampleId, 1)
-
-  test_pop <- samps[continent=="North_America"][grepl("Nor", locality)][1]$sampleId
-
-
 ### snp library
   snps.dt <- data.table(variant.id=seqGetData(genofile, "variant.id"),
                         nAlleles=seqGetData(genofile, "$num_allele"),
                         chr=seqGetData(genofile, "chromosome"))
+
+### define test pops
+  af_pop <- samps[continent=="Africa"][nFlies>100]$sampleId
+  eu_pop <- sample(samps[continent=="Europe"]$sampleId, 1)
+
+### iterate through
+  foreach(test_pop=samps[continent=="North_America"]$sampleId)%dopar%{
+    # test_pop=samps[continent=="North_America"]$sampleId[1]
+    seqSetFilter(genofile, variant.id=sample(snps.dt[nAlleles==2]$variant.id, 1000), sample.id=c(af_pop, eu_pop, test_pop))
+
+    
 
 
 ### get allele frequencies
@@ -39,7 +43,6 @@
       test_pop <- samps[continent=="North_America"][grepl("Nor", locality)][1]$sampleId
 
   ### seq set filter
-    seqSetFilter(genofile, variant.id=sample(snps.dt[nAlleles==2]$variant.id, 100), sample.id=c(af_pop, eu_pop, test_pop))
 
   ### build model
     dat <- t(seqGetData(genofile, "annotation/format/FREQ")$data)
