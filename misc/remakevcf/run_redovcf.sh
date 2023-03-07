@@ -11,7 +11,7 @@
 #SBATCH --account berglandlab_standard
 
 ### sbatch ~/DESTv2_data_paper/misc/remakevcf/run_redovcf.sh
-### sacct -j 47379537
+### sacct -j 47406123
 
 module load parallel
 
