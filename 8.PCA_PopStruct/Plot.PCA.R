@@ -64,6 +64,7 @@ pca.meta %>%
 ####
 cor.test(~Dim.1+lat, data = pca.meta.stats)
 cor.test(~Dim.1+long, data = pca.meta.stats)
+
 cor.test(~Dim.1+Missing.data.calc, data = pca.meta.stats)
 cor.test(~Dim.1+Neff, data = pca.meta.stats)
 
