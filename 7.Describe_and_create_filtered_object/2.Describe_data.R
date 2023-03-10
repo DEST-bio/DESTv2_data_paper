@@ -124,9 +124,6 @@ snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
                       nAlleles=seqNumAllele(genofile),
                       missing=seqMissing(genofile, .progress=T))
 ####
-snps.dt <- snps.dt[nAlleles==2]
-seqSetFilter(genofile, sample.id=samps$sampleId, variant.id=snps.dt$variant.id)
-snps.dt[,af:=seqGetData(genofile, "annotation/info/AF")$data]
 
 ad <- seqGetData(genofile, "annotation/format/AD")
 dp <- seqGetData(genofile, "annotation/format/DP")
