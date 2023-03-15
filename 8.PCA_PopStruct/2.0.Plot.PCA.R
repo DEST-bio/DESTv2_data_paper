@@ -12,9 +12,8 @@ library(ggExtra)
 library(foreach)
 
 ###
-system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
 
-samps <- vroom("dest_v2.samps_25Feb2023.csv")
+samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
 
 ####
 

@@ -1,4 +1,4 @@
-### Characterize Dataset
+### Characterize Data set
 ### 
 
 library(tidyverse)
@@ -20,10 +20,19 @@ library(rnaturalearthdata)
 library(ggExtra)
 library(foreach)
 
-#####
+
+
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+
 #####
 system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
-samps <- vroom("dest_v2.samps_25Feb2023.csv")
+samps <- fread("dest_v2.samps_25Feb2023.csv")
 
 samps %>% dim
 samps %>% group_by(set) %>%
@@ -83,7 +92,7 @@ samps %>%
   mutate(Region = case_when(long < -20 ~ "1.Long < -20",
                             long > -20 & long < 20 ~ "2.20 < Long > -20",
                             long >  20 ~ "3.Long > -20",
-                            )) %>%
+  )) %>%
   filter(city %in% multisamps$city) %>%
   separate(sampleId, 
            into = c("CountryT", "RegionT", "CityT", "RepT", "CollecDate"),
@@ -98,7 +107,16 @@ samps %>%
   date.test.plot
 ggsave(date.test.plot, file = "date.test.plot.pdf", w = 9, h = 5)
 
-####
+#####
+#####
+#####
+#####
+##### DESCRIBE ORIGINAL GDS
+##### DESCRIBE ORIGINAL GDS
+##### DESCRIBE ORIGINAL GDS
+##### DESCRIBE ORIGINAL GDS
+##### DESCRIBE ORIGINAL GDS
+
 #### ----> Generate Basic Stats
 ####
 ####
@@ -130,8 +148,8 @@ dp <- seqGetData(genofile, "annotation/format/DP")
 dat <- ad$data/dp
 dim(dat)
 colnames(dp) <- paste(seqGetData(genofile, "chromosome"),
-                       seqGetData(genofile, "position") 
-                       , sep="_")
+                      seqGetData(genofile, "position") 
+                      , sep="_")
 rownames(dp) <- seqGetData(genofile, "sample.id")
 
 #### Estimate NA %
@@ -161,10 +179,10 @@ load("DEST2.0.stats.summary.Rdata")
 lm(data=filter(DEST2.0.stats.summary, 
                Missing.data.calc < 0.07),
    Missing.data.calc ~ Means.Cov
-   ) %>% summary
+) %>% summary
 
 cor.test( ~Missing.data.calc+ Means.Cov,
-  data =filter(DEST2.0.stats.summary, Missing.data.calc < 0.07))
+          data =filter(DEST2.0.stats.summary, Missing.data.calc < 0.07))
 
 
 #### Some aggregations
@@ -184,7 +202,7 @@ DEST2.0.stats.summary %>%
   summarise(mean = ci((value), na.rm = T)[1],
             uci = ci((value), na.rm = T)[3],
             lci =  ci((value), na.rm = T)[2]
-            ) -> DEST_plus_stats
+  ) -> DEST_plus_stats
 
 DEST_plus_stats %>%
   ggplot(aes(
@@ -220,4 +238,81 @@ DEST2.0.stats.summary %>%
 ggsave(stats.general, file ="stats.general.pdf", w = 6, h = 4)
 
 
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+##### DESCRIBE MERGE DATASET
+
+#####
+#####
+#####
+#####
+#####
+
+metadata <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
+
+### Load objects 
+DPmatrix <- get(load("/project/berglandlab/DEST2.0_working_data/joint.dp.matrix.Rdata"))
+ADmatrix <- get(load("/project/berglandlab/DEST2.0_working_data/joint.ad.matrix.Rdata"))
+AFmatrix <- get(load("/project/berglandlab/DEST2.0_working_data/joint.AFs.Rdata"))
+
+##### DESCRIBE DATASETS
+#### Estimate NA %
+dim(DPmatrix)[2]
+rowSums(is.na(DPmatrix))/(dim(DPmatrix)[2]) -> Missing.data.calc
+rowMeans(DPmatrix, na.rm = T) -> Means.Cov
+
+####
+cbind(Means.Cov, Missing.data.calc) %>% 
+  as.data.frame() %>%
+  mutate(sampleId = rownames(.)) %>% 
+  left_join(metadata) %>% 
+  group_by(sampleId) %>%
+  mutate(Neff = (Means.Cov * nFlies-1)/(Means.Cov +nFlies )) ->
+  metadata.updated
+
+metadata.updated %>%
+  filter(collector == "Fournier-Level et al") %>%
+  group_by(collector) %>%
+   summarise(Neff = mean(Neff),
+            mCov = mean(Means.Cov))
+
+###
+metadata.updated %>%
+  filter(Missing.data.calc < 0.3) ->
+  metadata.flt
+metadata.flt %>% dim
 #
+metadata.updated %>%
+  filter(Missing.data.calc > 0.3) %>% dim() 
+
+metadata.flt %>%
+  filter(sampleId %in% samps.to.retain) %>%
+  group_by(set) %>%
+  summarise(m = mean(Means.Cov),
+            ne = mean(Neff),
+            miss = mean(Missing.data.calc))
+
+#### Apply filtering
+samps.to.retain = metadata.flt$sampleId
+
+###
+DPmatrix[samps.to.retain,] -> DPmatrix.flt
+ADmatrix[samps.to.retain,] -> ADmatrix.flt
+AFmatrix[samps.to.retain,] -> AFmatrix.flt
+
+###
+save(DPmatrix.flt,
+     file = "/project/berglandlab/DEST2.0_working_data/DPmatrix.flt.Rdata")
+save(ADmatrix.flt,
+     file = "/project/berglandlab/DEST2.0_working_data/ADmatrix.flt.Rdata")
+save(AFmatrix.flt,
+     file = "/project/berglandlab/DEST2.0_working_data/AFmatrix.flt.Rdata")
+###
+

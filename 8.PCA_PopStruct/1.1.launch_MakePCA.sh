@@ -12,4 +12,4 @@ module load gcc/7.1.0 openmpi/3.1.4 R/4.1.1 gdal proj
 
 Rscript \
 --vanilla \
-1.MakePCA.R
+1.0.MakePCA.R
