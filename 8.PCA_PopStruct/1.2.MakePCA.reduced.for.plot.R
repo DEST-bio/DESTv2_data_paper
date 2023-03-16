@@ -42,7 +42,7 @@ SNPs.df %>%
 SNPs.df.sort %>% head
 
 ### apply thinning
-pickSNPs(SNPs.df.sort, dist = 500 ) -> thinned.set
+pickSNPs(SNPs.df.sort, dist = 5000 ) -> thinned.set
 thinned.set %>% length()
 
 SNPs.df.sort[thinned.set,] %>% 
@@ -56,41 +56,101 @@ SNPs.df.sort[thinned.set,] %>%
 which(colnames(dat.o.nsim.noBeij) %in%  SNPs.df.sort.thinned$SNP_id) -> SNP.selector
 
 dat.o.nsim.noBeij[,SNP.selector] %>% 
-  PCA(graph = F, ncp = 100) ->
-  pca.object
+  PCA(graph = F, ncp = 5) ->
+  pca.object.plot
 
-save(pca.object, file = "pca.object.Rdata")
+###save(pca.object, file = "pca.object.Rdata")
 
 ####
 
-##pca.object$ind$coord %>%
-##  as.data.frame() %>% 
-##  mutate(sampleId = rownames(.)) %>%
-##  left_join(samps) %>%
-##  filter(!is.na(continent))->
-##  pca.meta
-##
-##pca.meta %>%
-##  ggplot(aes(
-##    x=Dim.1,
-##    y=Dim.2,
-##    color = continent
-##  )) +
-##  geom_point() +
-##  theme_bw() ->
-##  PCA12
-##
-##ggsave(PCA12, file = "PCA12.pdf", w = 5, h =4)
-##
-##pca.meta %>%
-##  ggplot(aes(
-##    x=Dim.1,
-##    y=Dim.3,
-##    color = continent
-##  )) +
-##  geom_point() +
-##  theme_bw() ->
-##  PCA13
-##
-##ggsave(PCA13, file = "PCA13.pdf", w = 5, h =4)
-##
+pca.object.plot$ind$coord %>%
+  as.data.frame() %>% 
+  mutate(sampleId = rownames(.)) %>%
+  left_join(samps) %>%
+  filter(!is.na(continent))->
+  pca.meta
+
+####
+pca.meta %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.2,
+    fill = continent
+  )) +
+  geom_point(shape = 21, color = "black") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_bw() ->
+  PCA12.lat
+
+ggsave(PCA12.lat, file = "PCA12.lat.pdf", w = 5, h =4)
+
+###
+pca.meta %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.3,
+    fill = continent
+  )) +
+  geom_point(shape = 21) +
+  geom_point(shape = 21, color = "black") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_bw() ->
+  PCA13.lat
+
+ggsave(PCA13.lat, file = "PCA13.lat.pdf", w = 5, h =4)
+
+###
+###
+###
+###
+###
+###
+###
+###
+cor.test(~lat + Dim.1, dat = pca.meta)
+cor.test(~long + Dim.1, dat = pca.meta)
+
+cor.test(~lat + Dim.2, dat = pca.meta)
+cor.test(~long + Dim.2, dat = pca.meta)
+
+cor.test(~lat + Dim.3, dat = pca.meta)
+cor.test(~long + Dim.3, dat = pca.meta)
+
+###
+pca.meta %>%
+  filter(continent %in% c("Europe","North_America","South_America","Oceania")) %>%
+  dplyr::select(Dim.1,Dim.2,Dim.3, lat, long, continent) %>%
+  reshape2::melt(id = c("lat", "long", "continent")) %>% 
+  ggplot(aes(
+    x=lat,
+    y=value,
+    color = variable
+  )) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  xlab("Latitude") +
+  ylab("PCA projections") +
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2") +
+  facet_grid(~continent, scale = "free_x") ->
+  lat.detail
+ggsave(lat.detail, file = "lat.detail.pdf", w = 8, h = 2.6)
+
+pca.meta %>%
+  filter(continent %in% c("Europe","North_America","South_America","Oceania")) %>%
+  dplyr::select(Dim.1,Dim.2,Dim.3, lat, long, continent) %>%
+  reshape2::melt(id = c("lat", "long", "continent")) %>% 
+  ggplot(aes(
+    x=long,
+    y=value,
+    color = variable
+  )) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm") +
+  xlab("Longitude") +
+  ylab("PCA projections") +
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2") +
+  facet_grid(~continent, scale = "free_x") ->
+  long.detail
+ggsave(long.detail, file = "long.detail.pdf", w = 8, h = 2.6)

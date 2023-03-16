@@ -210,5 +210,4 @@ mutate(f3.o.Sam, admix.set = "S.America")) %>%
 
 save(out.tmp.merged,
      file = 
-       paste("/yey2sn/DEST2_analysis/admix_samps/f3_Admix/", eu_pop, ".Rdata", sep ="" ))     
-
+       paste("/scratch/yey2sn/DEST2_analysis/admix_samps/f3_Admix/", eu_pop, ".Rdata", sep ="" ))
