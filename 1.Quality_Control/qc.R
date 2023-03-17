@@ -24,7 +24,8 @@
 ### depth
   snps.dt <- data.table(variant.id=seqGetData(genofile, "variant.id"),
                         nAlleles=seqGetData(genofile, "$num_allele"),
-                        chr=seqGetData(genofile, "chromosome"))
+                        chr=seqGetData(genofile, "chromosome"),
+                        pos=seqGetData(genofile, "position"))
 
   seqSetFilter(genofile, variant.id=sample(snps.dt[nAlleles==2]$variant.id, 1e5))
 
