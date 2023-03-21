@@ -5,15 +5,18 @@ library(magrittr)
 library(reshape2)
 library(data.table)
 library(foreach)
-library(santoku)
-
+#library(santoku)
 #####
 
+
+#### Central files
 files.seas = system("ls ./GLM_out", intern = T)
 root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_out"
 
-seas.p = 
-  foreach(fil = files.seas, .combine = "rbind" )%do%{
+#### binning analysis
+
+seas.p.bin = 
+  foreach(fil = files.seas[1:10], .combine = "rbind" )%do%{
     
     message(fil)
     tmp <- get(load(paste(root, fil, sep = "/"))) %>%
@@ -23,9 +26,9 @@ seas.p =
     tmp %>% 
       filter(perc_dat > 0.85) %>%
       mutate(AF_bin = chop(p_lrt, breaks=c(
-        seq(from=0, to = 0.009, by = 0.001),
-        seq(from=0.01, to = 0.09, by = 0.01),
-        seq(from=0.1, to = 1.0, by = 0.1))
+      seq(from=0.001, to = 0.009, by = 0.001),
+      seq(from=0.01, to = 0.09, by = 0.01),
+      seq(from=0.1, to = 1.0, by = 0.1))
       )) -> tmp.i
     
     tmp.i %>%
@@ -38,12 +41,29 @@ seas.p =
     
   }
 
-
-seas.p %>%
+seas.p.bin %>%
   group_by(AF_bin,perm,chr) %>%
   summarize(Nsps.ag = sum(Nsp)) ->
-  seas.p.ag
+  seas.p.bin.ag
 
-save(seas.p.ag, file = "seas.p.ag.rdata")
+save(seas.p.bin.ag, file = "seas.p.bin.ag.Rdata")
+
+#### --> collect object GLMS
+#### 
+seas.p.glm.2L = 
+  foreach(fil = files.seas, .combine = "rbind" )%do%{
+    
+    message(fil)
+    tmp <- get(load(paste(root, fil, sep = "/"))) %>%
+      mutate(perc_dat = nObs_i/nObs_tot) %>%
+      filter(chr == "2L")
+    
+    return(tmp)
+  }
+
+seas.p.glm.2L$pos = as.numeric(seas.p.glm.2L$pos)
+seas.p.glm.2L %<>% arrange(chr, pos) 
+
+save(seas.p.glm.2L, file = "seas.p.glm.2L.Rdata")
 
 

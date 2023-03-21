@@ -36,6 +36,7 @@ anovaFun <- function(m1, m2) {
   1-pchisq(chisq, parameter)
   
 }
+
 ###
 ###
 
