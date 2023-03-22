@@ -14,6 +14,7 @@ library(reshape2)
 library("geosphere")
 library(gmodels)
 library(ggforce)
+library(forcats)
 
 library(rnaturalearth)
 library(rnaturalearthdata)
@@ -21,18 +22,19 @@ library(ggExtra)
 library(foreach)
 
 
-
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-##### DESCRIBE ORIGINAL METADATA
-
 #####
 system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
 samps <- fread("dest_v2.samps_25Feb2023.csv")
+
+
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+##### DESCRIBE ORIGINAL METADATA
+
 
 samps %>% dim
 samps %>% group_by(set) %>%
@@ -126,7 +128,8 @@ genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.25Feb
 #### Load the filtering SNP object -- which JCBN created
 filtering.dt <- get(load("/project/berglandlab/DEST/SNP_Filtering_files/DESTv2.SNPmeta.filter.Rdata"))
 filtering.dt %<>%
-  filter(is.na(libs))
+  filter(is.na(libs)) %>%
+  mutate(SNP_id = paste(chr, pos, sep = "_")) 
 
 
 #grep( "SIM" , samps$sampleId) -> sim.pos
@@ -141,22 +144,171 @@ snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
                       variant.id=seqGetData(genofile, "variant.id"),
                       nAlleles=seqNumAllele(genofile),
                       missing=seqMissing(genofile, .progress=T))
-####
+snps.dt <- snps.dt[nAlleles==2][missing<.10]
 
+snps.dt %<>% mutate(SNP_id = paste(chr, pos, sep = "_")) 
+snps.dt %<>% filter(SNP_id %in% filtering.dt$SNP_id)
+snps.dt %>% dim
+
+####
+seqSetFilter(genofile, sample.id=samps$sampleId, variant.id=snps.dt$variant.id)
+
+########
 ad <- seqGetData(genofile, "annotation/format/AD")
 dp <- seqGetData(genofile, "annotation/format/DP")
-dat <- ad$data/dp
+ad.matrix = ad$data
+dat <- ad.matrix/dp
 dim(dat)
+
 colnames(dp) <- paste(seqGetData(genofile, "chromosome"),
                       seqGetData(genofile, "position") 
                       , sep="_")
 rownames(dp) <- seqGetData(genofile, "sample.id")
 
 #### Estimate NA %
-dim(dp)
-rowSums(is.na(dp))/4570964 -> Missing.data.calc
+
+rowSums(is.na(dp))/dim(dp)[2] -> Missing.data.calc
 rowMeans(dp, na.rm = T) -> Means.Cov
 
+####### COVERGAE DATA
+Means.Cov.df =
+  data.frame(Value = Means.Cov,
+             Var = "Cov") %>% 
+  mutate(sampleId = names(Means.Cov)) %>%
+  left_join(samps)
+
+### Missing data
+Missing.data.df =
+  data.frame(Value = Missing.data.calc,
+             Var = "Miss") %>% 
+  mutate(sampleId = names(Missing.data.calc)) %>%
+  left_join(samps)
+####
+
+#save(Miss.Cov.joint, file = "Miss.and.Cov.joint.Rdata")
+
+### PCR DUPLICATES
+### 
+ fns <- system("find /project/berglandlab/DEST/dest_mapped/ -name '*duplicates_report.txt'", intern=T)
+ pcr <- foreach(fn=fns, .combine = "rbind")%dopar%{
+   #fn <- fns[1]
+   message(fn)
+   tmp <- fread(fn, skip="LIBRARY", nrows=1)
+   data.table(pcrDup=tmp$PERCENT_DUPLICATION, READ_PAIRS_EXAMINED=tmp$READ_PAIRS_EXAMINED, sampleId=tstrsplit(fn, "/")[[7]])
+ }
+
+  pcr %>%
+   as.data.frame() %>%
+   dplyr::select(Value = pcrDup, sampleId) %>% 
+   mutate(Value=Value, Var = "PCRdup")  %>%
+    left_join(samps) ->
+    pcr.mod
+
+#### CONTAMINATION   
+sim.contam <- get(load("simulans_rates.Rdata"))  
+sim.contam %>%
+  dplyr::select(sampleId=samp, Value=simNorm ) %>% 
+  mutate(Value=Value, Var = "SimCont") %>%
+  left_join(samps) ->
+  sim.contam.samps
+  
+####  
+  rbind(Means.Cov.df, Missing.data.df, pcr.mod, sim.contam.samps) -> Miss.Cov.PCRdup.sim.joint
+  
+  save(Miss.Cov.PCRdup.sim.joint,
+       file = "Miss.Cov.PCRdup.sim.joint.Rdata")
+  
+  ### Filters
+  Miss.Cov.PCRdup.sim.joint %>%
+    dplyr::select(Value,Var,sampleId) %>%
+    dcast(sampleId~Var, value.var = "Value") %>% 
+    mutate(keep = case_when(
+      Cov > 10 & Miss < 0.1 & PCRdup < 1.0 & SimCont < 0.1 ~ "PASS",
+      TRUE ~ "FAIL"
+    )) %>% left_join(samps) ->
+    keep.fail.samps
+  
+  save(keep.fail.samps,
+       file = "keep.fail.samps.Rdata")
+  ##### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ### object to save ####
+  
+####  
+  keep.fail.samps %>%
+    ggplot(aes(
+      x=keep,
+      fill=set 
+    )) +
+    geom_bar(position = "dodge") ->
+    keep.lost.plot
+  ggsave(keep.lost.plot, file = "keep.lost.plot.pdf", w = 9, h = 6)
+  
+  
+####
+  Miss.Cov.PCRdup.sim.joint %>%
+    filter(!is.na(set)) %>%
+    ggplot(aes(
+      x=Value,
+      color=set
+    )) +
+    geom_histogram() +
+    facet_wrap(~Var, scale = "free") ->
+    hist.QC.stats
+  ggsave(hist.QC.stats, file = "hist.QC.stats.pdf", w = 9, h = 6)
+  
+  #filter(Miss.Cov.PCRdup.sim.joint, Var == "Miss") %>% arrange(Value) %>% tail
+  
+####    
+  
+ ###
+ data.frame(
+   Met = c("median", "median","median" , "median", "tresh","tresh","tresh","tresh"),
+   Var = c("Cov","Miss","PCRdup","SimCont","Cov","Miss","PCRdup","SimCont"),
+   m = c(median(filter(Miss.Cov.PCRdup.sim.joint, Var == "Cov")$Value),
+         median(filter(Miss.Cov.PCRdup.sim.joint, Var == "Miss")$Value),
+         median(filter(Miss.Cov.PCRdup.sim.joint, Var == "PCRdup")$Value),
+         median(filter(Miss.Cov.PCRdup.sim.joint, Var == "SimCont")$Value, na.rm = T),
+         10, 0.1, 1.0, 0.1)
+ ) -> m.dfs
+ 
+ ####
+ Miss.Cov.PCRdup.sim.joint %>%
+   filter(Var == "Cov") %>%
+   arrange(Value) %>%
+   mutate(order.id = 1:737) %>%
+   dplyr::select(sampleId, order.id) -> order.vec
+##### 
+ 
+ Miss.Cov.PCRdup.sim.joint %>%
+   left_join(order.vec) %>%
+   filter(!is.na(set)) %>%
+   ggplot(aes(
+     x=fct_reorder(sampleId, order.id),
+     y=Value,
+     color = set
+   )) +
+   geom_point() +
+   geom_hline(data =m.dfs, aes(yintercept = m, linetype = Met ) ) +
+   #geom_hline(yintercept = quantile(Means.Cov.df$Value)[2], linetype = "dashed" ) +
+   #geom_hline(yintercept = quantile(Means.Cov.df$Value)[4], linetype = "dashed" ) +
+   facet_grid(Var~set, scales = "free", space = "free") +
+   scale_y_continuous(trans='log10') +
+   theme_bw() +
+   theme(axis.title.x=element_blank(),
+         axis.text.x=element_blank(),
+         axis.ticks.x=element_blank(),
+         legend.pos = "bottom") ->
+   means.plot
+ ggsave(means.plot, file = "means.plot.pdf", w = 10, h = 4.0)
+ 
+ 
+### ---> Ended here for latest figure! More granular figures below + the aggregation set
+### 
+### 
+### 
+### 
+### 
+### 
+### 
 ### 
 cbind(Means.Cov, Missing.data.calc) %>% 
   as.data.frame() %>%
