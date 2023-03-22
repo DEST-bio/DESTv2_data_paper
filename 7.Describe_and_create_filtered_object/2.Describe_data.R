@@ -205,7 +205,7 @@ Missing.data.df =
     pcr.mod
 
 #### CONTAMINATION   
-sim.contam <- get(load("simulans_rates.Rdata"))  
+sim.contam <- get(load("simulans_rates.Rdata")) ### found un github!!
 sim.contam %>%
   dplyr::select(sampleId=samp, Value=simNorm ) %>% 
   mutate(Value=Value, Var = "SimCont") %>%
