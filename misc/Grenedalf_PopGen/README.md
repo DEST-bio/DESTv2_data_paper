@@ -10,6 +10,10 @@ Moreover, I had to replace the missing data fields `.:.:.:.:.:.` in the SYNC fil
 
 I obtained chromosome-wise estimates and the took the average weighted by the chromosome-length to calculate genome-wide estimates.
 
-These can be found below and in t[he following TSV file](results/Grenedalf.summary);
+These can be found below and in the following TSV files for [PoolSNP](results/Grenedalf_poolsnp.summary) and [SNAPE](results/Grenedalf_snape.summary);
 
 ![Grenedalf.png](results/Grenedalf.png)
+
+Below, I am further showing the correlation between the estimates of SNAPE and PoolSNP.
+
+![Grenedalf_corr.png](results/Grenedalf_corr.png)

@@ -77,13 +77,12 @@ for i in range(len(Chrom)):
                     FULL[k][Type]["counts"] += float(Value)*Lengths[i]
                     FULL[k][Type]["lengths"] += Lengths[i]
 
-for i in range(len(Chrom)):
-    for k, v in sorted(FULL.items()):
-        for Type in ["theta_pi_abs", "theta_watterson_abs", "tajimas_d", "snp_count"]:
-            if v[Type]["lengths"] == 0:
-                print
-                WAv = "NA"
-            else:
-                WAv = str(v[Type]["counts"]/v[Type]["lengths"])
-            print(k, META[k]["continent"], META[k]
-                  ["country"], "GenomeWide", Type, WAv, sep="\t")
+for k, v in sorted(FULL.items()):
+    for Type in ["theta_pi_abs", "theta_watterson_abs", "tajimas_d", "snp_count"]:
+        if v[Type]["lengths"] == 0:
+            print
+            WAv = "NA"
+        else:
+            WAv = str(v[Type]["counts"]/v[Type]["lengths"])
+        print(k, META[k]["continent"], META[k]
+              ["country"], "GenomeWide", Type, WAv, sep="\t")
