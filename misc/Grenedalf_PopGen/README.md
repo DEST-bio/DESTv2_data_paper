@@ -22,13 +22,13 @@ Below, I am further showing the correlation between the estimates of SNAPE and P
 
 Below, I show a few maps where I interpolated population genetic parameters acording to geographic distribution of the samples
 
-### $\Theta_{\pi}$ based on PoolSNP in Europe and North America 
+### $\theta_{\pi}$ based on PoolSNP in Europe and North America 
 
 ![Grenedalf_pi_Europe](results/Grenedalf_poolsnp_Europe_theta_pi_abs.png)
 
 ![Grenedalf_pi_NA](results/Grenedalf_poolsnp_North_America_theta_pi_abs.png)
 
-### $\Theta_{Watterson}$ based on PoolSNP in Europe and North America 
+### $\theta_{Watterson}$ based on PoolSNP in Europe and North America 
 
 ![Grenedalf_watterson_Europe](results/Grenedalf_poolsnp_Europe_theta_watterson_abs.png)
 
