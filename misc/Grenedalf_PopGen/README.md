@@ -17,3 +17,7 @@ These can be found below and in the following TSV files for [PoolSNP](results/Gr
 Below, I am further showing the correlation between the estimates of SNAPE and PoolSNP.
 
 ![Grenedalf_corr.png](results/Grenedalf_corr.png)
+
+## Is there any geographic structure?
+
+![Grenedalf_pi](results/Grenedalf_poolsnp.pi.png)

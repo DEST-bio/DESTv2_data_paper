@@ -47,10 +47,12 @@ for l in load_data(options.MET):
     DATA = {k: v for k, v in zip(*[header, a])}
     META[a[0]]["continent"] = DATA["continent"]
     META[a[0]]["country"] = DATA["country"]
+    META[a[0]]["lat"] = DATA["lat"]
+    META[a[0]]["long"] = DATA["long"]
 
 
 FULL = d(lambda: d(lambda: d(float)))
-print("ID\tContinent\tCountry\tChrom\tStat\tValue")
+print("ID\tContinent\tCountry\tLatitude\tLongitude\tChrom\tStat\tValue")
 for i in range(len(Chrom)):
     header = ""
     for l in load_data(options.IN+"_"+Chrom[i]+"diversity.csv"):
@@ -72,7 +74,7 @@ for i in range(len(Chrom)):
                 else:
                     Value = DATA[k+"."+Type]
                 print(k, META[k]["continent"], META[k]
-                      ["country"], Chrom[i], Type, Value, sep="\t")
+                      ["country"], META[k]["lat"], META[k]["long"], Chrom[i], Type, Value, sep="\t")
                 if DATA[k+"."+Type] != "NA":
                     FULL[k][Type]["counts"] += float(Value)*Lengths[i]
                     FULL[k][Type]["lengths"] += Lengths[i]
@@ -85,4 +87,4 @@ for k, v in sorted(FULL.items()):
         else:
             WAv = str(v[Type]["counts"]/v[Type]["lengths"])
         print(k, META[k]["continent"], META[k]
-              ["country"], "GenomeWide", Type, WAv, sep="\t")
+              ["country"], META[k]["lat"], META[k]["long"], "GenomeWide", Type, WAv, sep="\t")
