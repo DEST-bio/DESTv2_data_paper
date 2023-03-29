@@ -1,10 +1,28 @@
 ### Seasonality Analysis
 
-args = commandArgs(trailingOnly=TRUE)
-k = as.numeric(args[1])
-### K --> 1-7966
+
+# --> DEBUG SETTINGS
+#k=1
+#mAF.filt = 0.05
+#perms.ith = 0
+
+## model
 model = "season_pop_by_year"
 
+args = commandArgs(trailingOnly=TRUE)
+##########
+k = as.numeric(args[1])
+#
+##########
+mAF.filt = as.numeric(args[2])
+#
+##########
+perms.ith = as.numeric(args[3])
+#
+##########
+### K --> 1-7966
+
+########
 ## jobId=1; nJobs=5000
 
 ### libraries
@@ -48,15 +66,20 @@ DP.d <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/DPma
 ### open metadata
 samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
 
+### open filtering object
+keep.remove <- get(load("/project/berglandlab/DEST2.0_working_data/keep.fail.samps.Rdata"))
+
+pass.filt <- filter(keep.remove, keep == "PASS")$sampleId
+
 ### open seasonal pairs
-seasonal.sets <- get(load("DEST2.seasonals.plusCore20.flip.met.Rdata"))
+seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
 
 #seasonal.sets %>% 
 #  left_join(samps) %>%
 #  group_by(country) %>%
 #  summarize(N=n())
 
-set.samps <- seasonal.sets$sampleId
+set.samps <- filter(seasonal.sets, sampleId %in%  pass.filt)$sampleId
 
 ### ---> loop
 #SNPs = "2L_10038126_snp1"
@@ -86,13 +109,18 @@ data.table(start=seq(from=min(guide$index),
 SELECTED_SNPSs = SNPguides[MASTER_GUIDE$start[k]:MASTER_GUIDE$end[k]]
 
 message("Launching Iterations")
-
+#####
+#####
+#####
+#####
+#####
 o.glm =
 foreach(SNPs = SELECTED_SNPSs,
         .combine = "rbind",
         .errorhandling = "remove"
         )%do%{
-  
+
+            
 AF.tmp = AF.d[set.samps, SNPs]
 DP.tmp = DP.d[set.samps, SNPs]
 
@@ -106,8 +134,7 @@ data.frame(
   sampleId = set.samps,
   AF = AF.tmp,
   DP = DP.tmp
-) %>%
-  left_join(dplyr::select(samps, sampleId, nFlies, locality, year, set )) %>% 
+) %>% left_join(dplyr::select(samps, sampleId, nFlies, locality, year, set )) %>% 
   mutate(nEff=round((DP*2*nFlies - 1)/(DP+2*nFlies))) %>%
   mutate(af_nEff=round(AF*nEff)/nEff) %>%
   left_join(dplyr::select(seasonal.sets, season))->
@@ -121,97 +148,129 @@ tmp.af %>%
   .[complete.cases(.),] -> approved_locs.df
 
 approved_locs.vec = c(approved_locs.df$fall, approved_locs.df$spring)
-
 tmp.af %<>% filter(sampleId %in% approved_locs.vec)
 
 tmp.af$season = as.factor(tmp.af$season)
 tmp.af$locality = as.factor(tmp.af$locality)
 tmp.af$year = as.factor(tmp.af$year)
  
-#tmp.af %>% group_by(set) %>% summarise(N=n())
- 
-####
-glm.method <- 0
-         
-y <- tmp.af$af_nEff
-X.loc.year <- model.matrix(~locality:year, tmp.af)
-X.seas.loc.year <- model.matrix(~locality:year+season, tmp.af)
+mean(tmp.af$AF) -> mean.AF
 
-t.H0 <- fastglm(x=X.loc.year, 
-              y=y, 
-              family=binomial(), 
-              weights=tmp.af$nEff, method=glm.method)
-
-t.H1 <- fastglm(x=X.seas.loc.year, 
-                   y=y, 
-                   family=binomial(), 
-                   weights=tmp.af$nEff, method=glm.method)
-
-####
-chr = strsplit(SNPs, "_")[[1]][1]
-pos = strsplit(SNPs, "_")[[1]][2]
-
-data.table(
-           chr = chr,
-           pos = pos,
-           perm = 0,
-           AIC=c(AIC(t.H0)),
-           b_season=t.H1$coef[2], 
-           se_season=t.H1$se[2],
-           nObs_i=dim(tmp.af)[1],
-           nObs_tot=dim(seasonal.sets)[1],
-           p_lrt=anovaFun(t.H0, t.H1)
-           ) -> obs.data
-
-#### do permutations
-perms =
-foreach(perm = 1:100, 
-        .combine = "rbind", 
-        .errorhandling = "remove")%do%{
+if(mean.AF >= mAF.filt){
   
-          set.seed(perm)
-          
-          glm.method <- 0
-          
-          y.shuff <- tmp.af$af_nEff[shuffle(tmp.af$af_nEff)]
-          X.loc.year <- model.matrix(~locality:year, tmp.af)
-          X.seas.loc.year <- model.matrix(~locality:year+season, tmp.af)
-          
-          t.H0.p <- fastglm(x=X.loc.year, 
-                          y=y.shuff, 
-                          family=binomial(), 
-                          weights=tmp.af$nEff, method=glm.method)
-          
-          t.H1.p <- fastglm(x=X.seas.loc.year, 
-                          y=y.shuff, 
-                          family=binomial(), 
-                          weights=tmp.af$nEff, method=glm.method)
-          
-          ####
-          chr = strsplit(SNPs, "_")[[1]][1]
-          pos = strsplit(SNPs, "_")[[1]][2]
-          
-          data.table(
-            chr = chr,
-            pos = pos,
-            perm = perm,
-            AIC=c(AIC(t.H0.p)),
-            b_season=t.H1.p$coef[2], 
-            se_season=t.H1.p$se[2],
-            nObs_i=dim(tmp.af)[1],
-            nObs_tot=dim(seasonal.sets)[1],
-            p_lrt=anovaFun(t.H0.p, t.H1.p)
-          ) 
-          
-} ## inner
+  glm.method <- 0
+  
+  y <- tmp.af$af_nEff
+  X.loc.year <- model.matrix(~locality:year, tmp.af)
+  X.seas.loc.year <- model.matrix(~locality:year+season, tmp.af)
+  
+  t.H0 <- fastglm(x=X.loc.year, 
+                  y=y, 
+                  family=binomial(), 
+                  weights=tmp.af$nEff, method=glm.method)
+  
+  t.H1 <- fastglm(x=X.seas.loc.year, 
+                  y=y, 
+                  family=binomial(), 
+                  weights=tmp.af$nEff, method=glm.method)
+  
+  ####
+  chr = strsplit(SNPs, "_")[[1]][1]
+  pos = strsplit(SNPs, "_")[[1]][2]
+  
+  data.table(
+    chr = chr,
+    pos = pos,
+    perm = 0,
+    AIC=c(AIC(t.H0)),
+    b_season=t.H1$coef[2], 
+    se_season=t.H1$se[2],
+    nObs_i=dim(tmp.af)[1],
+    nObs_tot=dim(seasonal.sets)[1],
+    p_lrt=anovaFun(t.H0, t.H1),
+    mAF.filt = mAF.filt
+  ) -> obs.data
+  
+  #### do permutations
+  if(perms.ith > 0){
+    perms =
+      foreach(perm = 1:perms.ith, 
+              .combine = "rbind", 
+              .errorhandling = "remove")%do%{
+                
+                set.seed(perm)
+                
+                glm.method <- 0
+                
+                y.shuff <- tmp.af$af_nEff[shuffle(tmp.af$af_nEff)]
+                X.loc.year <- model.matrix(~locality:year, tmp.af)
+                X.seas.loc.year <- model.matrix(~locality:year+season, tmp.af)
+                
+                t.H0.p <- fastglm(x=X.loc.year, 
+                                  y=y.shuff, 
+                                  family=binomial(), 
+                                  weights=tmp.af$nEff, method=glm.method)
+                
+                t.H1.p <- fastglm(x=X.seas.loc.year, 
+                                  y=y.shuff, 
+                                  family=binomial(), 
+                                  weights=tmp.af$nEff, method=glm.method)
+                
+                ####
+                chr = strsplit(SNPs, "_")[[1]][1]
+                pos = strsplit(SNPs, "_")[[1]][2]
+                
+                data.table(
+                  chr = chr,
+                  pos = pos,
+                  perm = perm,
+                  AIC=c(AIC(t.H0.p)),
+                  b_season=t.H1.p$coef[2], 
+                  se_season=t.H1.p$se[2],
+                  nObs_i=dim(tmp.af)[1],
+                  nObs_tot=dim(seasonal.sets)[1],
+                  p_lrt=anovaFun(t.H0.p, t.H1.p),
+                  mAF.filt = mAF.filt
+                )  -> o.inner
+                
+              } ## inner
+  } ### PERMS
+  if(perms.ith <= 0){
+    message("No Permutatations done")
+    perms=c()
+  }
+    
+  #return(rbind(obs.data, perms))
+  
+} # AF-- filter
 
-rbind(obs.data, perms)
+if(mean.AF < mAF.filt){message("does not pass mAF filter"); break}
 
-} ## outer
+return(rbind(obs.data, perms))
 
-name.of.file = paste("GLM",model,"SNPrange",MASTER_GUIDE$start[k],MASTER_GUIDE$end[k], "Rdata", 
+} ## outer loop
+
+#####
+#####
+#####
+
+#o.glm %>% 
+#  filter(nObs_i / nObs_tot > 0.8 ) %>%
+#  ggplot(aes(
+#    p_lrt
+#  )) + 
+#  geom_histogram() ->
+#  hist.test
+#ggsave(hist.test, file = "hist.test.pdf")
+
+#####
+#####
+
+name.of.file = paste("GLM",model,
+                     "SNPrange",MASTER_GUIDE$start[k],MASTER_GUIDE$end[k], "Rdata", 
                      sep ="." )
-path.to.save = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_out"
+
+path.to.save = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_out.03.27.2023"
 full.path = paste(path.to.save,name.of.file, sep = "/")
 
 save(o.glm,
