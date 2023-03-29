@@ -200,43 +200,54 @@ ggsave("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/res
 
 Rscript /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf.r
 
+### Now visualize
 echo '''
 
 library(tidyverse)
-library(cowplot)
 library(rworldmap)
 library(kriging)
-library(akima)
 
+for (p in c("poolsnp","snape")){
 
-DATA=read.table("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_poolsnp.summary",header=T,sep="\t")
+    DATA=read.table(paste0("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_",p,".summary"),header=T,sep="\t")
 
-DATA$Latitude <- as.factor(round(DATA$Latitude,3))
-DATA$Longitude <- as.factor(round(DATA$Longitude,3))
+    DATA$Latitude <- as.factor(round(DATA$Latitude,3))
+    DATA$Longitude <- as.factor(round(DATA$Longitude,3))
 
-DATA.pi.summary<-na.omit(DATA) %>%
-    filter(DATA$Chrom=="GenomeWide"& DATA$Stat=="theta_pi_abs" & DATA$Value>0.0010 & DATA$Continent=="Europe") %>%
-    group_by(Latitude,Longitude) %>%
-    summarize(pi=mean(Value),N=n())
+    for (t in c("theta_pi_abs","theta_watterson_abs","tajimas_d")){
+        for (i in c("North_America","Europe","Oceania")){
 
-DATA.pi.summary$Latitude <- as.numeric(as.character(DATA.pi.summary$Latitude))
-DATA.pi.summary$Longitude <- as.numeric(as.character(DATA.pi.summary$Longitude))
+            DATA.pi.summary<-na.omit(DATA) %>%
+                filter(DATA$Chrom=="GenomeWide"& DATA$Stat==t & DATA$Continent==i) %>%
+                group_by(Latitude,Longitude) %>%
+                summarize(pi=mean(Value),N=n())
 
-X=c(min(DATA.pi.summary$Longitude)-2.5,max(DATA.pi.summary$Longitude)+2.5)
-Y=c(min(DATA.pi.summary$Latitude)-2.5,max(DATA.pi.summary$Latitude)+2.5)
-newmap<-getMap(resolution="low")
-color=colorRampPalette(c("darkgreen","green","white","orange","brown"))
+            DATA.pi.summary$Latitude <- as.numeric(as.character(DATA.pi.summary$Latitude))
+            DATA.pi.summary$Longitude <- as.numeric(as.character(DATA.pi.summary$Longitude))
 
-png("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_poolsnp.pi.png",
-    width=1200,
-    height=800)
+            X=c(min(DATA.pi.summary$Longitude)-2.5,max(DATA.pi.summary$Longitude)+2.5)
+            Y=c(min(DATA.pi.summary$Latitude)-2.5,max(DATA.pi.summary$Latitude)+2.5)
+            newmap<-getMap(resolution="low")
+            color=colorRampPalette(c("darkgreen","green","white","orange","brown"))
 
-K=kriging(DATA.pi.summary$Longitude,DATA.pi.summary$Latitude,response=DATA.pi.summary$pi,pixels=250)
-Zi=min(DATA.pi.summary$pi)
-Za=max(DATA.pi.summary$pi)
-par(cex=1.5,mar=c(4,4,2,4))
-image(K,zlim=c(Zi,Za),col=color(100),xlim=X,ylim=Y)
-plot(newmap,col=rgb(0,0,0,0.2),add=T,xlim=X1,ylim=Y1)
-points(DATA.pi.summary$Longitude,DATA.pi.summary$Latitude,pch=16,cex=2)
-legend.col(color(100),seq(Zi,Za,0.0001))
-dev.off()
+            png(paste0("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_",p,"_",i,"_",t,".png"),
+                width=1200,
+                height=800)
+
+            K=kriging(DATA.pi.summary$Longitude,DATA.pi.summary$Latitude,response=DATA.pi.summary$pi,pixels=250)
+            Zi=min(DATA.pi.summary$pi)
+            Za=max(DATA.pi.summary$pi)
+            par(cex=1.5,mar=c(4,4,2,4))
+            image(K,zlim=c(Zi,Za),col=color(100),xlim=X,ylim=Y)
+            plot(newmap,col=rgb(0,0,0,0.2),add=T,xlim=X1,ylim=Y1)
+            points(DATA.pi.summary$Longitude,DATA.pi.summary$Latitude,pch=16,cex=2)
+            legend.col(color(100),seq(Zi,Za,0.0001))
+            dev.off()
+        }
+    }
+
+}
+
+''' >/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_visual.r
+
+Rscript /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/results/Grenedalf_visual.r
