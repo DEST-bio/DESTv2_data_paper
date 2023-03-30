@@ -9,10 +9,10 @@
 #SBATCH -A berglandlab_standard
 #SBATCH -o ./slurmOut/glmseas.%A_%a.out # Standard output
 #SBATCH -e ./slurmOut/glmseas.%A_%a.err # Standard error
-#SBATCH --array=1-2000
+#SBATCH --array=1-3500
 
-# ---> did 1-2000 
-#total ==> 1-7966
+# ---> did 1-3500 
+#total ==> 3501-7966
 
 module load gcc/7.1.0 openmpi/3.1.4 R/4.1.1 gdal proj
 
@@ -21,5 +21,5 @@ Rscript \
 1.Seasonality_Analysis.R \
 ${SLURM_ARRAY_TASK_ID} \
 0.01 \
-100
+0
 

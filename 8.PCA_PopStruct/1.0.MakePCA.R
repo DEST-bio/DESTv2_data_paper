@@ -63,34 +63,33 @@ save(pca.object, file = "pca.object.Rdata")
 
 ####
 
-##pca.object$ind$coord %>%
-##  as.data.frame() %>% 
-##  mutate(sampleId = rownames(.)) %>%
-##  left_join(samps) %>%
-##  filter(!is.na(continent))->
-##  pca.meta
-##
-##pca.meta %>%
-##  ggplot(aes(
-##    x=Dim.1,
-##    y=Dim.2,
-##    color = continent
-##  )) +
-##  geom_point() +
-##  theme_bw() ->
-##  PCA12
-##
-##ggsave(PCA12, file = "PCA12.pdf", w = 5, h =4)
-##
-##pca.meta %>%
-##  ggplot(aes(
-##    x=Dim.1,
-##    y=Dim.3,
-##    color = continent
-##  )) +
-##  geom_point() +
-##  theme_bw() ->
-##  PCA13
-##
-##ggsave(PCA13, file = "PCA13.pdf", w = 5, h =4)
-##
+pca.object$ind$coord %>%
+  as.data.frame() %>% 
+  mutate(sampleId = rownames(.)) %>%
+  left_join(samps) %>%
+  filter(!is.na(continent))->
+  pca.meta.dim
+
+pca.meta.dim %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.2,
+    color = continent
+  )) +
+  geom_point() +
+  theme_bw() ->
+  PCA12.dim
+
+ggsave(PCA12.dim, file = "PCA12.dim.pdf", w = 5, h =4)
+
+pca.meta.dim %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.3,
+    color = continent
+  )) +
+  geom_point() +
+  theme_bw() ->
+  PCA13.dim
+
+ggsave(PCA13.dim, file = "PCA13.dim.pdf", w = 5, h =4)

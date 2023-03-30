@@ -188,7 +188,9 @@ if(mean.AF >= mAF.filt){
     nObs_i=dim(tmp.af)[1],
     nObs_tot=dim(seasonal.sets)[1],
     p_lrt=anovaFun(t.H0, t.H1),
-    mAF.filt = mAF.filt
+    mAF.filt = mAF.filt,
+    mAF.snp = mean.AF,
+    SNP_id=SNPs
   ) -> obs.data
   
   #### do permutations
@@ -230,7 +232,9 @@ if(mean.AF >= mAF.filt){
                   nObs_i=dim(tmp.af)[1],
                   nObs_tot=dim(seasonal.sets)[1],
                   p_lrt=anovaFun(t.H0.p, t.H1.p),
-                  mAF.filt = mAF.filt
+                  mAF.filt = mAF.filt,
+                  mAF.snp = mean.AF,
+                  SNP_id=SNPs
                 )  -> o.inner
                 
               } ## inner
