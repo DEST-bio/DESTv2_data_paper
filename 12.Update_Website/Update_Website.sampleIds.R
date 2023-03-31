@@ -27,16 +27,16 @@ file.targ = c( "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/_includes/be
                "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/SNAPE.monomorphic.masked.sync.gz.ALL.txt",
                "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/SNAPE.monomorphic.masked.sync.gz.GZONLY.txt",
                "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/SNAPE.monomorphic.masked.sync.gz.TBIONLY.txt",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/bed.gz.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/masked.sync.gz.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/masked.sync.gz.TOMARKDOWN.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/mel.bam.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/mel.bam.TOMARKDOWN.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/samps.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/SNAPE.monomorphic.masked.sync.gz.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/SNAPE.monomorphic.masked.sync.gz.TOMARKDOWN.csv",
-              # "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/samps.csv"
+               "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_bed.gz.ALL.txt.csv",
+               "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_masked.sync.gz.ALL.txt.csv",
+               "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_SNAPE.monomorphic.masked.sync.gz.ALL.txt.csv "
               )
+
+###file.targ = c( 
+###"/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_bed.gz.ALL.txt.csv",
+###"/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_masked.sync.gz.ALL.txt.csv",
+###"/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_SNAPE.monomorphic.masked.sync.gz.ALL.txt.csv "
+###)
 
 foreach(input.txt = file.targ)%do%{ #### open i
 foreach(i = 1:dim(samps.old.dat)[1])%do%{ #### open i
@@ -103,8 +103,12 @@ file.targ.dgn = c(
   "/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/12.Update_Website/DGN.spec.case.html",
   "/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/12.Update_Website/DGN.download.txt",
   "/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/12.Update_Website/DGN.sync.gz.GZONLY.txt",
-  "/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/12.Update_Website/DNG.sync.gz.TBIONLY.txt"
+  "/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/12.Update_Website/DNG.sync.gz.TBIONLY.txt",
+  "/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_masked.sync.gz.justDGN.csv"
 )
+
+#file.targ.dgn = c("/Users/jcbnunez/Documents/GitHub/DEST-bio.github.io/assets/util/MD5/MD5_masked.sync.gz.justDGN.csv")
+
 samps.old.dat.dgn = filter(samps, !is.na(sampleId_orig) 
                        & set == "dgn"
 )
@@ -140,7 +144,7 @@ foreach(input.txt = file.targ.dgn)%do%{ #### open i
       #)
       
    # } ### set
-    if(set == "dgn"){ ### set
+    #if(set == "dgn"){ ### set
       
       system(
         paste( "sed -i ''",
@@ -160,7 +164,7 @@ foreach(input.txt = file.targ.dgn)%do%{ #### open i
                sep = " ")
       )
       
-    } ### set
+    #} ### set
     
     
     
