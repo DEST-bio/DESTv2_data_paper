@@ -17,11 +17,10 @@ set.samps <- filter(seasonal.sets, sampleId %in%  pass.filt)$sampleId
 
 
 #### Central files
-files.seas = system("ls ./GLM_out.03.27.2023", intern = T)
-root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_out.03.27.2023"
+files.seas = system("ls ./GLM_out.03.30.2023", intern = T)
+root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_out.03.30.2023"
 
 #### binning analysis
-
 seas.p.bin = 
   foreach(fil = files.seas, .combine = "rbind" )%do%{
     
@@ -48,25 +47,73 @@ seas.p.bin =
     
   }
 
-seas.p.bin %>%
-  filter(perm == 0) %>%
+#### Analyze the p-value issue. 
+
+### --> Filter mising 0.9 ; mAF 0.2
+
+perc_dat.ith = seq(from = 0.1, to = 0.9, by = 0.1)
+mAF.snp.ith = seq(from = 0.1, to = 0.9, by = 0.1)
+p.vals.range = 
+foreach(k = perc_dat.ith, .combine = "rbind")%do%{
+  o.2 =
+  foreach(i = mAF.snp.ith, .combine = "rbind")%do%{
+   
+    message(paste(k,i, sep = "|"))
+    seas.p.bin %>%
+      filter(perm == 0 & perc_dat > k &  mAF.snp > i) -> dat.0
+    hist(dat.0$p_lrt) -> hist.dat
+    data.frame(hist.dat$mids ,    hist.dat$counts) %>%
+      mutate(perc_dat = k,
+             mAF.snp= i
+             ) -> ot
+    return(ot)} 
+  return(o.2)}
+
+p.vals.range %>%
+  filter(perc_dat > 0.7) %>% 
   ggplot(aes(
-    p_lrt
-  )) +
-  geom_histogram() ->
-  hist.test
+    x=hist.dat.mids,
+    y=log10(hist.dat.counts),
+    color = perc_dat,
+    group = perc_dat
+  )) + geom_line() +
+  geom_point() +
+  facet_wrap(~mAF.snp, nrow = 2, scales = "free_y") -> p.vals.filts
 
-ggsave(hist.test, file = "hist.test.pdf")
+ggsave(p.vals.filts, file = "p.vals.filts.pdf")
+
+
+p.vals.range %>% 
+  group_by(perc_dat) %>%
+  summarize(Ns = sum(hist.dat.counts))
+
+#######
 
 seas.p.bin %>%
-  filter(perm == 0 & perc_dat > 0.8) -> dat.0
+filter(perc_dat == 0.9 &  mAF.snp == 0.2) -> dat.flt
 
-pdf(file = "beta.hist.test.pdf")
-hist(dat.0$p_lrt)
-dev.off()
+hist.p = 
+foreach(perm.th = 0:100, .combine = "rbind" )%do%{
+  message(perm.th)
+  dat.flt %>% filter(perm == perm.th) -> tmp0
+    hist(tmp0$p_lrt) -> hist.dat
+    data.frame(hist.dat$mids ,    hist.dat$counts) %>%
+      mutate(perm = perm.th
+      ) -> ot
+    return(ot)
+  }
 
-ggsave(beta.hist.test, file = "beta.hist.test.png")
+hist.p %>%
+  ggplot(aes(
+    x=hist.dat.mids,
+    y=log10(hist.dat.counts),
+    color = perm == 0,
+  )) + geom_point()  -> p.vals.filts.o.p
 
+ggsave(p.vals.filts.o.p, file = "p.vals.filts.o.p.pdf")
+
+
+#######
 ####  
 ####  
 ####  

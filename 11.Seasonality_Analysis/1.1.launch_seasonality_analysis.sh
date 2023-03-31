@@ -20,6 +20,5 @@ Rscript \
 --vanilla \
 1.Seasonality_Analysis.R \
 ${SLURM_ARRAY_TASK_ID} \
-0.01 \
-0
+100
 
