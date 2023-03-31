@@ -1,1 +1,1 @@
-## _P_<sub>n</sub>_P_<sub>s</sub> anaylsis
+## _P_<sub>n</sub>_P_<sub>s</sub> analysis
