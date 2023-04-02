@@ -6,45 +6,34 @@
 #  Created by Martin Kapun on 04.11.20.
 #
 
-mkdir /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results
+cd /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/
 
-### define syn/non-syn SNPs
-python3 /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/scripts/PNPS4VCF.py \
-  --input /media/inter/mkapun/projects/ImPoolation/data/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.vcf.gz \
-  --output /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/PoolSNP_full.pnps.gz \
-  --MAF 0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.15,0.2
+mkdir results
 
-python3 /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/scripts/PNPS4VCF.py \
+## define syn/non-syn SNPs of different MAC thresholds for PoolSNP
+python3 scripts/PNPS4PoolSNP.py \
+  --input /media/inter/mkapun/projects/ImPoolation/data/dest.all.PoolSNP.001.5.test.norep.ann.vcf.gz \
+  --output results/PoolSNP_full.pnps.gz \
+  --MAC 5,10,15,20,25,30,40,50
+
+## define syn/non-syn SNPs of different MAF thresholds for SNAPE
+python3 scripts/PNPS4VCF.py \
   --input /media/inter/mkapun/projects/ImPoolation/data/dest.PoolSeq.SNAPE.NA.NA.25Feb2023.norep.ann.vcf.gz \
-  --output /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/SNAPE_full.pnps.gz \
+  --output results/SNAPE_full.pnps.gz \
   --MAF 0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.15,0.2
 
 ## Count Private SNPs
-python /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/scripts/PrivateSNPs.py \
+python scripts/PrivateSNPs.py \
   --input /media/inter/mkapun/projects/ImPoolation/data/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.vcf.gz \
-  --output /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/PoolSNP_full.ps
+  --output results/PoolSNP_full.ps
 
-python /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/scripts/PrivateSNPs.py \
+python scripts/PrivateSNPs.py \
   --input /media/inter/mkapun/projects/ImPoolation/data/dest.PoolSeq.SNAPE.NA.NA.25Feb2023.norep.ann.vcf.gz \
-  --output /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/SNAPE_full.ps
+  --output results/SNAPE_full.ps
 
-# ### now also for parameters in PoolSNP:
-
-# mkdir /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/ParamPoolSNP
-
-# cd /Volumes/MartinResearch2/DEST/data/paramTest
-
-# for i in *.gz; do
-
-#   python3 /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/scripts/PNPS4SNAPE.py \
-#     --input ${i} \
-#     --output /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/ParamPoolSNP/${i}.txt \
-#     --Parse \
-#     --MAF 0.0 &
-
-# done
-
+## and now classify the samples in R and plot summary Figures
 echo '''
+setwd("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/")
 
 library(tidyverse)
 library(gridExtra)
@@ -59,17 +48,16 @@ ALPHA=0.15
 linecol="green"
 
 ## get expected values for DGRP data
-null.l=read.table("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/null_subset.pnps",header=F)
+null.l=read.table("results/null_subset.pnps",header=F)
 colnames(null.l)<-c("x","Chrom","NS","SS","y")
 NL<-filter(null.l,Chrom == "genomewide")
 
 NL.0 <- filter(NL,x==0)$y
 
 ## at first read SNAPE pnps data and filter genomewide values
-DATA.snape=read.table("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/SNAPE_full.pnps.gz",
+DATA.snape=read.table("results/SNAPE_full.pnps.gz",
                       header=T,
                       stringsAsFactors = F)
-summary(DATA.snape)
 
 DATA.snape.group <- DATA.snape %>%
   filter(Chrom =="genomewide") %>%
@@ -88,7 +76,7 @@ DATA.snape.group.MAF0 <- DATA.snape %>%
 #DATA.snape.group.MAF0
 
 # read CSV of private SNPs
-DATA.ps=read.csv("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/SNAPE_full.ps",
+DATA.ps=read.csv("results/SNAPE_full.ps",
                  header=T,
                  stringsAsFactors = F,
                  sep = "\t")
@@ -102,7 +90,7 @@ Mean.pNpS=mean(DATA$pNpS)
 SD.pNpS=sd(DATA$pNpS)
 th.pNpS=Mean.pNpS+1.96*SD.pNpS
 
-##classify
+##classify based on pNpS
 DATA$TH.pNpS <-DATA$pNpS
 DATA$TH.pNpS[DATA$TH.pNpS<th.pNpS]<-NA
 DATA$TH.pNpS[DATA$TH.pNpS>=th.pNpS]<-"Exclude"
@@ -113,7 +101,7 @@ Mean.private=mean(DATA$private)
 SD.private=sd(DATA$private)
 th.private=Mean.private+1.96*SD.private
 
-#classify
+#classify based on private SNPs
 DATA$TH.private <-DATA$private
 DATA$TH.private[DATA$TH.private<th.private]<-NA
 DATA$TH.private[DATA$TH.private>=th.private]<-"Exclude"
@@ -124,11 +112,14 @@ DATA$Status <- rep("Keep",length(DATA$TH.private))
 DATA$Status[DATA$TH.pNpS=="Exclude"]<-"Exclude"
 DATA$Status[DATA$TH.private=="Exclude"]<-"Exclude"
 
-write.table(DATA,"/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/classify_pops.txt",quote = F,row.names = F)
+write.table(DATA,"results/classify_pops.txt",quote = F,row.names = F)
 
+## highlight Raleigh (DPGP) population
 DATA.RAL<-DATA %>%
   filter(POP=="US_Nor_Ral_2_2003-07-01")
 
+
+## make plot based on classification
 Classify.plot<-ggplot(DATA,aes(x=pNpS,y=private,col=Status))+
   geom_point(size=10)+
   xlab(expression(italic("p")["N"]/italic("p")["S"]))+
@@ -155,138 +146,136 @@ Classify.plot<-ggplot(DATA,aes(x=pNpS,y=private,col=Status))+
                                alpha(c("black"),
                                      alpha=ALPHA)))
 
-pdf("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/classify.pdf",width=10,height=8)
-Classify.plot
-dev.off()
+ggsave("results/classify.pdf",
+  Classify.plot,
+  width=10,height=8)
 
-png("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/classify.png",width=500,height=400)
-Classify.plot
-dev.off()
+ggsave("results/classify.png",
+  Classify.plot,
+  width=10,height=8)
 
-# LIST<-DATA$POP[DATA$Status=="Exclude"]
-# STATUSLIST=data.frame(POP=DATA$POP,Status=DATA$Status)
+LIST<-DATA$POP[DATA$Status=="Exclude"]
+STATUSLIST=data.frame(POP=DATA$POP,Status=DATA$Status)
 
-# DATA.poolsnp=read.table("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/results/PoolSNP_full.pnps.gz",
-#                         header=T,
-#                         na.strings = "NA")
+## OK, now read PoolSNP data
+DATA.poolsnp=read.table("results/PoolSNP_full.pnps.gz",
+  header=T,
+ na.strings = "NA")
 
-# ## keep pnps without MAF filtering only
-# DATA.poolsnp.group.MAF0 <- DATA.poolsnp %>%
-#   filter(MAF == 0.01 & MAC==10 & MAFc ==0 & Chrom =="genomewide")
-# #DATA.snape.group.MAF0
+DATA.poolsnp.RAL<-DATA.poolsnp %>%
+  filter(POP=="US_Nor_Ral_2_2003-07-01")
 
-# DATA.group <- merge(DATA.poolsnp.group.MAF0,DATA.snape.group.MAF0,by.x="POP",by.y="POP")
-# plot(DATA.group$pNpS.x,DATA.group$pNpS.y)
+DATA.poolsnp<-merge(DATA.poolsnp,STATUSLIST,by.x="POP",by.y="POP")
 
-# DATA.poolsnp.RAL<-DATA.poolsnp %>%
-#   filter(POP=="NC_ra_03_n")
+DATA.poolsnp.group <- DATA.poolsnp %>%
+  filter(Chrom =="genomewide") %>%
+  group_by(MAC) %>%
+  summarise(
+    n=n(),
+    pnps.m = mean(pNpS),
+    pnps.sd=sd(pNpS),
+    pnps.se =sd(pNpS)/sqrt(sum(n()))
+  )
 
-# DATA.poolsnp<-merge(DATA.poolsnp,STATUSLIST,by.x="POP",by.y="POP")
+DATA.poolsnp.group$NAME<-rep("PoolSNP",
+                             nrow(DATA.poolsnp.group))
 
-# DATA.poolsnp.group <- DATA.poolsnp %>%
-#   filter(Chrom =="genomewide" & MAF==0.01) %>%
-#   group_by(MAC) %>%
-#   summarise(
-#     n=n(),
-#     pnps.m = mean(pNpS),
-#     pnps.sd=sd(pNpS),
-#     pnps.se =sd(pNpS)/sqrt(sum(n()))
-#   )
+DATA.poolsnp.plot <- ggplot(DATA.poolsnp.group,
+                            aes(x=MAC,y=pnps.m))+
+  geom_jitter(data=filter(DATA.poolsnp,Chrom=="genomewide"),
+              aes(x=MAC,y=pNpS,col=Status))+
+  geom_ribbon(aes(ymin = pnps.m-pnps.sd, ymax = pnps.m+pnps.sd),
+              colour = NA,
+              fill=alpha(c("blue"),alpha=0.2))+
+  geom_line(lwd=1.5,
+            col="blue")+
+  geom_point(data=filter(DATA.poolsnp.RAL,Chrom=="genomewide"),
+             aes(x=MAC,y=pNpS),col=linecol,shape=18,size=3)+
+  xlab("Minor allele count (MAC)")+
+  ylab(expression(italic("p")["N"]/italic("p")["S"]))+
+  geom_abline(slope = 0,intercept=NL.0,lty=2,col=linecol,lwd=1)+
+  theme_bw()+
+  theme(axis.title.y = element_text(size = 20, angle = 90),
+        axis.title.x = element_text(size = 20, angle = 0),
+        axis.text=element_text(size=18),
+        strip.text =element_text(size=20),
+        legend.title = element_blank(),
+        legend.position = "none")+
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.05),
+                     limits=c(0,2.5))+
+  scale_fill_manual(values=c(alpha(c("red"),
+                                   alpha=ALPHA),
+                             alpha(c("black"),
+                                   alpha=ALPHA)))+
+  scale_colour_manual(values=c(alpha(c("red"),
+                                     alpha=ALPHA),
+                               alpha(c("black"),
+                                     alpha=ALPHA)))+
+  facet_wrap(vars(NAME))
+#DATA.poolsnp.plot
 
-# DATA.poolsnp.group$NAME<-rep("PoolSNP",
-#                              nrow(DATA.poolsnp.group))
+## make corresponding plot for SNAPE
+DATA.snape<-merge(DATA.snape,STATUSLIST,by.x="POP",by.y="POP")
+DATA.snape.group$NAME<-rep("SNAPE",nrow(DATA.snape.group))
 
-# DATA.poolsnp.plot <- ggplot(DATA.poolsnp.group,
-#                             aes(x=MAC,y=pnps.m))+
-#   geom_jitter(data=filter(DATA.poolsnp,Chrom=="genomewide" & MAF==0.01),
-#               aes(x=MAC,y=pNpS,col=Status))+
-#   geom_ribbon(aes(ymin = pnps.m-pnps.sd, ymax = pnps.m+pnps.sd),
-#               colour = NA,
-#               fill=alpha(c("blue"),alpha=0.2))+
-#   geom_line(lwd=1.5,
-#             col="blue")+
-#   geom_point(data=filter(DATA.poolsnp.RAL,Chrom=="genomewide" & MAF==0.01),
-#              aes(x=MAC,y=pNpS),col=linecol,shape=18,size=3)+
-#   xlab("Minor allele count (MAC)")+
-#   ylab(expression(italic("p")["N"]/italic("p")["S"]))+
-#   geom_abline(slope = 0,intercept=NL.0,lty=2,col=linecol,lwd=1)+
-#   theme_bw()+
-#   theme(axis.title.y = element_text(size = 20, angle = 90),
-#         axis.title.x = element_text(size = 20, angle = 0),
-#         axis.text=element_text(size=18),
-#         strip.text =element_text(size=20),
-#         legend.title = element_blank(),
-#         legend.position = "none")+
-#   scale_y_continuous(labels = scales::number_format(accuracy = 0.05),
-#                      limits=c(0,2.5))+
-#   scale_fill_manual(values=c(alpha(c("red"),
-#                                    alpha=ALPHA),
-#                              alpha(c("black"),
-#                                    alpha=ALPHA)))+
-#   scale_colour_manual(values=c(alpha(c("red"),
-#                                      alpha=ALPHA),
-#                                alpha(c("black"),
-#                                      alpha=ALPHA)))+
-#   facet_wrap(vars(NAME))
-# DATA.poolsnp.plot
+DATA.snape.RAL<-DATA.snape %>%
+  filter(POP=="US_Nor_Ral_2_2003-07-01" & Chrom =="genomewide")
 
+DATA.snape.plot <- ggplot(DATA.snape.group,
+                          aes(x=MAF,y=pnps.m))+
+  geom_jitter(data=filter(DATA.snape,Chrom=="genomewide"),
+              aes(x=MAF,y=pNpS,col=Status))+
+  geom_ribbon(aes(ymin = pnps.m-pnps.sd, ymax = pnps.m+pnps.sd),
+              colour = NA,
+              fill=alpha(c("blue"),alpha=0.2))+
+  geom_point(data=DATA.snape.RAL,
+             aes(x=MAF,y=pNpS),col=linecol,shape=18,size=3)+
+  geom_line(lwd=1.5,
+            col="blue")+
+  xlab("Minor allele frequency (MAF)")+
+  ylab(expression(italic("p")["N"]/italic("p")["S"]))+
+  ylim(0,2.5)+
+  geom_line(data=NL,aes(x=x,y=y),lty=2,col=linecol,lwd=1)+
+  theme_bw()+
+  theme(axis.title.y = element_text(size = 20, angle = 90),
+        axis.title.x = element_text(size = 20, angle = 0),
+        axis.text=element_text(size=18),
+        strip.text =element_text(size=20),
+        legend.title = element_blank(),
+        legend.position = "none")+
+  scale_fill_manual(values=c(alpha(c("red"),
+                                   alpha=ALPHA),
+                             alpha(c("black"),
+                                   alpha=ALPHA)))+
+  scale_colour_manual(values=c(alpha(c("red"),
+                                     alpha=ALPHA),
+                               alpha(c("black"),
+                                     alpha=ALPHA)))+
+  facet_wrap(vars(NAME))
+#DATA.snape.plot
 
-# DATA.snape<-merge(DATA.snape,STATUSLIST,by.x="POP",by.y="POP")
-# DATA.snape.group$NAME<-rep("SNAPE",nrow(DATA.snape.group))
+## arrange all Plots in a single Figure
+FP<-ggarrange(Classify.plot,
+              ggarrange(DATA.poolsnp.plot,
+                        DATA.snape.plot,
+                        labels = c("B","C"),
+                        font.label = list(size = 28, face = "bold"),
+                        nrow=2),
+              ncol=2,
+              labels="A",
+              common.legend = T,
+              legend = "bottom",
+              font.label = list(size = 28, face = "bold"))
 
-# DATA.snape.RAL<-DATA.snape %>%
-#   filter(POP=="NC_ra_03_n" & Chrom =="genomewide")
+ggsave("results/Figure2.pdf",
+       FP,
+       width=15,
+       height=9)
 
+ggsave("results/Figure2.png",
+       FP,
+       width=15,
+       height=9)
+''' >scripts/ClassifyNplot.r
 
-# DATA.snape.plot <- ggplot(DATA.snape.group,
-#                           aes(x=MAF,y=pnps.m))+
-#   geom_jitter(data=filter(DATA.snape,Chrom=="genomewide"),
-#               aes(x=MAF,y=pNpS,col=Status))+
-#   geom_ribbon(aes(ymin = pnps.m-pnps.sd, ymax = pnps.m+pnps.sd),
-#               colour = NA,
-#               fill=alpha(c("blue"),alpha=0.2))+
-#   geom_point(data=DATA.snape.RAL,
-#              aes(x=MAF,y=pNpS),col=linecol,shape=18,size=3)+
-#   geom_line(lwd=1.5,
-#             col="blue")+
-#   xlab("Minor allele frequency (MAF)")+
-#   ylab(expression(italic("p")["N"]/italic("p")["S"]))+
-#   ylim(0,2.5)+
-#   geom_line(data=NL,aes(x=x,y=y),lty=2,col=linecol,lwd=1)+
-#   theme_bw()+
-#   theme(axis.title.y = element_text(size = 20, angle = 90),
-#         axis.title.x = element_text(size = 20, angle = 0),
-#         axis.text=element_text(size=18),
-#         strip.text =element_text(size=20),
-#         legend.title = element_blank(),
-#         legend.position = "none")+
-#   scale_fill_manual(values=c(alpha(c("red"),
-#                                    alpha=ALPHA),
-#                              alpha(c("black"),
-#                                    alpha=ALPHA)))+
-#   scale_colour_manual(values=c(alpha(c("red"),
-#                                      alpha=ALPHA),
-#                                alpha(c("black"),
-#                                      alpha=ALPHA)))+
-#   facet_wrap(vars(NAME))
-# DATA.snape.plot
-
-
-# FP<-ggarrange(Classify.plot,
-#               ggarrange(DATA.poolsnp.plot,
-#                         DATA.snape.plot,
-#                         labels = c("B","C"),
-#                         font.label = list(size = 28, face = "bold"),
-#                         nrow=2),
-#               ncol=2,
-#               labels="A",
-#               common.legend = T,
-#               legend = "bottom",
-#               font.label = list(size = 28, face = "bold"))
-
-# ggsave("~/Documents/GitHub/data-paper/Figure2/Figure2.pdf",
-#        FP,
-#        device="pdf",
-#        width=15,
-#        height=9)
-'''
+Rscript scripts/ClassifyNplot.r
