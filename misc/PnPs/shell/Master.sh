@@ -123,7 +123,7 @@ DATA.RAL<-DATA %>%
 Classify.plot<-ggplot(DATA,aes(x=pNpS,y=private,col=Status))+
   geom_point(size=10)+
   xlab(expression(italic("p")["N"]/italic("p")["S"]))+
-  ylab("No. of private SNPs")+
+  ylab(expression("Log"[10]*"(No. of private SNPs)"))+
   theme_bw()+
   geom_hline(yintercept=th.private,lty=2,col="black",lwd=1)+
   geom_vline(xintercept=th.pNpS,lty=2,col="black",lwd=1)+
