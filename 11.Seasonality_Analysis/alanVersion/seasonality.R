@@ -104,7 +104,7 @@
 
 
 
-    set.seed(i)
+    set.seed(1234)
     nPerm <- 100
     perms <- foreach(j=1:nPerm, .combine="rbind")%dopar%{
       tmp <- af
