@@ -3,7 +3,7 @@
 
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
-  nJobs=as.numeric(args[2])
+  #nJobs=as.numeric(args[2])
 
   ## jobId=1; nJobs=5000
 
@@ -14,7 +14,8 @@
   library(SeqArray)
   library(doMC)
   registerDoMC(5)
-
+  library(tidyverse)
+  
   #setwd("/scratch/aob2x")
 
 ### load data
@@ -25,7 +26,9 @@
     genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.gds")
 
   ### sample metadata
-    samps <- fread("/scratch/aob2x/DESTv2/populationInfo/dest_v2.samps_25Feb2023.csv")
+  #system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
+
+    samps <- fread("./dest_v2.samps_25Feb2023.csv")
 
 ### get basic index
   data <- seqGetData(genofile, "annotation/info/AF")
@@ -41,7 +44,8 @@
 
 ### function
   getData <- function(variant, samps2use=seasonal.sets$sampleId) {
-    # variant=snp.dt[chr=="2L"][pos==14617051]$variant.id; samps2use=seasonal.sets$sampleId
+    # variant=snp.dt[chr=="2L"][pos==14617051]$variant.id; 
+    # samps2use=seasonal.sets$sampleId
     # variant=i
 
     ### filter to target
@@ -56,9 +60,12 @@
 
       af <- data.table(ad=expand.grid(ad)[,1],
                        dp=expand.grid(dp)[,1],
-                       sampleId=rep(seqGetData(genofile, "sample.id"), dim(ad)[2]),
-                       variant.id=rep(seqGetData(genofile, "variant.id"), each=dim(ad)[1]),
-                        chr=seqGetData(genofile, "chromosome"), pos=seqGetData(genofile, "position"))
+                       sampleId=rep(seqGetData(genofile, "sample.id"), 
+                                    dim(ad)[2]),
+                       variant.id=rep(seqGetData(genofile, "variant.id"), 
+                                      each=dim(ad)[1]),
+                        chr=seqGetData(genofile, "chromosome"), 
+                       pos=seqGetData(genofile, "position"))
 
     ### tack them together
       af[,af:=ad/dp]
@@ -75,7 +82,36 @@
   }
 
 ### get subset
-  tmp.ids <- snp.dt[chr=="2L"][pos%in%c(17584484, 14617051)]$variant.id
+### 
+### 
+  #snp.dt
+  snp.dt <- snp.dt[global_af>=0.1]
+  #dim(snp.dt)[1] -> total.snps
+  #snp.indexes = 1:total.snps
+  #colnames(snp.dt) -> SNPguides
+  win.bp <- 12000
+  step.bp <- 12001
+  setkey(snp.dt, "chr")
+  ## prepare windows
+  wins <- foreach(chr.i=c("2L","2R", "3L", "3R"),
+                  .combine="rbind", 
+                  .errorhandling="remove")%dopar%{
+                    
+                    tmp <- snp.dt %>%
+                      filter(chr == chr.i)
+                    
+                    data.table(chr=chr.i,
+                  start=seq(from=min(tmp$pos), to=max(tmp$pos)-win.bp, by=step.bp),
+                  end=seq(from=min(tmp$pos), to=max(tmp$pos)-win.bp, by=step.bp) + win.bp)
+                  }
+  
+  wins[,i:=1:dim(wins)[1]]
+  ###dim(wins)
+  ### ----> 9060
+  
+  wins.i = wins[jobId]
+  
+  tmp.ids <- snp.dt[chr==wins.i$chr][pos%in%c(wins.i$start:wins.i$end)]$variant.id
 
 ### iterate through
   o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
@@ -86,11 +122,14 @@
     af[,year_pop:=as.factor(interaction(locality, year))]
     af <- af[!is.na(af_nEff)]
 
-
     # t1 <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1, data=af, family=binomial())
     # t2 <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season, data=af, family=binomial())
-    t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop, data=af, family=binomial())
-    t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season+year_pop, data=af, family=binomial())
+    # 
+    t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop, data=af, 
+                   family=binomial())
+    
+    t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season+year_pop, data=af,
+                   family=binomial())
 
     obs <-
     data.table(perm=0,
@@ -107,11 +146,14 @@
     set.seed(1234)
     nPerm <- 100
     perms <- foreach(j=1:nPerm, .combine="rbind")%dopar%{
+      
       tmp <- af
       tmp[,season:=sample(season)]
 
-      t3.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~        year_pop,        data=tmp, family=binomial())
-      t4.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season+year_pop, data=tmp, family=binomial())
+      t3.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~        year_pop, 
+                     data=tmp, family=binomial())
+      t4.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season+year_pop, 
+                     data=tmp, family=binomial())
 
       data.table(perm=j,
                  b_seas=coef(t4.perm)[2], se_temp=summary(t4.perm)$coef[2,2],
@@ -128,4 +170,16 @@
     out[,variant.id:=tmp.ids[i]]
 
   }
+  
   o <- merge(o, snp.dt, by="variant.id")
+
+  #### SAVE O
+  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR102023/"
+  save(o,
+       file = paste(output_file,
+                    "GLM_out.", 
+                    jobId, 
+                    ".",
+                    paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
+                    ".Rdata", sep = ""))
+  
