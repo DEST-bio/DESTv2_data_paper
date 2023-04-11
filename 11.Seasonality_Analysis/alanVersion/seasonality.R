@@ -3,6 +3,7 @@
 
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
+  model=as.character(args[2])
   #nJobs=as.numeric(args[2])
 
   ## jobId=1; nJobs=5000
@@ -21,14 +22,34 @@
 ### load data
   ### seasonal pairs
     seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+  ### core20  
+    core.20 <- fread("./core20_samps.csv")
+    names(core.20)[1] = "sampleId_orig"
+  ### dest samps  
+    samps <- fread("./dest_v2.samps_25Feb2023.csv")
+  
+    core20.upd = left_join(core.20, samps[,c("sampleId", "sampleId_orig")])
 
+  #### model selector
+    if(model == "all_seas") {
+      
+      message("chosen model --> all")
+      seasonal.sets = seasonal.sets
+      
+    } else if(model == "NoCore20_seas") {
+      
+      message("chosen model --> No Core20")
+      seasonal.sets = seasonal.sets %>% filter(!sampleId %in% core20.upd$sampleId)
+      
+    } else{ message("model is not specified"); q("no") }
+    
+    
   ### gds object
     genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.gds")
 
   ### sample metadata
   #system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
 
-    samps <- fread("./dest_v2.samps_25Feb2023.csv")
 
 ### get basic index
   data <- seqGetData(genofile, "annotation/info/AF")
@@ -147,7 +168,9 @@
                nFixed=sum(af$af_nEff==0) + sum(af$af_nEff==1),
                af=mean(af$af_nEff), neff=mean(af$nEff),
                lrt=anova(t3.real, t4.real, test="Chisq")[2,4],
-               p_lrt=anova(t4.real, t3.real, test="Chisq")[2,5])
+               p_lrt=anova(t4.real, t3.real, test="Chisq")[2,5],
+               model=model
+               )
 
 
 
@@ -181,7 +204,9 @@
                  nFixed=sum(tmp$af_nEff==0) + sum(tmp$af_nEff==1),
                  af=mean(tmp$af_nEff), neff=mean(tmp$nEff),
                  lrt=anova(t3.perm, t4.perm, test="Chisq")[2,4],
-                 p_lrt=anova(t4.perm, t3.perm, test="Chisq")[2,5])
+                 p_lrt=anova(t4.perm, t3.perm, test="Chisq")[2,5],
+                 model=model
+      )
 
     }
 
@@ -193,11 +218,13 @@
   o <- merge(o, snp.dt, by="variant.id")
 
   #### SAVE O
-  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR102023/"
+  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR122023/"
   save(o,
        file = paste(output_file,
                     "GLM_out.",
                     jobId,
+                    ".",
+                    model,
                     ".",
                     paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
                     ".Rdata", sep = ""))
