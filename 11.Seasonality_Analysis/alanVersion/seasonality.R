@@ -4,9 +4,9 @@
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
   model=as.character(args[2]) # all_seas ; NoCore20_seas
-  model_features=as.character(args[3]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
-  nPerm = as.numeric(args[4])
-    
+  nPerm = as.numeric(args[3])
+  model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
+  
   #jobId=1
   #model="all_seas"
   #model_features="Phylo_LocRan"
@@ -143,6 +143,14 @@
   # tmp.ids <- c(759953, 1333833, 595225)
 
 ### iterate through
+o.mods = foreach(model_features = c("No_Phylo", 
+                                    "Phylo_LocRan", 
+                                    "PhyloRan_LocRan", 
+                                    "Phylo_Loc", 
+                                    "LocRan",  
+                                    "JustPhylo" ), 
+                 .combine = "rbind")%do%{
+
   o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
     message(paste(i, length(tmp.ids), sep=" / "))
     af <- getData(variant=tmp.ids[i])
@@ -154,7 +162,7 @@
     af$cluster = as.factor(af$cluster)
     
     #No_Phylo; Phylo_LocRan
-    if(model_features == "No_Phylo" ){
+    if(model_features == "No_Phylo"){
       
       message("No_Phylo model")
       t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,
@@ -348,7 +356,9 @@
     
   }
   o <- merge(o, snp.dt, by="variant.id")
-  
+  return(o)  
+                 }
+
   #### SAVE O
   output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_newods_ALAN_APR122023/"
   save(o,
@@ -364,21 +374,3 @@
   ####
   ####
   ####
-  
-  ggplot() +
-    geom_violin(
-      data = o[perm != 0],
-      aes(
-        x=model_features,
-        y=-log10(p_lrt)
-      )) +
-    geom_point(
-      data = o[perm == 0],
-      aes(
-        x=model_features,
-        y=-log10(p_lrt)
-      )) +
-    facet_wrap(~variant.id, scales = "free")->
-    model.tester
-  ggsave(model.tester, file = "model.tester.pdf")
-  
