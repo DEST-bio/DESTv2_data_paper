@@ -4,8 +4,9 @@
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
   model=as.character(args[2]) # all_seas ; NoCore20_seas
-  model_features=as.character(args[3]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan
-  
+  model_features=as.character(args[3]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
+  nPerm = as.numeric(args[4])
+    
   #jobId=1
   #model="all_seas"
   #model_features="Phylo_LocRan"
@@ -157,13 +158,14 @@
       
       message("No_Phylo model")
       t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,
-                     data=af, family=binomial())
+                     data=af, family=binomial)
       t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop,
-                     data=af, family=binomial())
+                     data=af, family=binomial)
       
       #lrt=anova(t3.real, t4.real, test="Chisq")$`Chisq`[2],
       p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chi)`[2]
-      
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
       
     } else if(model_features == "Phylo_LocRan" ){
       
@@ -174,6 +176,8 @@
                        data = af, family = binomial)
       
       p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chisq)`[2]
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
       
     } else if(model_features == "PhyloRan_LocRan" ){
       
@@ -184,8 +188,48 @@
                        data = af, family = binomial)
       
       p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chisq)`[2]
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
+      
+    } else if(model_features == "Phylo_Loc" ){
+      
+      message("Phylo_Loc model")
+      t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,
+                       data = af, family = binomial)
+      t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop,
+                       data = af, family = binomial)
+      
+      p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chi)`[2]
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
+      
+    } else if(model_features == "LocRan" ){
+      
+      message("LocRan model")
+      t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ (1 | year_pop),
+                       data = af, family = binomial)
+      t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop),
+                       data = af, family = binomial)
+      
+      p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chisq)`[2]
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
+      
+    } else if(model_features == "JustPhylo" ){
+      
+      message("JustPhylo model")
+      t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,
+                     data = af, family = binomial)
+      t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster,
+                     data = af, family = binomial)
+      
+      p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chi)`[2]
+      seas.AIC = extractAIC(t4.real)[2]
+      null.AIC = extractAIC(t3.real)[2]
       
     }
+    
+    
     
     obs <-
       data.table(perm=0,
@@ -197,12 +241,14 @@
                  #lrt=anova(t3.real, t4.real, test="Chisq")$`Chisq`[2],
                  p_lrt=p_lrt,
                  model=model,
-                 model_features=model_features
+                 model_features=model_features,
+                 seas.AIC = seas.AIC,
+                 null.AIC = null.AIC
       )
     
     
     set.seed(1234)
-    nPerm <- 100
+    nPerm <- nPerm
     perms <- foreach(j=1:nPerm, .combine="rbind")%dopar%{
       
       tmp <- af
@@ -211,37 +257,74 @@
       #No_Phylo; Phylo_LocRan
       if(model_features == "No_Phylo" ){
         
-        #message("No_Phylo model")
         t3.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,
-                       data=tmp, family=quasibinomial())
+                       data=tmp, family=binomial)
         t4.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop,
-                       data=tmp, family=quasibinomial())
+                       data=tmp, family=binomial)
         
         p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chi)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
         
       } else if(model_features == "Phylo_LocRan" ){
         
-        #message("Phylo_LocRan model")
         t3.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),
                          data = tmp, family = binomial)
         t4.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop),
                          data = tmp, family = binomial)
         
         p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
         
         
       } else if(model_features == "PhyloRan_LocRan" ){
         
-        #message("Phylo_LocRan model")
         t3.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ (1 | cluster) + (1 | year_pop),
                          data = tmp, family = binomial)
         t4.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | cluster) + (1 | year_pop),
                          data = tmp, family = binomial)
         
         p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
         
+      } else if(model_features == "Phylo_Loc" ){
+        
+        t3.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,
+                         data = tmp, family = binomial)
+        t4.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop,
+                         data = tmp, family = binomial)
+        
+        p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chi)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
+        
+      }  else if(model_features == "LocRan" ){
+        
+        t3.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ (1 | year_pop),
+                         data = tmp, family = binomial)
+        t4.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop),
+                         data = tmp, family = binomial)
+        
+        p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
+        
+      } else if(model_features == "JustPhylo" ){
+        
+        t3.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,
+                       data = tmp, family = binomial)
+        t4.perm <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster,
+                       data = tmp, family = binomial)
+        
+        p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chi)`[2]
+        seas.AIC = extractAIC(t4.perm)[2]
+        null.AIC = extractAIC(t3.perm)[2]
         
       }
+      
+      
       
       data.table(perm=j,
                  b_seas=summary(t4.perm)$coef[2,1], se_temp=summary(t4.perm)$coef[2,2],
@@ -252,7 +335,9 @@
                  #lrt=anova(t3.perm, t4.perm, test="Chisq")$`Chisq`[2],
                  p_lrt= p_lrt, #anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2],
                  model=model,
-                 model_features=model_features
+                 model_features=model_features,
+                 seas.AIC = seas.AIC,
+                 null.AIC = null.AIC
                  
       )
       
