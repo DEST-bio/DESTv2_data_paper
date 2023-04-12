@@ -25,12 +25,12 @@ samps <- fread("./dest_v2.samps_25Feb2023.csv")
 #set.samps <- filter(seasonal.sets, sampleId %in%  pass.filt)$sampleId
 
 #### Central files
-files.seas = system("ls ./GLM_ALAN_APR102023", intern = T)
-root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR102023/"
+files.seas = system("ls ./GLM_ALAN_APR122023", intern = T)
+root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR122023/"
 
 #### binning analysis
 seas.p.bin = 
-  foreach(fil = files.seas, .combine = "rbind" )%do%{
+  foreach(fil = files.seas, .combine = "rbind", .errorhandling = "remove" )%do%{
     
     message(fil)
     tmp <- get(load(paste(root, fil, sep = "/")))
@@ -39,9 +39,16 @@ seas.p.bin =
     
   }
 
+#### #### #### 
+#### 
+#### 
+#### 
 #### Collect into permutation sets
-outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR102023_by_PERM_seas"
+#### Collect into permutation sets
+#### Collect into permutation sets
+#### Collect into permutation sets
 
+outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR122023_by_PERM_quasibinomial"
 ### save as independent files
   foreach(p = 1:100)%do%{
     
@@ -53,15 +60,24 @@ outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR102023_by_P
     message(p)
     save(dat.p,
          file = paste(outfolder,
-                      paste("GLM_out.perm_id", p, "SeasAlan", "Rdata", sep = "."),
+                      paste("GLM_out.perm_id", p, "SeasAlanQusiBinom", "Rdata", sep = "."),
                       sep = "/"
                       ))
   }
 
+#### Collect into permutation sets -- end
+#### Collect into permutation sets -- end
+#### Collect into permutation sets -- end
+#### 
+#### 
+#### 
+#### #### #### 
+  
 
 
 #### Analyze the p-value
-seas.p.bin ->
+seas.p.bin %>%
+  filter(nFixed == 0 & af > 0.05)->
 dat.flt
 
 ot_across_perms=
