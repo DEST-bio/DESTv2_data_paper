@@ -25,8 +25,8 @@ samps <- fread("./dest_v2.samps_25Feb2023.csv")
 #set.samps <- filter(seasonal.sets, sampleId %in%  pass.filt)$sampleId
 
 #### Central files
-files.seas = system("ls ./GLM_ALAN_APR122023", intern = T)
-root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_ALAN_APR122023/"
+files.seas = system("ls ./GLM_newods_ALAN_APR122023", intern = T)
+root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_newods_ALAN_APR122023/"
 
 #### binning analysis
 seas.p.bin = 
@@ -88,7 +88,7 @@ foreach(p = 0:100, .combine = "rbind" )%do%{
     dat.flt %>% filter(perm == p 
                        #& chr == chr
                        ) -> dat.0
-    hist(dat.0$p_lrt, breaks = 80) -> hist.dat
+    hist(dat.0$p_lrt, breaks = 10) -> hist.dat
     data.frame(hist.dat$mids ,    hist.dat$counts) %>%
       mutate(perm = p, 
              #chr = chr
@@ -103,18 +103,36 @@ foreach(p = 0:100, .combine = "rbind" )%do%{
 
 setDT(ot_across_perms)
 
+ot_across_perms %>%
+  ggplot(
+    aes(
+      x=hist.dat.mids,
+      y=hist.dat.counts,
+      color = perm == 0,
+      group = perm
+    )
+  ) + 
+  scale_x_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::trans_format("log10", scales::math_format(10^.x))
+  ) +  geom_line(aes(alpha = perm == 0) ) +
+  geom_vline(xintercept = 0.05) +
+  scale_alpha_manual(values = c(0.05, 1)) ->
+  pvals.lines
+ggsave(pvals.lines, file = "pvals.lines.pdf", w = 9, h = 4)
+
   ggplot() +
-  geom_violin(
+  geom_boxplot(
     data = ot_across_perms[perm != 0],
     aes(x= as.factor(hist.dat.mids),
         y=hist.dat.counts),
-    fill = "grey", size = 0.5
+    fill = "grey", size = 0.5, outlier.shape = NA
   ) +
     geom_point(
       data = ot_across_perms[perm == 0],
       aes(x= as.factor(hist.dat.mids),
           y=hist.dat.counts),
-      size = 1,
+      size = 3,
       color = "red"
     ) + 
     #facet_wrap(~chr) +

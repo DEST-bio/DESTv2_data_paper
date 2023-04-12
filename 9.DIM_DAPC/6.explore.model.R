@@ -25,8 +25,11 @@ library(foreach)
 ####
 #sftp://rivanna.hpc.virginia.edu/scratch/yey2sn/DEST2_analysis/dapc_dims/xval_province.DEST2.0.Rdata
 
+GIMS = get(load("DEST.2.0.GIMS.Rdata"))
+unique(GIMS$SNP_id) -> GIMS.snps.ids
+
 model2.0 <- get(load("xval_province.DEST2.0.Rdata"))
-model2.0$DAPC$pca.loadings %>% rownames() %>% sort -> GIMs
+#model2.0$DAPC$pca.loadings %>% rownames() %>% sort -> GIMs
 ###
 message("now loading AF")
 AF.d <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))

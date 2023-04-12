@@ -4,7 +4,7 @@
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
   model=as.character(args[2]) # all_seas ; NoCore20_seas
-  model_features=as.character(args[3]) #No_Phylo; Phylo_LocRan
+  model_features=as.character(args[3]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan
   
   #jobId=1
   #model="all_seas"
@@ -175,6 +175,16 @@
       
       p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chisq)`[2]
       
+    } else if(model_features == "PhyloRan_LocRan" ){
+      
+      message("PhyloRan_LocRan model")
+      t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ (1 | cluster) + (1 | year_pop),
+                       data = af, family = binomial)
+      t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | cluster) + (1 | year_pop),
+                       data = af, family = binomial)
+      
+      p_lrt=anova(t4.real, t3.real, test="Chisq")$`Pr(>Chisq)`[2]
+      
     }
     
     obs <-
@@ -215,6 +225,17 @@
         t3.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),
                          data = tmp, family = binomial)
         t4.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop),
+                         data = tmp, family = binomial)
+        
+        p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2]
+        
+        
+      } else if(model_features == "PhyloRan_LocRan" ){
+        
+        #message("Phylo_LocRan model")
+        t3.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ (1 | cluster) + (1 | year_pop),
+                         data = tmp, family = binomial)
+        t4.perm <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | cluster) + (1 | year_pop),
                          data = tmp, family = binomial)
         
         p_lrt=anova(t4.perm, t3.perm, test="Chisq")$`Pr(>Chisq)`[2]

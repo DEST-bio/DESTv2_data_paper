@@ -25,7 +25,9 @@ grep( "CN_Bei_Bei_1_1992-09-16" , samps$sampleId) -> Beijing.pos
 samps[-c(sim.pos, Beijing.pos),] -> samps.o.nsim.noBeij
 #grep( "SIM" , dat.o.nsim.noBeij$sampleId)
 
-AF.d[-c(sim.pos, Beijing.pos), GIMs.DEST2.0$SNP_id] -> gims.AF
+unique(GIMs.DEST2.0$SNP_id) -> GIMS.snps.ids
+
+#AF.d[-c(sim.pos, Beijing.pos), GIMS.snps.ids] -> gims.AF
 ##
 ##gims.AF %>% 
 ##  PCA(graph = F, ncp = 5) ->
@@ -44,7 +46,7 @@ samps.o.nsim.noBeij %>%
 
 gim.samps$province = gsub("Kiev City", "Kiev", gim.samps$province)
 
-AF.d[gim.samps$sampleId, GIMs.DEST2.0$SNP_id] -> gims.flt.AF
+AF.d[gim.samps$sampleId, GIMS.snps.ids] -> gims.flt.AF
 
 ### clean AF tables from NA
 #apply(gims.flt.AF, 2, function(x) sum(is.na(x)) ) -> Count.of.NAs
@@ -67,5 +69,4 @@ xval_province <- xvalDapc(gims.flt.AF_naImp,
                           xval.plot = FALSE)
 
 save(xval_province, file = "xval_province.DEST2.0.Rdata")
-
 
