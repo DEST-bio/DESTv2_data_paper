@@ -5,7 +5,7 @@
   jobId=as.numeric(args[1])
   model=as.character(args[2]) # all_seas ; NoCore20_seas
   nPerm = as.numeric(args[3])
-  model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
+  ##model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
   
   #jobId=1
   #model="all_seas"
@@ -147,8 +147,9 @@ o.mods = foreach(model_features = c("No_Phylo",
                                     "Phylo_LocRan", 
                                     "PhyloRan_LocRan", 
                                     "Phylo_Loc", 
-                                    "LocRan",  
-                                    "JustPhylo" ), 
+                                    "LocRan" ##,  
+                                    ##"JustPhylo"
+                                    ), 
                  .combine = "rbind")%do%{
 
   o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
@@ -360,13 +361,13 @@ o.mods = foreach(model_features = c("No_Phylo",
                  }
 
   #### SAVE O
-  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_newods_ALAN_APR122023/"
-  save(o,
+  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_ALAN_APR122023/"
+  save(o.mods,
        file = paste(output_file,
                     "GLM_out.",
                     jobId,
                     ".",
-                    model,
+                    "omnibus",
                     ".",
                     paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
                     ".Rdata", sep = ""))

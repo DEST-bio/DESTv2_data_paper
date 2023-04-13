@@ -25,8 +25,8 @@ samps <- fread("./dest_v2.samps_25Feb2023.csv")
 #set.samps <- filter(seasonal.sets, sampleId %in%  pass.filt)$sampleId
 
 #### Central files
-files.seas = system("ls ./GLM_newods_ALAN_APR122023", intern = T)
-root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_newods_ALAN_APR122023/"
+files.seas = system("ls ./GLM_omnibus_ALAN_APR122023", intern = T)
+root = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_ALAN_APR122023/"
 
 #### binning analysis
 seas.p.bin = 
@@ -77,24 +77,27 @@ outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR122023_by_P
 
 #### Analyze the p-value
 seas.p.bin -> dat.flt
-
 ot_across_perms=
-foreach(p = 0:100, .combine = "rbind" )%do%{
-  #foreach(chr = c("2L","2R","3L","3R"), .combine = "rbind")%do%{
+  foreach(mfet = unique(dat.flt$model_features), .combine = "rbind"  )%do%{
+    
+  foreach(p = 0:20, .combine = "rbind" )%do%{
+    #foreach(chr = c("2L","2R","3L","3R"), .combine = "rbind")%do%{
     message(paste(p, 
                   #chr, 
                   sep = "/"))
     
     dat.flt %>% filter(perm == p 
-                       #& chr == chr
-                       ) -> dat.0
-    hist(dat.0$p_lrt, breaks = 10) -> hist.dat
+                       & model_features == mfet
+    ) -> dat.0
+    hist(dat.0$p_lrt, breaks = 1000) -> hist.dat
     data.frame(hist.dat$mids ,    hist.dat$counts) %>%
       mutate(perm = p, 
-             #chr = chr
-             )-> ot
+             model_features = mfet
+      )-> ot
     return(ot)
-}
+  } }
+
+
 #}
 #^^^ uncomment for CHR
 
@@ -102,6 +105,11 @@ foreach(p = 0:100, .combine = "rbind" )%do%{
 ### Plot
 
 setDT(ot_across_perms)
+
+log10_ceiling <- function(x) {
+  10^(ceiling(log10(x)))
+}
+
 
 ot_across_perms %>%
   ggplot(
@@ -117,9 +125,12 @@ ot_across_perms %>%
     labels = scales::trans_format("log10", scales::math_format(10^.x))
   ) +  geom_line(aes(alpha = perm == 0) ) +
   geom_vline(xintercept = 0.05) +
+  facet_wrap(~model_features) + 
   scale_alpha_manual(values = c(0.05, 1)) ->
   pvals.lines
-ggsave(pvals.lines, file = "pvals.lines.pdf", w = 9, h = 4)
+ggsave(pvals.lines, file = "pvals.lines.pdf", w = 9, h = 9)
+
+
 
   ggplot() +
   geom_boxplot(
