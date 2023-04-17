@@ -29,48 +29,76 @@ GIMS = get(load("DEST.2.0.GIMS.Rdata"))
 unique(GIMS$SNP_id) -> GIMS.snps.ids
 
 model2.0 <- get(load("xval_province.DEST2.0.Rdata"))
+model2.0$DAPC$ind.coord %>% rownames %>% .[-grep("^NA", .)] -> samps.for.model.train
 #model2.0$DAPC$pca.loadings %>% rownames() %>% sort -> GIMs
 ###
 message("now loading AF")
 AF.d <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))
 samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
+samps %>% filter(sampleId %in% samps.for.model.train) ->
+samps.used.in.modeltrain 
+####
+#### ---> Creating global object 
+AF.d[samps.for.model.train,GIMS.snps.ids] -> AF.gims
+AF.gims_naImp = na.aggregate(AF.gims)
 
 ####
 #### Part 1. Split sample set..
 #### 
-i=1
+#i=1
+out =
+foreach(i=1:dim(AF.gims_naImp)[1],
+        .combine = "rbind",
+        .errorhandling = "remove")%do%{
+          
+          message(i)
+          
+AF.gims_naImp[-which(rownames(AF.gims_naImp) == samps$sampleId[i]),] ->
+  AF.gims_naImp_loo
+samps.used.in.modeltrain_loo =
+  samps.used.in.modeltrain %>% filter(!sampleId == samps$sampleId[i])
 
-which(colnames(AF.d) %in% GIMs) -> GIMS.id
-AF.d[samps$sampleId[i],GIMS.id] %>%
-  t() %>%
-  as.data.frame() -> anchored.samp
-
-anchored.samp %>%
-  mutate(SNP_id = rownames(.)) %>%
-  .[complete.cases(anchored.samp),] %>% 
-  .$SNP_id ->
-  GIMS.id.noNas
-
-which(colnames(AF.d) %in% GIMS.id.noNas) -> GIMS.id.clean
-AF.d[samps$sampleId[i],GIMS.id.clean] -> AF.d.anchor.clean
-## Now get other samples
-AF.d[samps$sampleId[-i],GIMS.id.clean] -> AF.d.OTHER.clean
-AF.d.OTHER.clean_naImp = na.aggregate(AF.d.OTHER.clean)
-####
-rownames(AF.d.OTHER.clean_naImp) -> ids.used.in.modeltrain
-samps %>%
-  filter(sampleId %in% ids.used.in.modeltrain) ->
-  samps.used.in.modeltrain
+AF.gims_naImp[samps$sampleId[i],] ->
+  AF.gims_naImp_anchor
 
 ##########
-##########
-##########
-dapc(AF.d.OTHER.clean_naImp, 
-     grp=samps.used.in.modeltrain$province, 
+dapc(AF.gims_naImp_loo, 
+     grp=samps.used.in.modeltrain_loo$province, 
      n.pca=100, n.da=75) ->
   model.lo_out
 
+predict.dapc(model.lo_out, newdata=AF.gims_naImp_anchor) -> LOO_predictions
 
+  data.frame(pop = rownames(t(LOO_predictions$posterior)),
+         P = t(LOO_predictions$posterior)) ->
+    tmp.p
+names(tmp.p)[2] = "P"
+  
+tmp.p %>%
+  slice_max(P) ->
+  post.loo
 
+predicted.pop = post.loo$pop
+predicted.post = post.loo$P
 
+samps[province == post.loo$pop] %>%
+  group_by(province) %>%
+  summarize(real.lat = mean(lat),
+            real.long = mean(long),
+            cont = unique(continent)
+            ) -> real.mean
 
+predicted.lat = post.data$lat
+predicted.long = post.data$long
+
+###
+cbind(predicted.pop, 
+      predicted.post, 
+      predicted.lat, 
+      predicted.long, 
+      real.mean) -> o
+
+return(o)
+        }
+
+save(o, file = "DEST2.0.model.predictions.Rdata")
