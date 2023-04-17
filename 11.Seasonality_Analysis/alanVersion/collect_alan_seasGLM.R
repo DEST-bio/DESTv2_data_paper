@@ -8,6 +8,12 @@ library(foreach)
 library(MASS) # to access Animals data sets
 library(scales) # to access break formatting functions
 
+
+log10_ceiling <- function(x) {
+  10^(ceiling(log10(x)))
+}
+
+
 #####
 #####
 #####
@@ -48,19 +54,18 @@ seas.p.bin =
 #### Collect into permutation sets
 #### Collect into permutation sets
 
-outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR122023_by_PERM_quasibinomial"
+outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_omnibus_ALAN_APR122023_by_PERM"
 ### save as independent files
-  foreach(p = 1:100)%do%{
+  foreach(p = 0:20)%do%{
     
     message(paste(p, 
                   sep = "/"))
     
-    dat.flt %>% filter(perm == p 
+    seas.p.bin %>% filter(perm == p 
     ) -> dat.p
-    message(p)
     save(dat.p,
          file = paste(outfolder,
-                      paste("GLM_out.perm_id", p, "SeasAlanQusiBinom", "Rdata", sep = "."),
+                      paste("GLM_out.perm_id", p, "Omni", "Rdata", sep = "."),
                       sep = "/"
                       ))
   }
@@ -78,7 +83,7 @@ outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_ALAN_APR122023_by_P
 #### Analyze the p-value
 seas.p.bin -> dat.flt
 ot_across_perms=
-  foreach(mfet = unique(dat.flt$model_features), .combine = "rbind"  )%do%{
+  foreach(mfet = unique(dat.flt$model_features)[2], .combine = "rbind"  )%do%{
     
   foreach(p = 0:20, .combine = "rbind" )%do%{
     #foreach(chr = c("2L","2R","3L","3R"), .combine = "rbind")%do%{
@@ -86,36 +91,29 @@ ot_across_perms=
                   #chr, 
                   sep = "/"))
     
-    dat.flt %>% filter(perm == p 
+    dat.flt %>% 
+      filter(perm == p 
                        & model_features == mfet
-    ) -> dat.0
-    hist(dat.0$p_lrt, breaks = 1000) -> hist.dat
-    data.frame(hist.dat$mids ,    hist.dat$counts) %>%
+    ) -> dat.low
+    
+    hist(dat.low$p_lrt, breaks = 100) -> hist.dat.low
+    data.frame(hist.dat.low$mids ,    hist.dat.low$counts) %>%
       mutate(perm = p, 
              model_features = mfet
       )-> ot
+
     return(ot)
   } }
-
-
-#}
-#^^^ uncomment for CHR
-
 
 ### Plot
 
 setDT(ot_across_perms)
 
-log10_ceiling <- function(x) {
-  10^(ceiling(log10(x)))
-}
-
-
 ot_across_perms %>%
   ggplot(
     aes(
       x=hist.dat.mids,
-      y=hist.dat.counts,
+      y=log10(hist.dat.counts),
       color = perm == 0,
       group = perm
     )
@@ -125,10 +123,11 @@ ot_across_perms %>%
     labels = scales::trans_format("log10", scales::math_format(10^.x))
   ) +  geom_line(aes(alpha = perm == 0) ) +
   geom_vline(xintercept = 0.05) +
-  facet_wrap(~model_features) + 
+  facet_wrap(~model_features, scales = "free_y") + 
   scale_alpha_manual(values = c(0.05, 1)) ->
   pvals.lines
-ggsave(pvals.lines, file = "pvals.lines.pdf", w = 9, h = 9)
+#ggsave(pvals.lines, file = "pvals.lines.pdf", w = 9, h = 9)
+ggsave(pvals.lines, file = "pvals.lines.png", w = 9, h = 9)
 
 
 
