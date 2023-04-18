@@ -45,6 +45,19 @@ seas.p.bin =
     
   }
 
+#### load object
+snpdt.obj <- get(load("/project/berglandlab/Dmel_genomic_resources/Filtering_files/snp_dt.Rdata"))
+setDT(snpdt.obj)
+
+annotation <- get(load("/project/berglandlab/DEST_Charlottesville_TYS/DEST_metadata/DEST_Cville_SNP_Metadata.Rdata"))
+setDT(annotation)
+names(annotation)[1:2] = c("chr","pos")
+annotation$pos = as.numeric(annotation$pos)
+
+left_join(seas.p.bin, snpdt.obj, by = c("chr", "pos")) %>%
+  left_join(annotation, by = c("chr", "pos")) ->
+  seas.p.bin.inv
+
 #### #### #### 
 #### 
 #### 
@@ -80,7 +93,7 @@ outfolder = "/project/berglandlab/jcbnunez/Shared_w_Alan/GLM_omnibus_ALAN_APR122
   
 
 #### Analyze the p-value
-seas.p.bin -> dat.flt
+seas.p.bin.inv -> dat.flt
 ot_across_perms=
   foreach(mfet = "PhyloRan_LocRan", .combine = "rbind"  )%do%{
     
@@ -133,7 +146,7 @@ ggsave(pvals.lines, file = "pvals.lines.png", w = 5, h = 4)
 
 ####
 dat.flt %>% 
-  group_by(perm, model_features) %>%
+  group_by(perm, model_features, Putative_impact) %>%
   mutate(bin.id = case_when(
     p_lrt < 1e-5 ~ "e-5",
     p_lrt < 1e-4 ~ "e-4",
@@ -144,7 +157,7 @@ dat.flt %>%
   dat.flt.bin.id
 
 dat.flt.bin.id %>% 
-  group_by(perm, bin.id, chr, model_features) %>%
+  group_by(perm, bin.id, chr, model_features, Putative_impact) %>%
   summarize(N = n()) %>%
   .[complete.cases(.),] -> cum.dat
 setDT(cum.dat)
@@ -152,12 +165,145 @@ setDT(cum.dat)
   ggplot() +
     geom_boxplot(
       data = cum.dat[perm != 0][model_features == c("PhyloRan_LocRan")],
-    aes(x=chr, color =chr ,y=(N)),
+    aes(x=Putative_impact , color =chr ,y=log10(N)),
     outlier.shape = NA
     ) +
   geom_point(
     data = cum.dat[perm == 0][model_features == c("PhyloRan_LocRan")],
-    aes(x=chr, color =chr ,y=(N)), size = 3) +
-    facet_wrap(~bin.id, scales = "free_y") ->
+    aes(x=Putative_impact, color =chr ,y=log10(N)), size = 3) +
+    coord_flip() +
+    facet_wrap(chr~bin.id, scales = "free_x") ->
     cum.dis.plot
-  ggsave(cum.dis.plot, file = "cum.dis.plot.pdf")
+  ggsave(cum.dis.plot, file = "cum.dis.plot.pdf", w = 9, h  = 6)
+
+####
+#### ---> Window analysis
+####
+####
+####
+####
+####
+####
+####  
+  glm.out = seas.p.bin[model_features == "PhyloRan_LocRan"]
+  
+  glm.out %>%
+    group_by(perm) %>%
+    mutate(L = n()) %>% 
+    mutate(rnp = rank(p_lrt)/L) ->
+    glm.out
+  
+  glm.out %>%
+    group_by(chr, pos, perm) %>%
+    arrange(perm, pos) -> glm.out
+  setDT(glm.out)
+  
+  glm.out.p = glm.out[perm == 0]
+  
+  win.bp <- 1e5
+  step.bp <- 5e4
+  
+  setkey(glm.out.p, "chr")
+  
+  ## prepare windows
+  wins <- foreach(chr.i=c("2L","2R", "3L", "3R"),
+                  .combine="rbind", 
+                  .errorhandling="remove")%dopar%{
+                    
+                    tmp <- glm.out %>%
+                      filter(chr == chr.i)
+                    
+                    data.table(chr=chr.i,
+                               start=seq(from=min(tmp$pos), to=max(tmp$pos)-win.bp, by=step.bp),
+                               end=seq(from=min(tmp$pos), to=max(tmp$pos)-win.bp, by=step.bp) + win.bp)
+                  }
+  wins[,i:=1:dim(wins)[1]]
+  dim(wins)  
+  
+  ### start the summarization process
+  win.out <- foreach(win.i=1:dim(wins)[1], 
+                     #win.i=1:10,
+                     .errorhandling = "remove"#,
+                     #.combine = "rbind"
+  )%do%{
+    
+    message(paste(win.i, dim(wins)[1], sep=" / "))
+    
+    
+    win.tmp <- glm.out %>%
+                   filter(chr == wins[win.i]$chr) %>%
+                   filter(pos >= wins[win.i]$start & pos <= wins[win.i]$end)
+    setDT(win.tmp)
+    
+    #### Calculate Z score
+    win.tmp[,Z:=qnorm(p_lrt, 0, 1)]
+    #### Calculate Z rnp score
+    win.tmp[,rnpZ:=qnorm(rnp, 0, 1)]
+    
+    pr.i <- c(
+      0.05
+    )
+    
+    #tmpo <- foreach(
+    # pr.i=thrs, 
+    # .errorhandling="remove", 
+    # .combine="rbind")%do%{
+    win.tmp %>% 
+      filter(!is.na(rnp), pr.i == pr.i ) %>%
+      group_by(perm, chr) %>%
+      summarise(pos_mean = mean(pos),
+                pos_mean = mean(pos),
+                pos_min = min(pos),
+                pos_max = max(pos),
+                win=win.i,
+                pr=pr.i,
+                rnp.pr=c(mean(rnp<=pr.i)),
+                rnp.binom.p=c(binom.test(sum(rnp<=pr.i), 
+                                         length(rnp), pr.i)$p.value),
+                min.p.lrt=min(p_lrt),
+                min.rnp=min(rnp),
+                nSNPs = n(),
+                sum.rnp=sum(rnp<=pr.i),
+      )   %>%
+      mutate(
+        perm_type=ifelse(perm==0, "real","permuted"),
+        invName=case_when(
+          chr=="2L" & pos_min >	2225744	 & pos_max < 13154180	 ~ "2Lt",
+          chr=="2R" & pos_min >	15391154 & pos_max < 	20276334 ~ 	"2RNS",
+          chr=="3R" & pos_min >	11750567 & pos_max < 	26140370 ~ 	"3RK",
+          chr=="3R" & pos_min >	21406917 & pos_max < 	29031297 ~ 	"3RMo",
+          chr=="3R" & pos_min >	16432209 & pos_max < 	24744010 ~ 	"3RP",
+          chr=="3L" & pos_min >	3173046	 & pos_max < 16308841	 ~ "3LP",
+          TRUE ~ "noInv"
+        )) -> win.out
+    
+    win.out %>%
+      group_by(perm_type,invName, chr, pos_mean ) %>%
+      summarize(rnp.m05 = quantile(rnp.binom.p, 0.05)) ->
+      out
+    
+    return(out)
+    #}
+    #tmpo
+  }
+  
+  ##}
+save(win.out, file = "win.out.Rdata")  
+  
+load("win.out.Rdata")  
+
+win.out.dt = do.call("rbind", win.out)
+
+win.out.dt %>%
+  ggplot(
+    aes(
+      x=pos_mean/1e6,
+      y=-log10(rnp.m05),
+      color=perm_type
+    )
+  ) +
+  geom_line() +
+  facet_wrap(~chr, scales = "free_x", ncol = 1) ->
+  rnp.plot 
+ggsave(rnp.plot, file = "rnp.plot.pdf", w = 6, h = 7)
+

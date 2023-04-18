@@ -46,10 +46,13 @@ AF.gims_naImp = na.aggregate(AF.gims)
 #### Part 1. Split sample set..
 #### 
 #i=1
+out2 = list()
 out =
 foreach(i=1:dim(AF.gims_naImp)[1],
+        #i=1:10,
         .combine = "rbind",
-        .errorhandling = "remove")%do%{
+        .errorhandling = "remove"
+        )%do%{
           
           message(i)
           
@@ -81,24 +84,27 @@ tmp.p %>%
 predicted.pop = post.loo$pop
 predicted.post = post.loo$P
 
-samps[province == post.loo$pop] %>%
+samps[sampleId == samps$sampleId[i]] %>%
   group_by(province) %>%
   summarize(real.lat = mean(lat),
             real.long = mean(long),
             cont = unique(continent)
             ) -> real.mean
 
-predicted.lat = post.data$lat
-predicted.long = post.data$long
+samps[province == post.loo$pop] %>%
+  group_by(province) %>%
+  summarize(pred.lat = mean(lat),
+            pred.long = mean(long),
+  ) -> pred.mean
 
-###
 cbind(predicted.pop, 
       predicted.post, 
-      predicted.lat, 
-      predicted.long, 
-      real.mean) -> o
-
+      pred.mean$pred.lat, 
+      pred.mean$pred.long, 
+      real.mean, sampleid = samps$sampleId[i]) -> o
+out2[[i]] = o
 return(o)
+
         }
 
-save(o, file = "DEST2.0.model.predictions.Rdata")
+save(out, file = "DEST2.0.model.predictions.Rdata")
