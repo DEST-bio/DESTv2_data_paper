@@ -182,5 +182,6 @@ out.hvd %>%
   troubled.samps
   
 ggsave(troubled.samps, file = "troubled.samps.pdf")
+ggsave(troubled.samps, file = "troubled.samps.png")
 
 
