@@ -14,14 +14,14 @@ setDT(samps)
 samps = samps[set!="dgn"]
 
 qcs <- system("ls /project/berglandlab/DEST/dest_mapped/*/*/*duplicates_report.txt", intern=T)
+#qcs <- system("ls /project/berglandlab/DEST/dest_mapped/DEST_plus/*/*duplicates_report.txt", intern=T)
 
 dup.rat.head <- read.table( pipe( paste("sed -n 7p ", 
                                         paste(qcs[1]) 
                                         )
                                   ))
 ####
-dup.rate <- foreach(i=1:length(qcs), .combine = "rbind")%do%{
-  
+dup.rate <- foreach(i=1:length(qcs), .combine = "rbind" )%do%{
   
   
   dup.rat <- read.table( pipe( paste("sed -n 8p ", 
@@ -30,9 +30,11 @@ dup.rate <- foreach(i=1:length(qcs), .combine = "rbind")%do%{
   
   dup.rat %<>% as.data.frame() %>% mutate(samp = str_split( qcs[i], "/")[[1]][7] )
   message(paste(i, dim(dup.rat)[2], sep = "-") )
-  return(dup.rat)
+  return(data.frame(sampleId = dup.rat$samp,
+                    pcrdup = dup.rat$V9))
 }
-names(dup.rate)[1:10] = dup.rat.head
+
+#names(dup.rate)[1:10] = dup.rat.head
 
 save(dup.rate, file = "DuplicateRates.all.Rdata")
 
