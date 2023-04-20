@@ -61,12 +61,19 @@ ggplot() +
 
 ggsave(base_world, file = "base_world.pdf", w = 6, h = 3.5)
 
+samps %>%
+  mutate(collapse = case_when(collector == "Fournier-Level et al" ~ "Yes", TRUE ~ "No")) %>%
+  mutate(super.set = case_when(set %in% c("DrosEU","DrosRTEC") ~ "DEST 1.0",
+                               set %in% c("cville","dest_plus","DrosEU_3","DrosEU_3_sa") ~ "DEST 2.0",
+                               set %in% "dgn" ~ "DGN"
+  )) ->samps.map
+
 base_world + 
   geom_point(
-    data = metadata.seq,
+    data = samps.map,
     aes(x=long,
         y=lat,
-        fill = super.set), size = 1.1, shape = 21
+        fill = super.set), size = 1.5, shape = 21
   ) +
   scale_fill_brewer(palette = "Set1") -> DEST_world
 
