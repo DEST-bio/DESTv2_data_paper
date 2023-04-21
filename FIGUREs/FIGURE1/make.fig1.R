@@ -73,6 +73,7 @@ samps %>%
  geom_bar_pattern(stat = "identity",
                  pattern_color = "white",
                  pattern_fill = "black",
+                 linewidth = 0.2,
                  aes(pattern = continent))+
   coord_flip() +
   theme_classic() +
@@ -95,8 +96,8 @@ samps %>%
     y=city,
     x=year,
     fill = N
-  )) + geom_point(shape = 22) +
-  scale_fill_gradient2(midpoint = 7.5, low = "blue", high = "red", mid = "grey") +
+  )) + geom_point(shape = 22, size = 3.0) +
+  scale_fill_gradient2(midpoint = 7.5, mid = "blue", high = "red", low = "grey") +
   theme_classic() + theme(axis.text = element_text(size = 6)) -> PanelB
 
 ### Panel C
@@ -153,7 +154,12 @@ ggsave(PanelA, file = "PanelA.pdf",
        w= 5, h = 4)
 
 ggsave(PanelB, file = "PanelB.pdf",
-       w= 5, h = 8)
+       w= 5, h = 7)
 
+ggsave(PanelC, file = "PanelC.pdf",
+       w= 6, h = 3)
+
+ggsave(PanelD, file = "PanelD.pdf",
+       w= 8, h = 3)
 
 
