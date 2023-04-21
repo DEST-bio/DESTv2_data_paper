@@ -22,6 +22,7 @@ library(foreach)
 library(MASS) # to access Animals data sets
 library(scales) # to access break formatting functions
 library(forcats)
+library(FactoMineR)
 
 ####
 ####
@@ -38,6 +39,7 @@ model2.0$DAPC$ind.coord %>% rownames %>% .[-grep("^NA", .)] -> samps.for.model.t
 message("now loading AF")
 AF.d <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))
 samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
+setDT(samps)
 samps %>% filter(sampleId %in% samps.for.model.train) ->
 samps.used.in.modeltrain 
 ####
@@ -45,6 +47,101 @@ samps.used.in.modeltrain
 AF.d[samps.for.model.train,GIMS.snps.ids] -> AF.gims
 AF.gims_naImp = na.aggregate(AF.gims)
 
+
+### Explore clustering
+exclude.samps = fread("QC.recomendations.csv")
+setDT(exclude.samps)
+
+samps_to_keep = c(
+                  samps[set == "dgn"]$sampleId[-14],
+                  rownames(AF.gims_naImp)[526:538],
+                  exclude.samps[Recomendation == "Pass"]$sampleId)
+
+AF.d[which(rownames(AF.d) %in% samps_to_keep),
+     sample( dim(AF.d)[2], 10000)
+     ] -> AF.ran.fltsamps
+#AF.ran.fltsamps_naImp = na.aggregate(AF.ran.fltsamps)
+
+### PCA -->
+AF.ran.fltsamps %>%
+  PCA(graph = F) ->
+  AF.ran.PCAobj
+
+AF.ran.PCAobj$ind$coord %>%
+  as.data.frame() ->
+  coord.pca.ran
+
+set.seed(123)
+km.res <- kmeans(coord.pca.ran[,1:3], 5, nstart = 25)
+km.res$cluster = as.factor(km.res$cluster)
+data.frame(km.res$cluster) %>%
+  mutate(sampleId = rownames(.))-> clust
+
+save(clust, file = "DEST.2.0.Pyloclust.Rdata")
+
+
+AF.ran.PCAobj$ind$coord %>%
+  as.data.frame() %>%
+  mutate(sampleId = rownames(.)) %>%
+  left_join(samps) %>% 
+  left_join(clust) ->
+  samps.cluster
+
+world <- map_data("world")
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color = "black", fill = "lightgray", size = 0.1
+  ) + theme_classic() -> base_world
+
+base_world + 
+  geom_point(
+    data = samps.cluster,
+    aes(x=long,
+        y=lat,
+        fill = as.factor(km.res.cluster)), size = 1.5, shape = 21
+  ) -> DEST_cluster
+
+ggsave(DEST_cluster, file = "DEST_cluster.pdf", w = 7, h = 3.5)
+
+
+
+####
+samps.cluster %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.2,
+    color = km.res$cluster,
+    shape = continent
+  )) + 
+  geom_point() ->
+  pca.gims
+
+ggsave(pca.gims, file = "pca.gims.pdf")
+
+samps.cluster %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.3,
+    color = km.res$cluster,
+    shape = continent
+  )) + 
+  geom_point() ->
+  pca.gims13
+
+ggsave(pca.gims13, file = "pca.gims13.pdf")
+
+###
+###
+###
+###
+
+
+
+
+
+###
 ####
 #### Part 1. Split sample set..
 #### 
@@ -140,7 +237,6 @@ out %>%
 ggsave(long.pred, file = "long.pred.pdf")
 
 #### Calculate the haversine distance 
-
 
 out %>% 
   group_by(sampleid) %>%

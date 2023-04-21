@@ -128,7 +128,18 @@ DAPC_model.v1 <- xvalDapc(samples,
 
 #save(DAPC_model.v1, file = "DAPC_model.v1.Rdata")
 ###
+
+##### ------->>> Phylogenetic clusters
+grps=samps_filt.d1$province
+
+
+
+
+
+
 load("./DAPC_model.v1.Rdata")
+
+
 
 samps.m %>%
   filter(set %in% c("cville","dest_plus","DrosEU_3","DrosEU_3_sa") ) ->
@@ -286,6 +297,10 @@ all.preds.Dest1.city %>%
 
 save(hav.dist.obj.top.pred.city, file = "hav.dist.obj.top.pred.city.Rdata")
 load("hav.dist.obj.top.pred.city.Rdata")
+
+######
+
+
 
 ####### <<-=- CITY MODEL END
 #######

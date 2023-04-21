@@ -6,6 +6,9 @@ library(factoextra)
 
 #### samps ---> 
 samps <- fread("dest_v2.samps_25Feb2023.csv")
+
+####
+
 #### Contaminantion --->
 contam<-get(load("/scratch/yey2sn/DEST2_analysis/filtering/Mean.contamination.Final.Rdata"))
 #### DuplicateRates --->
@@ -48,6 +51,7 @@ metadata.seq %>%
   )) ->metadata.seq
 
 save(metadata.seq, file = "fig1.fig2.Rdata")
+load("fig1.fig2.Rdata")
 
 #### CREATE FIGURE 1
 world <- map_data("world")
@@ -60,6 +64,8 @@ ggplot() +
   ) + theme_classic() -> base_world
 
 ggsave(base_world, file = "base_world.pdf", w = 6, h = 3.5)
+
+#### Panel of time
 
 samps %>%
   mutate(collapse = case_when(collector == "Fournier-Level et al" ~ "Yes", TRUE ~ "No")) %>%
@@ -98,6 +104,27 @@ metadata.seq %>%
   facet_grid(~year) ->
   time.plot
 ggsave(time.plot, file = "time.plot.pdf", w = 8.5, h = 3.5)
+
+
+## UpSet plot
+
+samps %>%
+  group_by(year, city) %>%
+  filter(set != "dest_plus") %>% 
+  summarize(N = n()) %>%
+  .[complete.cases(.),] %>%
+  filter(year > 2006) %>%
+  filter(N >= 2) %>%
+  ggplot(aes(
+    y=city,
+    x=year,
+    fill = N
+  )) + geom_point(shape = 22) +
+  scale_fill_gradient2(midpoint = 7.5, low = "blue", high = "red", mid = "grey") +
+  theme_classic() ->
+  time_resolution
+ggsave(time_resolution, file = "time_resolution.pdf", h = 5, w = 3.5)
+
 
 
 #### CREATE FIGURE 2
@@ -189,4 +216,3 @@ Metadata_final %>%
 
 ggsave(QC.pca.plot, file = "QC.pca.plot.pdf", w = 6, h = 4)
 
-#### Figure 1
