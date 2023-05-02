@@ -11,14 +11,19 @@ library(vroom)
 
 ### --> -bash-4.2$pwd /scratch/yey2sn/DEST2_analysis/filtering
 outfile = "/scratch/yey2sn/DEST2_analysis/filtering/sim_contam_final/"
-  
+#outfile = "/gpfs/gpfs0/scratch/yey2sn/DEST2_analysis/filtering/collapsed_samps"  
+
 ### load metadata
 #system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
-samps <- vroom("dest_v2.samps_25Feb2023.csv")
+meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.qc_merge.csv"
+
+samps <- fread(meta_git)
 setDT(samps)
 samps = samps[set!="dgn"]
+#samps = samps[!is.na(collapsedSamples)]
 
 fns <- system("ls /project/berglandlab/DEST/dest_mapped/*/*/*duplicates_report.txt", intern=T)
+#fns <- system("ls /project/berglandlab/DEST/dest_mapped/DEST_plus_collapsed/*/*duplicates_report.txt", intern=T)
 
 ##log.dat = vroom("./log.simcontam.txt",  col_names = F)
 ##names(log.dat) = c("sample.ith", "status")
