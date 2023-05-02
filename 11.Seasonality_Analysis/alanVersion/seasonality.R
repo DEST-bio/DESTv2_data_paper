@@ -29,18 +29,13 @@
     seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
     setDT(seasonal.sets)
     
-    seasonal.sets %>% filter(locality == "US_Pen_Lin") %>% 
-      .$cluster %>% .[complete.cases(.)] %>% unique() -> pen.clust
+    phylo_clust <- get(load("phylocluster_data.Rdata"))
     
-    seasonal.sets$cluster[which(is.na(seasonal.sets$cluster))] = pen.clust
-    
-    meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
-    
-    samps <- fread(meta_git)
-    setDT(samps)
-    left_join(seasonal.sets, samps[,c("sampleId","cluster")] ) ->
+    left_join(seasonal.sets, phylo_clust ) ->
       seasonal.sets
     
+    #seasonal.sets %>% filter(is.na(cluster))
+    seasonal.sets$cluster[which(is.na(seasonal.sets$cluster))] = 1
     
   ### core20  
   #  core.20 <- fread("./core20_samps.csv")
@@ -61,6 +56,7 @@
       
       message("chosen model --> No Core20")
       seasonal.sets = seasonal.sets %>% filter(Core20_sat == FALSE)
+      
       
     } else if(model == "Core20_seas") {
       

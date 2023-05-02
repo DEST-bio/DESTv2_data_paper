@@ -20,5 +20,5 @@ Rscript \
 seasonality.R \
 ${SLURM_ARRAY_TASK_ID} \
 "all_seas" \
-20
+100
 
