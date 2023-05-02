@@ -34,9 +34,13 @@ samps <- fread(meta_git)
 setDT(samps)
 samps.p = samps[set!="dgn"][Recommendation == "Pass"][collector != "Fournier-Level et al"]
 samps.c = samps[!is.na(collapsedSamples)]
-samps.af = samps[set=="dgn"][continent == "Africa"]
+samps.af = samps[set=="dgn"][continent %in% c("Africa","North_America","Oceania","Europe") ]
 
-samps = rbind(samps.p, samps.c, samps.af)
+samps = rbind(samps.p, samps.af, samps.c)
+
+samps %>%
+  group_by(set, continent) %>%
+  summarise(N= n())
 
 ######
 ######
@@ -57,10 +61,10 @@ snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
 snps.dt <- snps.dt[nAlleles==2][missing < 0.1][chr %in% c("2L","2R","3L","3R")]
 
 snps.dt %<>% mutate(SNP_id = paste(chr, pos, sep = "_")) 
-snps.dt %<>% filter(SNP_id %in% filtering.dt$SNP_id)
 snps.dt %>% dim
 
 ####
+set.seed(12345)
 seqSetFilter(genofile, sample.id=samps$sampleId, 
              variant.id=snps.dt[sample(dim(snps.dt)[1], 50000 )]$variant.id)
 
@@ -84,9 +88,9 @@ dat %>%
   PCA(graph = F, ncp = 40) ->
   pca.object.plot
 
-###save(pca.object, file = "pca.object.Rdata")
+save(pca.object.plot, file = "pca.object.plot.Rdata")
 
-####
+#### #### #### #### #### #### #### #### #### #### #### #### 
 
 pca.object.plot$ind$coord %>%
   as.data.frame() %>% 
@@ -181,6 +185,11 @@ pca.meta %>%
 ggsave(long.detail, file = "long.detail.pdf", w = 8, h = 2.6)
 
 ##### ---->>> Cluster Analysis
+##### ---->>> Cluster Analysis
+##### ---->>> Cluster Analysis
+##### ---->>> Cluster Analysis
+##### ---->>> Cluster Analysis
+
 world <- map_data("world")
 ggplot() +
   geom_map(
@@ -198,9 +207,10 @@ set.seed(123)
 km.res <- kmeans(dat.cluster, 5, nstart = 25)
 # 3. Visualize
 
-c.dat.plo = cbind(pca.meta, cluster=km.res$cluster)[,c("sampleId","cluster")]
+c.dat.data = cbind(pca.meta, cluster=km.res$cluster)[,c("sampleId","cluster")]
+c.dat.plo = cbind(pca.meta, cluster=km.res$cluster)
 
-save(c.dat.plo, 
+save(c.dat.data, 
      file = "sampleId.cluster.Rdata")
 
 

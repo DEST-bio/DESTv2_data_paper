@@ -2,10 +2,11 @@
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
   args = commandArgs(trailingOnly=TRUE)
+  
   jobId=as.numeric(args[1])
-  model=as.character(args[2]) # all_seas ; NoCore20_seas
+  model=as.character(args[2]) # all_seas ; NoCore20_seas ; Core20_seas
   nPerm = as.numeric(args[3])
-  ##model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
+  #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
   
   #jobId=1
   #model="all_seas"
@@ -26,15 +27,29 @@
 ### load data
   ### seasonal pairs
     seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+    setDT(seasonal.sets)
+    
+    seasonal.sets %>% filter(locality == "US_Pen_Lin") %>% 
+      .$cluster %>% .[complete.cases(.)] %>% unique() -> pen.clust
+    
+    seasonal.sets$cluster[which(is.na(seasonal.sets$cluster))] = pen.clust
+    
+    meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
+    
+    samps <- fread(meta_git)
+    setDT(samps)
+    left_join(seasonal.sets, samps[,c("sampleId","cluster")] ) ->
+      seasonal.sets
+    
+    
   ### core20  
-    core.20 <- fread("./core20_samps.csv")
-    names(core.20)[1] = "sampleId_orig"
-  ### dest samps  
-    samps <- fread("./dest_v2.samps_25Feb2023.csv")
-  
-    core20.upd = left_join(core.20, samps[,c("sampleId", "sampleId_orig")])
-
-    seasonal.phylo.clusters = get(load("phylocluster_data.Rdata"))
+  #  core.20 <- fread("./core20_samps.csv")
+  #  names(core.20)[1] = "sampleId_orig"
+  #### dest samps  
+  #  samps <- fread("./dest_v2.samps_25Feb2023.csv")
+  #
+  #  core20.upd = left_join(core.20, samps[,c("sampleId", "sampleId_orig")])
+  #  seasonal.phylo.clusters = get(load("phylocluster_data.Rdata"))
     
   #### model selector
     if(model == "all_seas") {
@@ -45,17 +60,20 @@
     } else if(model == "NoCore20_seas") {
       
       message("chosen model --> No Core20")
-      seasonal.sets = seasonal.sets %>% filter(!sampleId %in% core20.upd$sampleId)
+      seasonal.sets = seasonal.sets %>% filter(Core20_sat == FALSE)
+      
+    } else if(model == "Core20_seas") {
+      
+      message("chosen model --> Only Core20")
+      seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE)
       
     } else{ message("model is not specified"); q("no") }
     
-    
   ### gds object
-    genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.gds")
+    genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
 
   ### sample metadata
   #system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
-
 
 ### get basic index
   data <- seqGetData(genofile, "annotation/info/AF")
@@ -148,12 +166,13 @@ o.mods = foreach(model_features = c("No_Phylo",
                                     "PhyloRan_LocRan", 
                                     "Phylo_Loc", 
                                     "LocRan" ##,  
-                                    ##"JustPhylo"
                                     ), 
                  .combine = "rbind")%do%{
 
   o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
+    
     message(paste(i, length(tmp.ids), sep=" / "))
+    
     af <- getData(variant=tmp.ids[i])
     af <- merge(af, seasonal.sets, by="sampleId")
     af[,year_pop:=as.factor(interaction(locality, year))]
@@ -347,7 +366,6 @@ o.mods = foreach(model_features = c("No_Phylo",
                  model_features=model_features,
                  seas.AIC = seas.AIC,
                  null.AIC = null.AIC
-                 
       )
       
     }
@@ -361,7 +379,7 @@ o.mods = foreach(model_features = c("No_Phylo",
                  }
 
   #### SAVE O
-  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_ALAN_APR122023/"
+  output_file = "/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_ALAN_MAY22023/"
   save(o.mods,
        file = paste(output_file,
                     "GLM_out.",
