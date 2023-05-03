@@ -25,8 +25,12 @@
   #setwd("/scratch/aob2x")
 
 ### load data
+
+  # General metadata
+  samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")  
+  
   ### seasonal pairs
-    seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+  seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
     setDT(seasonal.sets)
     
     phylo_clust <- get(load("phylocluster_data.Rdata"))
