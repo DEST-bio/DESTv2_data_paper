@@ -46,6 +46,7 @@ sam.samps) ->
   linear.admix.dat.filters
 
 save(linear.admix.dat.filters, file = "linear.admix.dat.Rdata")
+load("linear.admix.dat.Rdata")
 ####
 regression.coeffs = 
 foreach(filter.i = unique(linear.admix.dat.filters$filter),
@@ -93,6 +94,8 @@ linear.admix.dat %>%
   arrange(lat)
 ####
 linear.admix.dat.filters %>%
+  filter(source_pop == "AFRICA") %>%
+  filter(filter %in% c("noINV","silent")) %>%
 ggplot(aes(
   x=lat,
   y=mean.est,
@@ -100,15 +103,61 @@ ggplot(aes(
   ymax = mean.est + sd.est,
   color = source_pop
 )) + 
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm",aes(linetype = filter)) +
   geom_errorbar(width = 0.1) +
-  geom_point(size = 2.1, shape = 21, 
-             color = "black", aes(fill = source_pop)) +
+  geom_point(size = 2.1, 
+             fill = "grey",
+             color = "black", aes(shape = filter)) +
   theme_bw() +
-  facet_grid(filter~admix.set, scales = "free_x")->
+  scale_shape_manual(values = 21:22) +
+  facet_grid(.~admix.set, scales = "free_x")->
   plot.admix.flt
 
-ggsave(plot.admix.flt, file = "plot.admix.flt.pdf", w = 9, h  =6)
+ggsave(plot.admix.flt, file = "plot.admix.flt.pdf", w = 10, h  =3)
 
+####
+linear.admix.dat.filters %>%
+  filter(source_pop == "AFRICA") %>%
+  filter(filter %in% c("noINV","silent")) ->
+  admix.dat.sets
 
+adm5 = get(load("nclust.5.sampleId.cluster.Rdata"))
+names(adm5)[2] = "adm5"
+adm8 = get(load("nclust.8.sampleId.cluster.Rdata"))
+names(adm8)[2] = "adm8"
 
+admix.dat.sets %>%
+  filter(admix.set == "N.America") %>%
+  left_join(adm5) %>%
+  left_join(adm8) ->
+  admix.dat.sets.adms
+  
+admix.dat.sets.adms %>%
+  filter(!is.na(adm5)) %>%
+  ggplot(aes(
+    x=as.factor(adm5),
+    y=mean.est,
+    fill = as.factor(adm5)
+  )) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  geom_jitter(alpha = 0.3, color = "grey") +
+  geom_boxplot(outlier.shape = NA) +
+  facet_grid(~as.factor(filter)) ->
+  adm5box
+ggsave(adm5box, file = "adm5box.pdf", w = 4, h  =2.0)
+
+admix.dat.sets.adms %>%
+  filter(!is.na(adm8)) %>%
+  ggplot(aes(
+    x=as.factor(adm8) ,
+    y=mean.est,
+    fill = as.factor(adm8)
+  )) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  geom_jitter(alpha = 0.3, color = "grey") +
+  geom_boxplot(outlier.shape = NA) +
+  facet_grid(~as.factor(filter)) ->
+  adm8box
+ggsave(adm8box, file = "adm8box.pdf", w = 4, h  =2.0)

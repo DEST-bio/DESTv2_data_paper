@@ -178,7 +178,7 @@ o.mods = foreach(model_features = c("No_Phylo",
     af[,year_pop:=as.factor(interaction(locality, year))]
     af <- af[!is.na(af_nEff)]
     
-    left_join(af, seasonal.phylo.clusters) -> af
+    left_join(af, phylo_clust) -> af
     af$cluster = as.factor(af$cluster)
     
     #No_Phylo; Phylo_LocRan

@@ -89,7 +89,14 @@ dat %>%
   pca.object.plot
 
 save(pca.object.plot, file = "pca.object.plot.Rdata")
-
+#### #### #### #### #### #### #### #### #### #### #### #### 
+load("pca.object.plot.Rdata")
+pca.object.plot$ind$coord %>%
+  as.data.frame() %>% 
+  mutate(sampleId = rownames(.)) %>%
+  left_join(samps) %>%
+  filter(!is.na(continent))->
+  pca.meta
 #### #### #### #### #### #### #### #### #### #### #### #### 
 
 pca.object.plot$ind$coord %>%
@@ -195,7 +202,7 @@ ggplot() +
   geom_map(
     data = world, map = world,
     aes(long, lat, map_id = region),
-    color = "black", fill = "lightgray", size = 0.1
+    color = "white", fill = "lightgray", size = 0.1
   ) + theme_classic() -> base_world
 
 
@@ -203,25 +210,78 @@ ggplot() +
 
 dat.cluster <- pca.meta[,c("Dim.1","Dim.2","Dim.3")]
 
-set.seed(123)
-km.res <- kmeans(dat.cluster, 5, nstart = 25)
-# 3. Visualize
+pdf("clust.viz.ALL.pdf")
+fviz_nbclust(dat.cluster, kmeans, nstart = 25,  method = "gap_stat", nboot = 100) 
+dev.off()
 
-c.dat.data = cbind(pca.meta, cluster=km.res$cluster)[,c("sampleId","cluster")]
-c.dat.plo = cbind(pca.meta, cluster=km.res$cluster)
+foreach(i=c(4,5,8))%do%{
+  
+  set.seed(123)
+  km.res <- kmeans(dat.cluster, i, nstart = 25)
+  # 3. Visualize
+  
+  c.dat.data = cbind(pca.meta, cluster=km.res$cluster)[,c("sampleId","cluster")]
+  c.dat.plo = cbind(pca.meta, cluster=km.res$cluster)
+  
+  save(c.dat.data, 
+       file = paste("nclust",i,"sampleId.cluster.Rdata", sep = "."))
+  
+  if(i == 4){
+    SET = "Set1"
+  } else  if(i == 5){
+    SET = "Dark2"
+  } else if(i == 8){
+    SET = "Set2"
+  }
+    
+  base_world + 
+    geom_point(
+      data = c.dat.plo,
+      aes(x=long,
+          y=lat,
+          fill = as.factor(cluster)), size = 2.3, shape = 21
+    ) +
+    scale_fill_brewer(palette = SET) -> cluster.plot
+  
+  ggsave(cluster.plot, file = paste("nclust",i,"cluster.plot.pdf", sep = ".")
+         , w = 7, h = 3.5)
+  
+}
 
-save(c.dat.data, 
-     file = "sampleId.cluster.Rdata")
+#### Zoom on Europe
+#### Zoom on Europe
+#### Zoom on Europe
+#### Zoom on Europe
+#### Zoom on Europe
+world2 <- ne_countries(scale = "medium", returnclass = "sf")
+ggplot(data = world2) +
+  geom_sf(fill= "lightgray") +
+  coord_sf(xlim =  c(-12, 41.00), ylim = c(32.00, 63.00), expand = FALSE) + 
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5), panel.background = element_rect(fill = "aliceblue")) + 
+  geom_point(data =c.dat.plo , 
+             aes(x=as.numeric(long), 
+                 y=as.numeric(lat), 
+                 fill = as.factor(cluster)), size = 2.3, shape = 21)  +
+  xlab("Lon") + ylab("Lat") + 
+  ggtitle("Europe under K=8") + 
+  theme(legend.position = "none") + 
+  scale_shape_manual(values = c(21,22,23,24)) -> Suture_ZoneEU
 
+ggsave(Suture_ZoneEU, file = "Suture_ZoneEU.pdf",  w = 7, h = 3.5)
+######3
+ggplot(data = world2) +
+  geom_sf(fill= "lightgray") +
+  coord_sf(xlim =  c(-125.15, -55), ylim = c(-10, 50.00), expand = FALSE) + 
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.5), panel.background = element_rect(fill = "aliceblue")) + 
+  geom_point(data =c.dat.plo , 
+             aes(x=as.numeric(long), 
+                 y=as.numeric(lat), 
+                 fill = as.factor(cluster)), size = 2.3, shape = 21)  +
+  xlab("Lon") + ylab("Lat") + 
+  ggtitle("North America under K=8") + 
+  theme(legend.position = "none") + 
+  scale_shape_manual(values = c(21,22,23,24)) -> Suture_ZoneAM
 
-base_world + 
-  geom_point(
-    data = c.dat.plo,
-    aes(x=long,
-        y=lat,
-        fill = as.factor(cluster)), size = 1.5, shape = 21
-  ) +
-  scale_fill_brewer(palette = "Set1") -> cluster.plot
+ggsave(Suture_ZoneAM, file = "Suture_ZoneAM.pdf",  w = 7, h = 3.5)
 
-ggsave(cluster.plot, file = "cluster.plot.pdf", w = 7, h = 3.5)
 
