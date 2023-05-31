@@ -28,7 +28,7 @@ library(ggExtra)
 library(foreach)
 
 ####
-meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.qc_merge.csv"
+meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
 
 samps <- fread(meta_git)
 setDT(samps)
@@ -65,131 +65,63 @@ snps.dt %>% dim
 
 ####
 set.seed(12345)
-seqSetFilter(genofile, sample.id=samps$sampleId, 
-             variant.id=snps.dt[sample(dim(snps.dt)[1], 50000 )]$variant.id)
+chr.vec = c("all","2L","2R","3L","3R")
 
+pca.var.exp = list()
+
+PCA.results.df =
+foreach(i = 1:length(chr.vec),
+        .combine = "rbind")%do%{
+          
+          seqResetFilter(genofile)
+          
+          chr.i = chr.vec[i]
+          
+          message(paste(chr.i, i, sep = "/"))
+          
+          if(chr.i == "all"){
+            snps.dt.tmp = snps.dt
+          } else if(chr.i != "all"){
+            snps.dt.tmp = filter(snps.dt, chr == chr.i )
+          }
+               
+  seqSetFilter(genofile, 
+               sample.id=samps$sampleId, 
+               variant.id=snps.dt.tmp[sample(dim(snps.dt)[1], 20000 )]$variant.id)
+          
+  ad <- seqGetData(genofile, "annotation/format/AD")
+  dp <- seqGetData(genofile, "annotation/format/DP")
+  ad.matrix = ad$data
+  dat <- ad.matrix/dp
+  dim(dat)
+  colnames(dat) <- paste(seqGetData(genofile, "chromosome"),
+                         seqGetData(genofile, "position") 
+                         , sep="_")
+  rownames(dat) <- seqGetData(genofile, "sample.id")
+  
+  dat %>% 
+    PCA(graph = F, ncp = 3) ->
+    pca.object.plot
+  
+  pca.object.plot$ind$coord %>%
+    as.data.frame() %>% 
+    mutate(sampleId = rownames(.)) %>%
+    left_join(samps) %>%
+    filter(!is.na(continent)) %>%
+    dplyr::select(Dim.1,Dim.2,Dim.3,sampleId,country,continent,lat,long)%>%
+    mutate(case = chr.i)->
+    pca.meta
+  
+  pca.var.exp[[i]] = pca.object.plot$eig %>% 
+    as.data.frame() %>% mutate(PC = rownames(.)) %>%
+    mutate(case = chr.i)
+  
+  return(pca.meta)
+        } ### close for each
 ########
-ad <- seqGetData(genofile, "annotation/format/AD")
-dp <- seqGetData(genofile, "annotation/format/DP")
-ad.matrix = ad$data
-dat <- ad.matrix/dp
-dim(dat)
+save(PCA.results.df, file = "PCA.results.df.Rdata")
+save(pca.var.exp, file = "pca.var.exp.Rdata")
 
-colnames(dat) <- paste(seqGetData(genofile, "chromosome"),
-                      seqGetData(genofile, "position") 
-                      , sep="_")
-rownames(dat) <- seqGetData(genofile, "sample.id")
-
-####
-####
-####
-
-dat %>% 
-  PCA(graph = F, ncp = 40) ->
-  pca.object.plot
-
-save(pca.object.plot, file = "pca.object.plot.Rdata")
-#### #### #### #### #### #### #### #### #### #### #### #### 
-load("pca.object.plot.Rdata")
-pca.object.plot$ind$coord %>%
-  as.data.frame() %>% 
-  mutate(sampleId = rownames(.)) %>%
-  left_join(samps) %>%
-  filter(!is.na(continent))->
-  pca.meta
-#### #### #### #### #### #### #### #### #### #### #### #### 
-
-pca.object.plot$ind$coord %>%
-  as.data.frame() %>% 
-  mutate(sampleId = rownames(.)) %>%
-  left_join(samps) %>%
-  filter(!is.na(continent))->
-  pca.meta
-
-####
-pca.meta %>%
-  ggplot(aes(
-    x=Dim.1,
-    y=Dim.2,
-    fill = continent
-  )) +
-  geom_point(shape = 21, color = "black") +
-  scale_fill_brewer(palette = "Set2") +
-  theme_bw() ->
-  PCA12.lat
-
-ggsave(PCA12.lat, file = "PCA12.lat.pdf", w = 5, h =4)
-
-###
-pca.meta %>%
-  ggplot(aes(
-    x=Dim.1,
-    y=Dim.3,
-    fill = continent
-  )) +
-  geom_point(shape = 21) +
-  geom_point(shape = 21, color = "black") +
-  scale_fill_brewer(palette = "Set2") +
-  theme_bw() ->
-  PCA13.lat
-
-ggsave(PCA13.lat, file = "PCA13.lat.pdf", w = 5, h =4)
-
-###
-###
-###
-###
-###
-###
-###
-###
-cor.test(~lat + Dim.1, dat = pca.meta)
-cor.test(~long + Dim.1, dat = pca.meta)
-
-cor.test(~lat + Dim.2, dat = pca.meta)
-cor.test(~long + Dim.2, dat = pca.meta)
-
-cor.test(~lat + Dim.3, dat = pca.meta)
-cor.test(~long + Dim.3, dat = pca.meta)
-
-###
-pca.meta %>%
-  filter(continent %in% c("Europe","North_America","South_America","Oceania")) %>%
-  dplyr::select(Dim.1,Dim.2,Dim.3, lat, long, continent) %>%
-  reshape2::melt(id = c("lat", "long", "continent")) %>% 
-  ggplot(aes(
-    x=lat,
-    y=value,
-    color = variable
-  )) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm") +
-  xlab("Latitude") +
-  ylab("PCA projections") +
-  theme_bw() +
-  scale_color_brewer(palette = "Dark2") +
-  facet_grid(~continent, scale = "free_x") ->
-  lat.detail
-ggsave(lat.detail, file = "lat.detail.pdf", w = 8, h = 2.6)
-
-pca.meta %>%
-  filter(continent %in% c("Europe","North_America","South_America","Oceania")) %>%
-  dplyr::select(Dim.1,Dim.2,Dim.3, lat, long, continent) %>%
-  reshape2::melt(id = c("lat", "long", "continent")) %>% 
-  ggplot(aes(
-    x=long,
-    y=value,
-    color = variable
-  )) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm") +
-  xlab("Longitude") +
-  ylab("PCA projections") +
-  theme_bw() +
-  scale_color_brewer(palette = "Dark2") +
-  facet_grid(~continent, scale = "free_x") ->
-  long.detail
-ggsave(long.detail, file = "long.detail.pdf", w = 8, h = 2.6)
 
 ##### ---->>> Cluster Analysis
 ##### ---->>> Cluster Analysis
@@ -207,7 +139,8 @@ ggplot() +
 
 
 ##### ---->>> Cluster Analysis
-
+setDT(PCA.results.df)
+pca.meta = PCA.results.df %>% filter(case == "all")
 dat.cluster <- pca.meta[,c("Dim.1","Dim.2","Dim.3")]
 
 pdf("clust.viz.ALL.pdf")
