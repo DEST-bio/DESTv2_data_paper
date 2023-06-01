@@ -11,8 +11,8 @@
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
 ### sbatch --array=1000 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.core20.sh
-### sacct -j 49751805
-### cat /scratch/aob2x/Overwintering_18_19/ld_alan/logs/ld.49751619_17*.err
+### sacct -j 50038937
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50038937_1000*.out
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 
 

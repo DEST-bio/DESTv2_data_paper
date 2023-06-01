@@ -60,9 +60,11 @@
   } else{ message("population set is not specified"); q("no") }
 
 ### gds object
+  message("open genofile")
   genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
 
 ### get basic index
+  message("get snp table")
   data <- seqGetData(genofile, "annotation/info/AF")
   seqResetFilter(genofile)
   snp.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
@@ -114,6 +116,7 @@
   }
 
 ### make windows and get subset
+  message("make windows")
   snp.dt <- snp.dt[global_af>=0.05]
   win.bp <- 12000
   step.bp <- 12001
@@ -142,98 +145,89 @@
   # tmp.ids <- c(759953, 1333833, 595225)
 
 ### iterate through
+  message("iterate")
+  o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
+    #i <- 1
+    message(paste(i, length(tmp.ids), sep=" / "))
 
-foreach(model_features = c("No_Phylo",
-                            "Phylo_LocRan",
-                            "PhyloRan_LocRan",
-                            "Phylo_Loc",
-                            "LocRan" ##,
-                                    ),
-                 .combine = "rbind")%do%{
+    ### get allele frequency data
+      af <- getData(variant=tmp.ids[i])
+      af <- merge(af, seasonal.sets, by="sampleId")
+      af[,year_pop:=as.factor(interaction(locality, year))]
+      af <- af[!is.na(af_nEff)]
 
+    ### iterate through permutations
+      set.seed(1234)
+      o <- foreach(j=0:nPerm, .combine="rbind")%dopar%{
+        if(j==0) {
+          tmp <- af[af>0 & af<1]
+        } else if(j>0) {
+          tmp <- af[af>0 & af<1]
+          tmp[,season:=sample(season)]
+        }
+        message(j)
+        ### iterate through model types
 
+          foreach(model_features = c("Loc", "Phylo", "Loc_Phylo", "LocRan", "Phylo_LocRan"),  .combine="rbind")%do%{
+            p_lrt=-999
+            seas.AIC = -999
+            null.AIC = -999
 
-o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
-  #i <- 1
-  message(paste(i, length(tmp.ids), sep=" / "))
+            if(model_features == "Loc"){
+              # message("Loc model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= quasibinomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= quasibinomial)
+            } else if(model_features == "Phylo" ){
+              # message("Phylo model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,          data=tmp,  family = quasibinomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster, data=tmp,  family = quasibinomial)
+            } else if(model_features == "Loc_Phylo" ){
+              # message("Loc_Phylo model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,          data=tmp,  family = quasibinomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop, data=tmp,  family = quasibinomial)
+            } else if(model_features == "LocRan" ){
+              # message("LocRan model")
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
+            } else if(model_features == "Phylo_LocRan" ){
+              # message("Phylo_LocRan model")
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop), data=tmp, family = binomial)
+            }
 
-  ### get allele frequency data
-    af <- getData(variant=tmp.ids[i])
-    af <- merge(af, seasonal.sets, by="sampleId")
-    af[,year_pop:=as.factor(interaction(locality, year))]
-    af <- af[!is.na(af_nEff)]
-
-  ### iterate through permutations
-    set.seed(1234)
-    o <- foreach(j=0:nPerm, .combine="rbind")%dopar%{
-      if(j==0) {
-        tmp <- af[af>0 & af<1]
-      } else if(j>0) {
-        tmp <- af[af>0 & af<1]
-        tmp[,season:=sample(season)]
-      }
-      message(j)
-      ### iterate through model types
-
-        foreach(model_features = c("Loc", "Phylo", "Loc_Phylo", "LocRan", "Phylo_LocRan"),  .combine="rbind")%do%{
-          p_lrt=-999
-          seas.AIC = -999
-          null.AIC = -999
-
-          if(model_features == "Loc"){
-            # message("Loc model")
-            t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= quasibinomial)
-            t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= quasibinomial)
-          } else if(model_features == "Phylo" ){
-            # message("Phylo model")
-            t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,          data=tmp,  family = quasibinomial)
-            t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster, data=tmp,  family = quasibinomial)
-          } else if(model_features == "Loc_Phylo" ){
-            # message("Loc_Phylo model")
-            t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,          data=tmp,  family = quasibinomial)
-            t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop, data=tmp,  family = quasibinomial)
-          } else if(model_features == "LocRan" ){
-            # message("LocRan model")
-            t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
-            t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
-          } else if(model_features == "Phylo_LocRan" ){
-            # message("Phylo_LocRan model")
-            t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
-            t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop), data=tmp, family = binomial)
-          }
-
-          if(grepl("Ran", model_features)) {
-            p_lrt=anova(t4.real, t3.real, test="Chisq")[2,8]
-            seas.AIC = extractAIC(t4.real)[2]
-            null.AIC = extractAIC(t3.real)[2]
-          } else if (!grepl("Ran", model_features)) {
-            p_lrt=anova(t4.real, t3.real, test="Chisq")[2,5]
-            seas.AIC = extractAIC(t4.real)[1]
-            null.AIC = extractAIC(t3.real)[1]
-          }
+            if(grepl("Ran", model_features)) {
+              p_lrt=anova(t4.real, t3.real, test="Chisq")[2,8]
+              seas.AIC = extractAIC(t4.real)[2]
+              null.AIC = extractAIC(t3.real)[2]
+            } else if (!grepl("Ran", model_features)) {
+              p_lrt=anova(t4.real, t3.real, test="Chisq")[2,5]
+              seas.AIC = extractAIC(t4.real)[1]
+              null.AIC = extractAIC(t3.real)[1]
+            }
 
 
-          obs <-
-            data.table(variant.id=tmp.ids[i], perm=j,
-                       b_seas=summary(t4.real)$coef[2,1], se_temp=summary(t4.real)$coef[2,2],
-                       nTotal=dim(seasonal.sets)[1],
-                       nObs=dim(af)[1],
-                       nFixed=sum(af$af_nEff==0) + sum(af$af_nEff==1),
-                       af=mean(af$af_nEff), neff=mean(af$nEff),
-                       p_lrt=p_lrt,
-                       pops=pops,
-                       model_features=model_features,
-                       seas.AIC = seas.AIC,
-                       null.AIC = null.AIC,
-                       ran=runif(1, 0,1e6))
-            return(obs)
-        } # iterate through models
-    } # iterate through perms
-  } # last line
+            obs <-
+              data.table(variant.id=tmp.ids[i], perm=j,
+                         b_seas=summary(t4.real)$coef[2,1], se_temp=summary(t4.real)$coef[2,2],
+                         nTotal=dim(seasonal.sets)[1],
+                         nObs=dim(af)[1],
+                         nFixed=sum(af$af_nEff==0) + sum(af$af_nEff==1),
+                         af=mean(af$af_nEff), neff=mean(af$nEff),
+                         p_lrt=p_lrt,
+                         pops=pops,
+                         model_features=model_features,
+                         seas.AIC = seas.AIC,
+                         null.AIC = null.AIC,
+                         ran=runif(1, 0,1e6))
+              return(obs)
+          } # iterate through models
+      } # iterate through perms
+    } # last line
 
-o <- merge(o, snp.dt, by="variant.id")
+  o <- merge(o, snp.dt, by="variant.id")
 
 #### SAVE O
+  message("save")
   output_file = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_1_2023/"
   save(o,
        file = paste(output_file,
