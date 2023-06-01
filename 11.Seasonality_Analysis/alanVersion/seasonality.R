@@ -201,8 +201,8 @@
               null.AIC = extractAIC(t3.real)[2]
             } else if (!grepl("Ran", model_features)) {
               p_lrt=anova(t4.real, t3.real, test="Chisq")[2,5]
-              seas.AIC = extractAIC(t4.real)[1]
-              null.AIC = extractAIC(t3.real)[1]
+              seas.AIC = extractAIC(t4.real)[2]
+              null.AIC = extractAIC(t3.real)[2]
             }
 
 
