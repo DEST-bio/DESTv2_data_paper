@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1000; pops="all_seas"; nPerm=10
+  #jobId=1010; pops="all_seas"; nPerm=10
 
 ### libraries
   library(data.table)
@@ -146,8 +146,8 @@
 
 ### iterate through
   message("iterate")
-  o <- foreach(i=1:length(tmp.ids), .combine="rbind")%do%{
-    #i <- 1
+  o <- foreach(i=1:length(tmp.ids), .combine="rbind", .errorhandling="remove")%do%{
+    #i <- 54
     message(paste(i, length(tmp.ids), sep=" / "))
 
     ### get allele frequency data
@@ -158,7 +158,7 @@
 
     ### iterate through permutations
       set.seed(1234)
-      o <- foreach(j=0:nPerm, .combine="rbind")%dopar%{
+      o <- foreach(j=0:nPerm, .combine="rbind", .errorhandling="remove")%dopar%{
         if(j==0) {
           tmp <- af[af>0 & af<1]
         } else if(j>0) {
@@ -168,7 +168,7 @@
         message(j)
         ### iterate through model types
 
-          foreach(model_features = c("Loc", "Phylo", "Loc_Phylo", "LocRan", "Phylo_LocRan"),  .combine="rbind")%do%{
+          foreach(model_features = c("Loc", "Phylo", "Loc_Phylo", "LocRan", "Phylo_LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
@@ -222,6 +222,7 @@
               return(obs)
           } # iterate through models
       } # iterate through perms
+      o
     } # last line
 
   o <- merge(o, snp.dt, by="variant.id")
