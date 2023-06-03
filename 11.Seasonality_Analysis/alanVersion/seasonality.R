@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1010; pops="all_seas"; nPerm=10
+  #jobId=1310; pops="all_seas"; nPerm=10
 
 ### libraries
   library(data.table)
@@ -142,6 +142,10 @@
 
   tmp.ids <- snp.dt[chr==wins.i$chr][pos%in%c(wins.i$start:wins.i$end)]$variant.id
 
+  if(length(tmp.ids)==0) {
+    message("nothing in window")
+    q("no")
+  }
   # tmp.ids <- c(759953, 1333833, 595225)
 
 ### iterate through
