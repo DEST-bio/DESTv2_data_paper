@@ -4,7 +4,9 @@
 ### libraries
   library(data.table)
   library(foreach)
-
+  library(doMC)
+  registerDoMC(2)
+  
 ### get files
   fl <- list.files("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_1_2023", full.names=T)
 
@@ -15,7 +17,7 @@
   # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl[1:100], .errorhandling="remove")%dopar%{
+  o <- foreach(fl.i=fl, .errorhandling="remove")%dopar%{
     # fl.i <- fl[100]
     load(fl.i)
     message(paste(which(fl.i==fl), length(fl), sep=" / "))
@@ -28,25 +30,33 @@
 
 ### save jobs based on model type
   setkey(o, model_features, pops)
-  foreach(mf=unique(o$model_features))%dopar%{
-    foreach(p=unique(o$pops))%do%{
+
+  make_bins = function(x, size){
+      x = na.omit(x)
+      my_seq = seq(from=0, to=1, by=size)
+      my_sum=vector()
+      for (i in 1:(length(my_seq)-1) ){
+          my_sum[i] = sum(x>=my_seq[i] & x<my_seq[i+1])
+      }
+      list(my_sum, my_seq)
+  }
+
+
+  oo <- foreach(mf=unique(o$model_features), .combine="rbind")%dopar%{
+    foreach(p=unique(o$pops), .combine="rbind")%do%{
       # mf="Loc"; p="Core20_seas"
+      message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
+
       save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/", p, "_", mf, ".Rdata", sep=""))
+
+      foreach(p.i=unique(mod.out$perm), .combine="rbind")%do%{
+        # p.i <- 0
+        o.sig <- make_bins(x=mod.out[perm==p.i]$p_lrt, size=.001)
+        data.table(nSig=o.sig[[1]], thr=o.sig[[2]][-1], perm=p.i, model_features=mf, pops=p)
+      }
+
     }
   }
 
-### aggregate
-  pthr <- c(0, expand.grid(sapply(c(-6:-1), function(x) c(1:9)*10^x))[,1])
-
-  o.sig <- foreach(x=1:(length(pthr)-1))%do%{
-    # x <- pthr[10,1]
-    message(x)
-    o[,list(nSig=sum(p_lrt>pthr[x] & p_lrt<=pthr[x+1]),
-            thr_min=pthr[x], thr_max=pthr[x+1],
-            N=.N),
-       list(perm, model_features, chr)]
-
-  }
-  o.sig <- rbindlist(o.sig)
-  save(o.sig, file="/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.Core20_seas")
+  save(oo, file="/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.Core20_seas.Rdata")
