@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1310; pops="all_seas"; nPerm=10
+  #jobId=1300; pops="all_seas"; nPerm=10
 
 ### libraries
   library(data.table)
@@ -146,7 +146,7 @@
     message("nothing in window")
     q("no")
   }
-  # tmp.ids <- c(759953, 1333833, 595225)
+  # tmp.ids <- tmp.ids[1:3]
 
 ### iterate through
   message("iterate")
@@ -237,19 +237,37 @@
 #### SAVE O
   message("save")
   output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/"
-  if(!dir.exists(output_dir)) dir.create(output_dir)
+  if(!dir.exists(output_dir)) {
+    message("makding new dir:")
+    message(output_dir)
+    dir.create(output_dir)
+  }
 
   output_dir = paste(output_dir, pops, "/", sep="")
-  if(!dir.exists(output_dir)) dir.create(output_dir)
+  if(!dir.exists(output_dir)) {
+    message("makding new dir:")
+    message(output_dir)
+    dir.create(output_dir)
+  }
 
-  save(o,
-       file = paste(output_file,
-                    "GLM_out.",
-                    jobId,
-                    ".",
-                    pops,
-                    ".",
-                    "omnibus",
-                    ".",
-                    paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
-                    ".Rdata", sep = ""))
+  foreach(mf=unique(o$model_features))%do%{
+    output_dir_final = paste(output_dir, mf, "/", sep="")
+
+    if(!dir.exists(output_dir_final)) {
+      message("makding new dir:")
+      message(output_dir_final)
+      dir.create(output_dir_final)
+    }
+
+    save(o,
+         file = paste(output_dir_final,
+                      "GLM_out.",
+                      jobId,
+                      ".",
+                      pops,
+                      ".",
+                      "omnibus",
+                      ".",
+                      paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
+                      ".Rdata", sep = ""))
+  }
