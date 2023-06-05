@@ -4,8 +4,6 @@
 ### libraries
   library(data.table)
   library(foreach)
-  library(doMC)
-  registerDoMC(4)
 
 ### get files
   fl <- list.files("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_1_2023", full.names=T)
@@ -17,7 +15,7 @@
   # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl, .errorhandling="remove")%dopar%{
+  o <- foreach(fl.i=fl[1:100], .errorhandling="remove")%dopar%{
     # fl.i <- fl[100]
     load(fl.i)
     message(paste(which(fl.i==fl), length(fl), sep=" / "))
