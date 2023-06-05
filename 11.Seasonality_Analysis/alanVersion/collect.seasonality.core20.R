@@ -17,14 +17,14 @@
   # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl)%dopar%{
+  o <- foreach(fl.i=fl, .errorhandling="remove")%dopar%{
     # fl.i <- fl[100]
     load(fl.i)
     message(paste(which(fl.i==fl), length(fl), sep=" / "))
     return(o[!is.na(p_lrt) & p_lrt!=0])
 
   }
-  o <- rbindlist(o)
+  o <- rbindlist(o, fill=T)
 
   table(o$chr)
 

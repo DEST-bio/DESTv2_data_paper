@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
 #SBATCH -J collect_Core20 # A single job name for the array
-#SBATCH -c 10
+#SBATCH -c 1
 #SBATCH -N 1 # on one node
-#SBATCH -t 01:30:00 #<= this may depend on your resources
+#SBATCH -t 02:30:00 #<= this may depend on your resources
 #SBATCH --mem 100G #<= this may depend on your resources
 #SBATCH -p largemem
 #SBATCH -A berglandlab_standard
@@ -12,8 +12,8 @@
 
 ### sbatch /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.collect.core20.sh
 ###
-### sacct -j 50085745
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50075916_199.err
+### sacct -j 50085748
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50085748_*.err
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 
 
