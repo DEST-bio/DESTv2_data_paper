@@ -4,7 +4,7 @@
 #SBATCH -c 1
 #SBATCH -N 1 # on one node
 #SBATCH -t 02:30:00 #<= this may depend on your resources
-#SBATCH --mem 100G #<= this may depend on your resources
+#SBATCH --mem 500G #<= this may depend on your resources
 #SBATCH -p largemem
 #SBATCH -A berglandlab_standard
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.out # Standard output
@@ -12,8 +12,8 @@
 
 ### sbatch /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.collect.core20.sh
 ###
-### sacct -j 50085748
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50085748_*.err
+### sacct -j 50085848
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50085848_*.err
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 
 

@@ -172,20 +172,23 @@
         message(j)
         ### iterate through model types
 
-          foreach(model_features = c("Loc", "Phylo", "Loc_Phylo", "LocRan", "Phylo_LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
+          foreach(model_features = c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
 
-            if(model_features == "Loc"){
+            if(model_features == "LocBinomial"){
               # message("Loc model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= binomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= binomial)
+            } else if(model_features == "LocQB"){
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= quasibinomial)
               t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= quasibinomial)
-            } else if(model_features == "Phylo" ){
+            } else if(model_features == "PhyloQB" ){
               # message("Phylo model")
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,          data=tmp,  family = quasibinomial)
               t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster, data=tmp,  family = quasibinomial)
-            } else if(model_features == "Loc_Phylo" ){
+            } else if(model_features == "Loc_PhyloQB" ){
               # message("Loc_Phylo model")
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,          data=tmp,  family = quasibinomial)
               t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop, data=tmp,  family = quasibinomial)
@@ -233,7 +236,12 @@
 
 #### SAVE O
   message("save")
-  output_file = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_1_2023/"
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/"
+  if(!dir.exists(output_dir)) dir.create(output_dir)
+
+  output_dir = paste(output_dir, pops, "/", sep="")
+  if(!dir.exists(output_dir)) dir.create(output_dir)
+
   save(o,
        file = paste(output_file,
                     "GLM_out.",
