@@ -131,7 +131,13 @@ admix.dat.sets %>%
   left_join(adm5) %>%
   left_join(adm8) ->
   admix.dat.sets.adms
-  
+
+#### Some summaries
+admix.dat.sets.adms %>%
+  group_by(adm8) %>%
+  summarize(meanBeta = mean(mean.est))
+
+### Plots
 admix.dat.sets.adms %>%
   filter(!is.na(adm5)) %>%
   ggplot(aes(
