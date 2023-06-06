@@ -18,7 +18,8 @@
 
 
 ### get files
-  fl <- list.files(paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/"), full.names=T)
+#  fl <- list.files(paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/"), full.names=T)
+  fl <- list.files("/project/berglandlab/jcbnunez/Shared_w_Alan/GLMs_trialruns_Jun1_2023", full.names=F)
 
 ### missing jobs
   # fls <- gsub("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_1_2023/", "", fl)
@@ -31,7 +32,7 @@
     # fl.i <- fl[100]
     load(fl.i)
     message(paste(which(fl.i==fl), length(fl), sep=" / "))
-    return(o[!is.na(p_lrt) & p_lrt!=0])
+    return(o.mods[perm<=10][!is.na(p_lrt) & p_lrt!=0])
 
   }
   o <- rbindlist(o, fill=T)
@@ -39,23 +40,13 @@
   table(o$chr)
 
 ### save jobs based on model type
+  setnames(o, "model", "pops")
   setkey(o, model_features, pops)
-
-  make_bins = function(x, size, ret){
-      x = na.omit(x)
-      my_seq = seq(from=0, to=1, by=size)
-      my_sum=vector()
-
-        for (i in 1:(length(my_seq)-1) ){
-            my_sum[i] = sum(x>=my_seq[i] & x<my_seq[i+1])
-        }
-        list(my_sum, my_seq)
-    }
 
 
   oo <- foreach(mf=unique(o$model_features), .combine="rbind")%do%{
     foreach(p=unique(o$pops), .combine="rbind")%do%{
-      # mf="LocQB"; p="Core20_seas"
+      # mf="No_Phylo"; p="NoCore20_seas"
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
 
@@ -71,20 +62,18 @@
 
         #o.sig <- make_bins(x=mod.out[J(p.i)]$p_lrt, size=.001)
         #data.table(nSig=o.sig[[1]], thr=o.sig[[2]][-1], perm=p.i, model_features=mf, pops=p)
-        grid <- 0.001
-        my_seq = data.table(min_p=seq(from=0, to=1-grid, by=grid), max_p=seq(from=grid, to=1, by=grid))
-
+        my_seq = data.table(min_p=seq(from=0, to=1-.001, by=.001), max_p=seq(from=0.001, to=1, by=.001))
         tmp <- mod.out[J(p.i)][my_seq, .(N = .N), on = .(p_lrt > min_p, p_lrt < max_p), by = .EACHI]
         setnames(tmp, c("min_p", "max_p", "N"))
         tmp[,perm:=p.i]
         tmp[,pops:=p]
         tmp[,model_features:=mf]
+
         tmp
       }
       return(o.temp)
-
     }
   }
   oo[thr==.001][model_features=="LocBinomial"]
 
-  save(oo, file="/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.Core20_seas.Rdata")
+  save(oo, file="/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.NoCore20_seas.Rdata")

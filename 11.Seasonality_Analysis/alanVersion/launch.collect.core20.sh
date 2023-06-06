@@ -12,8 +12,8 @@
 
 ### sbatch /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.collect.core20.sh
 ###
-### sacct -j 50085848
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50085848_*.err
+### sacct -j 50085870
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50085870_*.err
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 
 
