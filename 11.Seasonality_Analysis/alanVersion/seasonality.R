@@ -31,13 +31,34 @@
 ### seasonal pairs
   seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
   setDT(seasonal.sets)
+  table(seasonal.sets[,.N,loc.y]$N)
+  dim(seasonal.sets)
 
+### add phylo cluster
   phylo_clust <- as.data.table(get(load("~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/phylocluster_data.Rdata")))
   setnames(phylo_clust, "smapleId", "sampleId")
 
+  dim(seasonal.sets)
   seasonal.sets <- merge(seasonal.sets, phylo_clust, by="sampleId", all.x=T)
+  dim(seasonal.sets)
 
   seasonal.sets$cluster[is.na(seasonal.sets$cluster)] = 1
+
+### add in sample metadata
+  dim(seasonal.sets)
+  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation", "exactDate")], by="sampleId")
+  seasonal.sets[is.na(exactDate)]
+  dim(seasonal.sets)
+
+  table(seasonal.sets$Recommendation)
+  table(seasonal.sets$exactDate)
+
+### trim out ghost samples and leftover pair
+  seasonal.sets.ag <- seasonal.sets[,.N,loc.y]
+  setkey(seasonal.sets, loc.y)
+  dim(seasonal.sets)
+  seasonal.sets <- seasonal.sets[J(seasonal.sets.ag[N==2])]
+  dim(seasonal.sets)
 
 
 #### population selector
@@ -57,7 +78,23 @@
     message("chosen model --> Only Core20")
     seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE)
 
-  } else{ message("population set is not specified"); q("no") }
+  } else if(pops== "NoCore20_NoProblems_seas") {
+
+    message("chosen model --> NoCore20_NoProblems_seas")
+    seasonal.sets = seasonal.sets %>% filter(Core20_sat == FALSE) %>% filter(Recommendation == "Pass")
+    seasonal.sets.N <- seasonal.sets[,.N,loc.y]
+    setkey(seasonal.sets, loc.y)
+    seasonal.sets <- seasonal.sets[J(seasonal.sets.N[N==2])]
+    dim(seasonal.sets)
+
+  } else if(pops== "NoCore20_NoProblems_NoFlip_seas") {
+
+    message("chosen model --> NoCore20_NoFlip_seas")
+    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
+    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][Core20_sat==F][delta.T.sign==-1][delta.T.mag=="Steep"]
+    seasonal.sets[,.N,loc.y]
+
+  } else if{ message("population set is not specified"); q("no") }
 
 ### gds object
   message("open genofile")
@@ -118,8 +155,8 @@
 ### make windows and get subset
   message("make windows")
   snp.dt <- snp.dt[global_af>=0.05]
-  win.bp <- 12000
-  step.bp <- 12001
+  win.bp <-  50000   #12000
+  step.bp <- 50001   #12001
   setkey(snp.dt, "chr")
   ## prepare windows
   wins <- foreach(chr.i=c("2L","2R", "3L", "3R"),
@@ -136,7 +173,7 @@
 
   wins[,i:=1:dim(wins)[1]]
   dim(wins)
-  ### ----> 9060
+  ### ----> 2173
 
   wins.i = wins[jobId]
 
@@ -155,18 +192,19 @@
     message(paste(i, length(tmp.ids), sep=" / "))
 
     ### get allele frequency data
-      af <- getData(variant=tmp.ids[i])
+      af <- getData(variant=tmp.ids[i])   ## af <- getData(variant=2178993)
       af <- merge(af, seasonal.sets, by="sampleId")
       af[,year_pop:=as.factor(interaction(locality, year))]
       af <- af[!is.na(af_nEff)]
+      af <- af[af_nEff>0 & af_nEff<1]
 
     ### iterate through permutations
       set.seed(1234)
       o <- foreach(j=0:nPerm, .combine="rbind", .errorhandling="remove")%dopar%{
         if(j==0) {
-          tmp <- af[af>0 & af<1]
+          tmp <- af
         } else if(j>0) {
-          tmp <- af[af>0 & af<1]
+          tmp <- af
           tmp[,season:=sample(season)]
         }
         message(j)
@@ -176,7 +214,7 @@
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
-
+            # model_features <- "LocBinomial"
             if(model_features == "LocBinomial"){
               # message("Loc model")
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= binomial)
@@ -229,7 +267,10 @@
               return(obs)
           } # iterate through models
       } # iterate through perms
+
+      #
       o
+
     } # last line
 
   o <- merge(o, snp.dt, by="variant.id")
@@ -259,7 +300,7 @@
       dir.create(output_dir_final)
     }
 
-    save(o,
+    save(o[model_features==mf],
          file = paste(output_dir_final,
                       "GLM_out.",
                       jobId,

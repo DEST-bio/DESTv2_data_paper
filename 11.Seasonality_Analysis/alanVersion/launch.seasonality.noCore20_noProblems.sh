@@ -12,7 +12,7 @@
 
 ###9060
 
-### sbatch --array=1-9060 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.noCore20.sh
+### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.noCore20.sh
 ###
 ### sacct -j 50118201
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50115144_1.err
@@ -29,5 +29,5 @@ Rscript \
 --vanilla \
 seasonality.R \
 ${SLURM_ARRAY_TASK_ID} \
-"NoCore20_seas" \
+"NoCore20_NoProblems_seas" \
 10
