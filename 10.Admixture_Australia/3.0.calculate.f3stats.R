@@ -1,10 +1,8 @@
 ##### Calculate F3 statistics in pool-seq
 ##### 
 
-
 args = commandArgs(trailingOnly=TRUE)
 k=as.numeric(args[1]) ## 1-347
-
 
 ### libraries
 library(SeqArray)
@@ -61,10 +59,8 @@ snps.dt %>%
 #### Begin analyses
 #### 
 #### 
-
   af_pop <- samps[continent=="Africa"][nFlies>100]$sampleId
   eu_pop <- samps[continent=="Europe"]$sampleId[k]
-  
   children_samps = samps[continent=="North_America"]$sampleId
 
 #### ----> Run loop
@@ -74,7 +70,7 @@ f3.o.au = foreach(ch.i = children_samps,
                  
                  #test_pop <- sample(samps[continent=="Oceania"]$sampleId, 1)
                  ###au.i=AUS_samps[1]
-                 ch.i = children_samps[1]
+                 #ch.i = children_samps[1]
                  test_pop = ch.i
                  message(ch.i)
                  
@@ -147,138 +143,16 @@ f3.o.au = foreach(ch.i = children_samps,
                  fstats.dat@f3star.values %>%
                    as.data.frame()  ->
                    f3stat
-                 f3stat
                  
-                 target.pop.col = grep(paste(test_pop,";", sep = ""), rownames(f3stat))
-                 data.frame(f3 = f3stat[target.pop.col,]) %>%
-                   mutate(set.tree = rownames(f3stat)[target.pop.col] ) %>%
-                   mutate(parent_eu = eu_pop,
-                          parent_af = af_pop,
-                          sampleId = test_pop)->
-                   o
+                 f3stat %>%
+                   mutate(popf3 = rownames(.) ) %>%
+                   separate(popf3, into = c("focal", "parents"), sep = ";") %>%
+                   filter(focal == test_pop) -> o
                  
                  return(o)
                }
 
 ####
-NAM_samps = samps[continent=="North_America"]$sampleId
-
-f3.o.Nam = foreach(NAM.i=NAM_samps, 
-                   .combine = "rbind", 
-                   .errorhandling = "remove")%do%{
-                     
-                     message(NAM.i)
-                     #test_pop <- sample(samps[continent=="Oceania"]$sampleId, 1)
-                     ###au.i=AUS_samps[1]
-                     test_pop = NAM.i 
-                    
-                    poolsizes = c(
-                      filter(samps, sampleId == rownames(dp)[1])$nFlies,
-                      filter(samps, sampleId == rownames(dp)[2])$nFlies,
-                      filter(samps, sampleId == rownames(dp)[3])$nFlies
-                    )
-                    
-                    
-                    ad.tmp = ad[ c(af_pop, eu_pop, test_pop), sampled.SNPs]
-                    
-                    dp.tmp = dp[ c(af_pop, eu_pop, test_pop), sampled.SNPs]
-                    
-                    pool <- new("pooldata",
-                                npools=dim(ad.tmp)[1], #### Rows = Number of pools
-                                nsnp=dim(ad.tmp)[2], ### Columns = Number of SNPs
-                                refallele.readcount=t(ad.tmp),
-                                readcoverage=t(dp.tmp),
-                                poolsizes=poolsizes * 2,
-                                poolnames = rownames(ad.tmp),
-                                snp.info = snp.info)
-                    
-                    fstats.dat <- 
-                      compute.fstats(
-                        pool,
-                        #nsnp.per.bjack.block = 100,
-                        computeDstat = TRUE,
-                        verbose = TRUE
-                      )
-                    
-                    fstats.dat@f3star.values %>%
-                      as.data.frame()  ->
-                      f3stat
-                    
-                    target.pop.col = grep(paste(test_pop,";", sep = ""), rownames(f3stat))
-                    data.frame(f3 = f3stat[target.pop.col,]) %>%
-                      mutate(set.tree = rownames(f3stat)[target.pop.col] ) %>%
-                      mutate(parent_eu = eu_pop,
-                             parent_af = af_pop,
-                             sampleId = test_pop)->
-                      o
-                    
-                    return(o)
-                  }
-
-#####
-SAM_samps = samps[continent=="South_America"]$sampleId
-
-f3.o.Sam = foreach(SAM.i=SAM_samps, 
-                   .combine = "rbind", 
-                   .errorhandling = "remove")%do%{
-                     
-                     message(SAM.i)
-                     #test_pop <- sample(samps[continent=="Oceania"]$sampleId, 1)
-                     ###au.i=AUS_samps[1]
-                     test_pop = SAM.i 
-                     
-                     poolsizes = c(
-                       filter(samps, sampleId == rownames(dp)[1])$nFlies,
-                       filter(samps, sampleId == rownames(dp)[2])$nFlies,
-                       filter(samps, sampleId == rownames(dp)[3])$nFlies
-                     )
-                     
-                     
-                     ad.tmp = ad[ c(af_pop, eu_pop, test_pop), sampled.SNPs]
-                     
-                     dp.tmp = dp[ c(af_pop, eu_pop, test_pop), sampled.SNPs]
-                     
-                     pool <- new("pooldata",
-                                 npools=dim(ad.tmp)[1], #### Rows = Number of pools
-                                 nsnp=dim(ad.tmp)[2], ### Columns = Number of SNPs
-                                 refallele.readcount=t(ad.tmp),
-                                 readcoverage=t(dp.tmp),
-                                 poolsizes=poolsizes * 2,
-                                 poolnames = rownames(ad.tmp),
-                                 snp.info = snp.info)
-                     
-                     fstats.dat <- 
-                       compute.fstats(
-                         pool,
-                         #nsnp.per.bjack.block = 100,
-                         computeDstat = TRUE,
-                         verbose = TRUE
-                       )
-                     
-                     fstats.dat@f3star.values %>%
-                       as.data.frame()  ->
-                       f3stat
-                     
-                     target.pop.col = grep(paste(test_pop,";", sep = ""), rownames(f3stat))
-                     data.frame(f3 = f3stat[target.pop.col,]) %>%
-                       mutate(set.tree = rownames(f3stat)[target.pop.col] ) %>%
-                       mutate(parent_eu = eu_pop,
-                              parent_af = af_pop,
-                              sampleId = test_pop)->
-                       o
-                     
-                     return(o)
-                   }
-
-####
-
-rbind(
-mutate(f3.o.au, admix.set = "Australia"),
-mutate(f3.o.Nam, admix.set = "N.America"),
-mutate(f3.o.Sam, admix.set = "S.America")) %>%
-  left_join(samps) -> out.tmp.merged
-
-
-save(out.tmp.merged,
+save(f3.o.au,
      file = 
-       paste("/scratch/yey2sn/DEST2_analysis/admix_samps/f3_Admix/", eu_pop, ".Rdata", sep ="" ))
+       paste("./", N.America.AdmixEUAF, ".Rdata", sep ="" ))
