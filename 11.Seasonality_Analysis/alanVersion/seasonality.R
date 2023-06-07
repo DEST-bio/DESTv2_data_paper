@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1300; pops="all_seas"; nPerm=10
+  #jobId=1; pops="NoCore20_seas"; nPerm=2
 
 ### libraries
   library(data.table)
@@ -69,7 +69,7 @@
 
   } else if(pops == "NoCore20_seas") {
 
-    message("chosen model --> No Core20")
+    message("chosen model --> NoCore20_seas")
     seasonal.sets = seasonal.sets %>% filter(Core20_sat == FALSE)
 
 
@@ -191,7 +191,7 @@
 ### iterate through
   message("iterate")
   o <- foreach(i=1:length(tmp.ids), .combine="rbind", .errorhandling="remove")%do%{
-    #i <- 54
+    #i <- 1
     message(paste(i, length(tmp.ids), sep=" / "))
 
     ### get allele frequency data
@@ -302,8 +302,8 @@
       message(output_dir_final)
       dir.create(output_dir_final)
     }
-
-    save(o[model_features==mf],
+    oo <- o[model_features==mf]
+    save(oo,
          file = paste(output_dir_final,
                       "GLM_out.",
                       jobId,
@@ -315,3 +315,5 @@
                       paste(wins.i$chr,wins.i$start,wins.i$end, sep = "_"),
                       ".Rdata", sep = ""))
   }
+
+  message("done")
