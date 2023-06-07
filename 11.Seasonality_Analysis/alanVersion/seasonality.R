@@ -94,7 +94,10 @@
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][Core20_sat==F][delta.T.sign==-1][delta.T.mag=="Steep"]
     seasonal.sets[,.N,loc.y]
 
-  } else if{ message("population set is not specified"); q("no") }
+  } else {
+    message("population set is not specified")
+    q("no")
+  }
 
 ### gds object
   message("open genofile")
