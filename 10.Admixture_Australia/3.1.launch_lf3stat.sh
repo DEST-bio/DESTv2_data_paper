@@ -9,7 +9,7 @@
 #SBATCH -A jcbnunez
 #SBATCH -o ./slurmOut/admx.%A_%a.out # Standard output
 #SBATCH -e ./slurmOut/admx.%A_%a.err # Standard error
-#SBATCH --array=1-347
+#SBATCH --array=1-9022
 
 module load gcc/7.1.0 openmpi/3.1.4 R/4.1.1 gdal proj
 

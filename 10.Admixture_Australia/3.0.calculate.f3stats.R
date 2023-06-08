@@ -2,8 +2,9 @@
 ##### 
 
 args = commandArgs(trailingOnly=TRUE)
-k=as.numeric(args[1]) ## 1-347
-
+k=as.numeric(args[1]) ## 1-9022
+group = "Expansion.Admix"
+  
 ### libraries
 library(SeqArray)
 library(data.table)
@@ -12,6 +13,15 @@ library(tidyverse)
 library(magrittr)
 library(vroom)
 library(poolfstat)
+
+### North America == EUrope == Africa
+### 
+AM_EU_AF =
+  foreach( i = 1:347, .combine = "rbind")%do%{
+    cbind(EU = i, AF=1:26)
+  }
+AM_EU_AF = data.frame(AM_EU_AF)
+setDT(AM_EU_AF)
 
 ### metadata
 meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
@@ -59,12 +69,13 @@ snps.dt %>%
 #### Begin analyses
 #### 
 #### 
-  af_pop <- samps[continent=="Africa"][nFlies>100]$sampleId
-  eu_pop <- samps[continent=="Europe"]$sampleId[k]
-  children_samps = samps[continent=="North_America"]$sampleId
+  af_pop <- samps[continent=="Africa"]$sampleId[AM_EU_AF$AF[k]]
+  eu_pop <- samps[continent=="Europe"]$sampleId[AM_EU_AF$EU[k]] 
+  children_samps = samps[continent%in% c("North_America","South_America","Oceania")]$sampleId
 
 #### ----> Run loop
-f3.o.au = foreach(ch.i = children_samps, 
+  #start1 <- Sys.time()  
+  f3.o.au = foreach(ch.i = children_samps, 
                .combine = "rbind", 
                .errorhandling = "remove")%do%{
                  
@@ -72,7 +83,9 @@ f3.o.au = foreach(ch.i = children_samps,
                  ###au.i=AUS_samps[1]
                  #ch.i = children_samps[1]
                  test_pop = ch.i
-                 message(ch.i)
+                 message(paste("children=", ch.i, 
+                               "parent1=", af_pop,
+                               "parent2=", eu_pop) )
                  
                  ### Reset filter
                  seqResetFilter(genofile)
@@ -147,12 +160,21 @@ f3.o.au = foreach(ch.i = children_samps,
                  f3stat %>%
                    mutate(popf3 = rownames(.) ) %>%
                    separate(popf3, into = c("focal", "parents"), sep = ";") %>%
-                   filter(focal == test_pop) -> o
+                   filter(focal == test_pop) %>%
+                   mutate(group=group,
+                          african_parent=af_pop,
+                          european_parent=eu_pop)-> o
                  
                  return(o)
                }
-
+  
+  #end1 <- Sys.time() 
+  
+  #time1 <- end1 - start1      # Time difference between start &amp; end
+  #time1 
 ####
-save(f3.o.au,
+root = "/scratch/yey2sn/DEST2_analysis/admix_samps/Jun8.admix/"
+
+  save(f3.o.au,
      file = 
-       paste("./", N.America.AdmixEUAF, ".Rdata", sep ="" ))
+       paste(root, k, ".admix", ".Rdata", sep ="" ))
