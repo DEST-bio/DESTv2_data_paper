@@ -14,7 +14,7 @@
 
 ### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.NoCore20_NoProblems_NoFlip_seas.sh
 ###
-### sacct -j 50160634
+### sacct -j 50192800
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50115144_1.err
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 

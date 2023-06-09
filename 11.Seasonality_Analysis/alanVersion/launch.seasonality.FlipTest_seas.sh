@@ -12,11 +12,10 @@
 
 ###9060
 
-### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.noCore20.sh
+### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.NoCore20_NoProblems_NoFlip_seas.sh
 ###
-### sacct -j 50160609
-### seff 50160609_376
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50160180_1.err
+### sacct -j 50160634
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50115144_1.err
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 
 
@@ -30,5 +29,13 @@ Rscript \
 --vanilla \
 seasonality.R \
 ${SLURM_ARRAY_TASK_ID} \
-"NoCore20_seas" \
+"NoCore20_NoProblems_Steep_Pos_seas" \
+10
+
+
+Rscript \
+--vanilla \
+seasonality.R \
+${SLURM_ARRAY_TASK_ID} \
+"NoProblems_Steep_Pos_seas" \
 10

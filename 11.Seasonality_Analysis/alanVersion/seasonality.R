@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c1 -p dev --mem=4G
+# ijob -A berglandlab_standard -c5 -p dev --mem=4G
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
   args = commandArgs(trailingOnly=TRUE)
@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1; pops="NoCore20_seas"; nPerm=2
+  #jobId=1; pops="NoCore20_NoProblems_seas"; nPerm=2
 
 ### libraries
   library(data.table)
@@ -26,6 +26,7 @@
 ### load data
 
 # General metadata
+  #samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
   samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")
 
 ### seasonal pairs
@@ -46,12 +47,13 @@
 
 ### add in sample metadata
   dim(seasonal.sets)
-  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation", "exactDate")], by="sampleId")
+  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation", "exactDate", "continent")], by="sampleId")
   seasonal.sets[is.na(exactDate)]
   dim(seasonal.sets)
 
   table(seasonal.sets$Recommendation)
   table(seasonal.sets$exactDate)
+  table(seasonal.sets$cluster, seasonal.sets$continent)
 
 ### trim out ghost samples and leftover pair
   seasonal.sets.ag <- seasonal.sets[,.N,loc.y]
@@ -92,6 +94,27 @@
     message("chosen model --> NoCore20_NoFlip_seas")
     #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][Core20_sat==F][delta.T.sign==-1][delta.T.mag=="Steep"]
+    seasonal.sets[,.N,loc.y]
+
+  } else if(pops== "NoCore20_NoProblems_Steep_Pos_seas") {
+
+    message("chosen model --> NoCore20_NoProblems_Steep_Pos_seas")
+    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
+    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][Core20_sat==F][delta.T.sign==1][delta.T.mag=="Steep"]
+    seasonal.sets[,.N,loc.y]
+
+  } else if(pops== "NoProblems_Steep_Pos_seas") {
+
+    message("chosen model --> NoCore20_NoProblems_EuropeWest")
+    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
+    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][delta.T.sign==1][delta.T.mag=="Steep"]
+    seasonal.sets[,.N,loc.y]
+
+  } else if(pops== "NoCore20_NoProblems_NorthAmerica") {
+
+    message("chosen model --> NoCore20_NoProblems_EuropeEast")
+    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
+    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][cluster==1]
     seasonal.sets[,.N,loc.y]
 
   } else {
@@ -191,7 +214,7 @@
 ### iterate through
   message("iterate")
   o <- foreach(i=1:length(tmp.ids), .combine="rbind", .errorhandling="remove")%do%{
-    #i <- 1
+    #i <- 1; tmp.ids <- 678513
     message(paste(i, length(tmp.ids), sep=" / "))
 
     ### get allele frequency data
@@ -213,7 +236,8 @@
         message(j)
         ### iterate through model types
 
-          foreach(model_features = c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
+          # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
+          foreach(model_features = "LocRan",  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
@@ -237,6 +261,11 @@
               # message("LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
               t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
+              #t5.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (season | locality) + (1|year_pop), data=tmp, family = binomial)
+              #anova(t5.real, t4.real)
+              #anova(t3.real, t4.real)
+
+            T.dir
             } else if(model_features == "Phylo_LocRan" ){
               # message("Phylo_LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
@@ -266,6 +295,7 @@
                          model_features=model_features,
                          seas.AIC = seas.AIC,
                          null.AIC = null.AIC,
+                         spring.frac = mean(tmp$season=="spring")
                          ran=runif(1, 0,1e6))
               return(obs)
           } # iterate through models

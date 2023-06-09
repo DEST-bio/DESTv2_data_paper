@@ -2,8 +2,8 @@ scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/com
 scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.Core20_seas.Rdata
 
 system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.NoCore20_seas.Rdata ~/.")
-
-
+system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.NoCore20_NoProblems_seas.Rdata ~/.")
+system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.all.Rdata ~/.")
 
 ### libraries
   library(data.table)
@@ -12,7 +12,7 @@ system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasona
   library(patchwork)
 
 ### data COre20
-  load("~/enrichment.NoCore20_seas.Rdata")
+  load("~/enrichment.all.Rdata")
   oo[,model_features:=factor(model_features, levels=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))]
 
   oo.ag <- oo[,list(N=sum(N), chr="genome"), list(perm, max_p, model_features, pops)]
@@ -20,25 +20,29 @@ system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasona
   oo <- rbind(oo, oo.ag, fill=T)
 
 ####
-  oo.ag <- oo[,list(en=median(log2(N[perm==0]/N[perm!=0]))), list(pops, max_p, model_features)]
+  foreach(pops.i=unique(oo$pops))%do%{
+    message(pops.i)
 
-  p1 <-
-  ggplot(data=oo[perm!=0][chr=="genome"]) +
-  geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
-  geom_line(data=oo[perm==0][chr=="genome"], aes(x=log10(max_p), y=(N), group=perm), color="red") +
-  facet_grid(model_features~chr, scales="free_y")
+    p1 <-
+    ggplot(data=oo[perm!=0][chr=="genome"][pops==pops.i]) +
+    geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
+    geom_line(data=oo[perm==0][chr=="genome"][pops==pops.i], aes(x=log10(max_p), y=(N), group=perm), color="red") +
+    facet_grid(model_features~chr, scales="free_y")
 
-  p2 <-
-  ggplot(data=oo[perm!=0][chr!="genome"]) +
-  geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
-  geom_line(data=oo[perm==0][chr!="genome"], aes(x=log10(max_p), y=(N), group=perm), color="red") +
-  facet_grid(model_features~chr, scales="free_y")
+    p2 <-
+    ggplot(data=oo[perm!=0][chr!="genome"][pops==pops.i]) +
+    geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
+    geom_line(data=oo[perm==0][chr!="genome"][pops==pops.i], aes(x=log10(max_p), y=(N), group=perm), color="red") +
+    facet_grid(inv+model_features~chr, scales="free_y")
 
-layout <-
-"ABBBB"
+    layout <-
+    "ABBBB"
 
-  mega <- p1 + p2 + plot_layout(design=layout)
-  ggsave(mega, file="~/NoCore20.png", h=10, w=10)
+    mega <- p1 + p2 + plot_layout(design=layout) +  plot_annotation(title = pops.i)
+    ggsave(mega, file=paste("~/modelEnrichment.", pops.i, ".png", sep=""), h=5, w=10)
+
+  }
+
 
 
   ggplot(data=oo.ag) +
