@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c5 -p dev --mem=4G
+# ijob -A berglandlab_standard -c5 -p standard --mem=4G
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
   args = commandArgs(trailingOnly=TRUE)
@@ -8,7 +8,7 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1; pops="NoCore20_NoProblems_seas"; nPerm=2
+  #jobId=1; pops="NoCore20_NoProblems_Steep_Pos_seas"; nPerm=2
 
 ### libraries
   library(data.table)
@@ -128,7 +128,7 @@
 
 ### get basic index
   message("get snp table")
-  data <- seqGetData(genofile, "annotation/info/AF")
+  # data <- seqGetData(genofile, "annotation/info/AF")
   seqResetFilter(genofile)
   snp.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
                        pos=seqGetData(genofile, "position"),
@@ -265,7 +265,7 @@
               #anova(t5.real, t4.real)
               #anova(t3.real, t4.real)
 
-            T.dir
+
             } else if(model_features == "Phylo_LocRan" ){
               # message("Phylo_LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
