@@ -295,7 +295,7 @@
                          model_features=model_features,
                          seas.AIC = seas.AIC,
                          null.AIC = null.AIC,
-                         spring.frac = mean(tmp$season=="spring")
+                         spring.frac = mean(tmp$season=="spring", na.rm=T),
                          ran=runif(1, 0,1e6))
               return(obs)
           } # iterate through models
