@@ -80,7 +80,7 @@
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
 
-      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output", p, "_", mf, ".Rdata", sep=""))
+      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output/", p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
 
       #mod.out[,list(N=make_bins(p_lrt, size=.001, ret="my_sum"), thr=make_bins(p_lrt, size=.001, ret="my")), list(perm)]
