@@ -35,7 +35,7 @@
   # # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl, .errorhandling="remove")%do%{
+  o <- foreach(fl.i=fl, .errorhandling="remove")%dopar%{
     # fl.i <- fl[1]
 
     load(fl.i)

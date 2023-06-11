@@ -3,7 +3,7 @@
 #SBATCH -J glmOmn # A single job name for the array
 #SBATCH -c 5
 #SBATCH -N 1 # on one node
-#SBATCH -t 01:30:00 #<= this may depend on your resources
+#SBATCH -t 00:30:00 #<= this may depend on your resources
 #SBATCH --mem 15G #<= this may depend on your resources
 #SBATCH -p standard
 #SBATCH -A berglandlab_standard
@@ -12,7 +12,7 @@
 
 ###9060
 
-### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.noCore20.sh
+### sbatch --array=1-26 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.noCore20.sh
 ###
 ### sacct -j 50160609
 ### seff 50160609_376
