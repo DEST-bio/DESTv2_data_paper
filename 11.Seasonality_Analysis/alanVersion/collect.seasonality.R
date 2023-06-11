@@ -14,12 +14,14 @@
   jobId=as.numeric(args[1])
 
 ### jobs
-  job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_NoFlip_seas"), mf=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))
-  jobId=1:dim(job.dt)[1]
+  job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_NoFlip_seas"),
+                        mf=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))
+  job.dt <- rbind(job.dt, data.table(pops=c("NoCore20_NoProblems_Steep_Pos_seas", "NoProblems_Steep_Pos_seas"), mf="LocRan"))
+
+  # jobId=1:dim(job.dt)[1]
   # jobId=which(job.dt$pops=="NoCore20_NoProblems_NoFlip_seas")
   # job.dt <- expand.grid(pops=c("Core20_bad"), mf=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))
-  # jobId <- 1
-
+  # jobId <- 3
 
 ### get files
   fns <- paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
@@ -33,7 +35,7 @@
   # # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl, .errorhandling="stop")%do%{
+  o <- foreach(fl.i=fl, .errorhandling="remove")%do%{
     # fl.i <- fl[1]
 
     load(fl.i)
@@ -56,14 +58,14 @@
   }
   o <- rbindlist(o, fill=T)
 
-  table(o$chr, o$model_features, o$pops)
-  table(is.na(o$p_lrt))
-  o[,list(zero=sum( p_lrt==0, na.rm=T)), list(perm, model_features)]
-  table(o$p_lrt==1)
-  table(o[nObs>19]$p_lrt<.05, o[nObs>19]$perm, o[nObs>19]$model_features)
-  table(o[nObs>20][model_features=="LocBinomial"]$p_lrt<.05, o[nObs>20][model_features=="LocBinomial"]$perm, o[nObs>20][model_features=="LocBinomial"]$chr)
-
-  table(o$nFixed)
+  #table(o$chr, o$model_features, o$pops)
+  #table(is.na(o$p_lrt))
+  #o[,list(zero=sum( p_lrt==0, na.rm=T)), list(perm, model_features)]
+  #table(o$p_lrt==1)
+  #table(o[nObs>19]$p_lrt<.05, o[nObs>19]$perm, o[nObs>19]$model_features)
+  #table(o[nObs>20][model_features=="LocBinomial"]$p_lrt<.05, o[nObs>20][model_features=="LocBinomial"]$perm, o[nObs>20][model_features=="LocBinomial"]$chr)
+#
+  #table(o$nFixed)
 
 ### save jobs based on model type
   setkey(o, model_features, pops)
@@ -75,7 +77,7 @@
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
 
-      #save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/", p, "_", mf, ".Rdata", sep=""))
+      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/", p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
 
       #mod.out[,list(N=make_bins(p_lrt, size=.001, ret="my_sum"), thr=make_bins(p_lrt, size=.001, ret="my")), list(perm)]
@@ -110,12 +112,4 @@
     }
   }
   #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"]
-
-  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/compiled_output/enrichment.all.Rdata", sep=""))
-
-
-
-### sliding window aggregation
-  o.ag <- o[,list(nSig=sum(p_lrt<1e-4)), list(model_features, chr, pos, perm=perm!=0)]
-  o.ag[perm==T & nSig>8]
-  o.ag[perm==F & nSig>0]
+  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/enrichment.", p, "_", mf, ".Rdata", sep=""))
