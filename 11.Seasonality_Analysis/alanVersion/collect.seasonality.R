@@ -12,6 +12,7 @@
   args = commandArgs(trailingOnly=TRUE)
 
   jobId=as.numeric(args[1])
+  message(jobId)
 
 ### jobs
   job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_NoFlip_seas"),
@@ -22,6 +23,7 @@
   # jobId=which(job.dt$pops=="NoCore20_NoProblems_NoFlip_seas")
   # job.dt <- expand.grid(pops=c("Core20_bad"), mf=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))
   # jobId <- 3
+  message(job.dt[jobId,])
 
 ### get files
   fns <- paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
@@ -35,11 +37,12 @@
   # # paste(c(1:9060)[!c(1:9060)%in%fls[order(fls)]], collapse=",")
 
 ### collect completed jobs
-  o <- foreach(fl.i=fl, .errorhandling="remove")%dopar%{
+  message("collect")
+  o <- foreach(fl.i=fl[,1], .errorhandling="remove")%dopar%{
     # fl.i <- fl[1]
+    message(paste(which(fl.i==fl), length(fl), sep=" / "))
 
     load(fl.i)
-    message(paste(which(fl.i==fl), length(fl), sep=" / "))
 
     if(grepl("Core20_bad", fl.i)){
       oo <- o[model_features==tstrsplit(fl.i, "/")[[8]]]
