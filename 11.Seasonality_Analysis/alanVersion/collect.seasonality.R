@@ -73,14 +73,14 @@
 ### save jobs based on model type
   setkey(o, model_features, pops)
 
-  # unique(o$model_features)
-  oo <- foreach(mf="LocRan", .combine="rbind")%do%{
+  #
+  oo <- foreach(mf=unique(o$model_features), .combine="rbind")%do%{
     foreach(p=unique(o$pops), .combine="rbind")%do%{
       # mf="LocRan"; p="NoCore20_NoProblems_NoFlip_seas"; p.i=0; chr.i="2L"; inv.i=T
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
 
-      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/", p, "_", mf, ".Rdata", sep=""))
+      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output", p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
 
       #mod.out[,list(N=make_bins(p_lrt, size=.001, ret="my_sum"), thr=make_bins(p_lrt, size=.001, ret="my")), list(perm)]
@@ -115,4 +115,4 @@
     }
   }
   #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"]
-  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/enrichment.", p, "_", mf, ".Rdata", sep=""))
+  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))
