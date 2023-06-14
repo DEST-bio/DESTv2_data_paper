@@ -33,13 +33,13 @@ system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasona
     ggplot(data=oo[perm!=0][chr!="genome"][pops==pops.i]) +
     geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
     geom_line(data=oo[perm==0][chr!="genome"][pops==pops.i], aes(x=log10(max_p), y=(N), group=perm), color="red") +
-    facet_grid(inv+model_features~chr, scales="free_y")
+    facet_grid(model_features~chr, scales="free_y")
 
     layout <-
     "ABBBB"
 
     mega <- p1 + p2 + plot_layout(design=layout) +  plot_annotation(title = pops.i)
-    ggsave(mega, file=paste("~/modelEnrichment.", pops.i, ".png", sep=""), h=5, w=10)
+    ggsave(mega, file=paste("~/modelEnrichment.old.", pops.i, ".png", sep=""), h=5, w=10)
 
   }
 

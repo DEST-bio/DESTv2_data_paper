@@ -8,7 +8,15 @@
   registerDoMC(5)
 
 ### load data
-  load("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiledCore20_seas_LocBinomial.Rdata")
+
+### wd
+  setwd("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output")
+
+### load in datasets
+  ### focal
+    load("NoCore20_NoProblems_NoFlip_seas_LocRan.Rdata")
+    nObs.thr <- quantile(mod.out$nObs, .25, na.rm=T); nObs.thr
+    mod.out <- mod.out[nObs>=nObs.thr][!is.na(p_lrt)][nFixed==0][af>.05 & af<.95]
 
 ### make window definitions
   win.bp <- 1e5
@@ -44,8 +52,8 @@
 
   setkey(mod.out, chr, pos)
 
-  win.out <- foreach(win.i=1:dim(wins)[1], .errorhandling = "remove", .combine = "rbind"  )%do%{
-    # win.i <- 500
+  win.out <- foreach(win.i=1:dim(wins)[1], .errorhandling = "remove", .combine = "rbind"  )%dopar%{
+    # win.i <- 736
     message(paste(win.i, dim(wins)[1], sep=" / "))
 
 
@@ -53,7 +61,7 @@
                                     pos=wins[win.i]$start:wins[win.i]$end,
                                     key="chr,pos")), nomatch=0]
 
-    win.tmp <- win.tmp[!is.na(p_lrt)]
+    win.tmp <- win.tmp[!is.na(p_lrt)][p_lrt>0 & p_lrt<1]
     #### Calculate Z score
     win.tmp[,Z:=qnorm(p_lrt, 0, 1)]
     #### Calculate Z rnp score
@@ -68,7 +76,7 @@
                   rnp.pr=c(mean(rnp<=pr.i)),
                   rnp.binom.p=c(binom.test(sum(rnp<=pr.i),
                                            length(rnp), pr.i)$p.value),
-                  wZa=sum(het*Z, na.rm=T)/(sqrt(sum(het^2))),
+                  wZa=sum(het*Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
                   wZa.p=pnorm(sum(het*Z)/(sqrt(sum(het^2))), lower.tail=T),
                   rnp.wZa=sum(het*rnpZ)/(sqrt(sum(het^2))),
                   rnp.wZa.p=pnorm(sum(het*rnpZ)/(sqrt(sum(het^2))), lower.tail=T),
@@ -89,16 +97,23 @@
     win.out
   }
 
-  save(win.out, file="~/core20_dest2_windows.Rdata")
+  save(win.out, file="~/NoCore20_NoProblems_NoFlip_seas_LocRan.windows.Rdata")
+
+
+  table(win.out$wZa.p<1e-10, win.out$perm)
+
+
 
 
 ### plot
-  system("scp aob2x@rivanna.hpc.virginia.edu:~/core20_dest2_windows.Rdata ~/.")
+  system("scp aob2x@rivanna.hpc.virginia.edu:~/NoCore20_NoProblems_NoFlip_seas_LocRan.windows.Rdata ~/.")
 
-  load("~/core20_dest2_windows.Rdata")
+  load("~/NoCore20_NoProblems_NoFlip_seas_LocRan.windows.Rdata")
 
-  ggplot(data=win.out[,c("win","rnp.binom.p", "chr", "perm", "perm_type", "pos_mean", "model_features", "wZa.p"), with=F],
-          aes(x=pos_mean, y=-log10(wZa.p), group=perm, color=perm_type)) + geom_line() + facet_grid(~chr)
+  ggplot(data=win.out[perm!=0]) +
+    geom_line(aes(x=pos_mean, y=-log10(rnp.binom.p), group=perm), alpha=.5) +
+    geom_line(data=win.out[perm==0],aes(x=pos_mean, y=-log10(rnp.binom.p)), color="red") +
+    facet_grid(~chr)
 
   win.out.pa <- win.out[,list(wZa.pa=p.adjust(wZa.p, "bonferroni"), win), list(perm)]
 

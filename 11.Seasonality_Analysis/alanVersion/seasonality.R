@@ -30,7 +30,8 @@
   samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")
 
 ### seasonal pairs
-  seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+  #seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+  seasonal.sets <- get(load("/project/berglandlab/jcbnunez/Shared_w_Alan/seasonal_classification/DEST2.seasonals.plusCore20.flip.met.Rdata"))
   setDT(seasonal.sets)
   table(seasonal.sets[,.N,loc.y]$N)
   dim(seasonal.sets)
@@ -105,16 +106,9 @@
 
   } else if(pops== "NoProblems_Steep_Pos_seas") {
 
-    message("chosen model --> NoCore20_NoProblems_EuropeWest")
+    message("chosen model --> NoProblems_Steep_Pos_seas")
     #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][delta.T.sign==1][delta.T.mag=="Steep"]
-    seasonal.sets[,.N,loc.y]
-
-  } else if(pops== "NoCore20_NoProblems_NorthAmerica") {
-
-    message("chosen model --> NoCore20_NoProblems_EuropeEast")
-    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
-    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][cluster==1]
     seasonal.sets[,.N,loc.y]
 
   } else {
@@ -237,7 +231,7 @@
         ### iterate through model types
 
           # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
-          foreach(model_features = "LocRan",  .combine="rbind", .errorhandling="remove")%do%{
+          foreach(model_features = c("LocBinomial", "LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
@@ -310,7 +304,7 @@
 
 #### SAVE O
   message("save")
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/"
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
   if(!dir.exists(output_dir)) {
     message("makding new dir:")
     message(output_dir)
