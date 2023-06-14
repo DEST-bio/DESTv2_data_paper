@@ -1,49 +1,4 @@
-#!/bin/sh
 
-#  Master.sh
-#
-#
-#  Created by Martin Kapun on 04.11.20.
-#
-
-cd /media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/
-
-mkdir results
-
-## define syn/non-syn SNPs of different MAC thresholds for PoolSNP
-python3 scripts/PNPS4PoolSNP.py \
-  --input /media/inter/mkapun/projects/ImPoolation/data/dest.all.PoolSNP.001.5.test.norep.ann.vcf.gz \
-  --output results/PoolSNP_full.pnps.gz \
-  --MAC 5,10,15,20,25,30,40,50
-
-## define syn/non-syn SNPs of different MAC thresholds for PoolSNP collapsed
-python3 scripts/PNPS4PoolSNP.py \
-  --input /media/inter/ssteindl/DEST/DEST2_NHM/collapsed/PoolSNP/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz \
-  --output results/PoolSNP_full_collapsed.pnps.gz \
-  --MAC 5,10,15,20,25,30,40,50
-
-## define syn/non-syn SNPs of different MAF thresholds for SNAPE
-python3 scripts/PNPS4VCF.py \
-  --input /media/inter/mkapun/projects/ImPoolation/data/dest.PoolSeq.SNAPE.NA.NA.25Feb2023.norep.ann.vcf.gz \
-  --output results/SNAPE_full.pnps.gz \
-  --MAF 0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.15,0.2
-
-## Count Private SNPs
-python scripts/PrivateSNPs.py \
-  --input /media/inter/mkapun/projects/ImPoolation/data/dest.all.PoolSNP.001.50.25Feb2023.norep.ann.vcf.gz \
-  --output results/PoolSNP_full.ps
-
-## Count Private SNPs
-python scripts/PrivateSNPs.py \
-  --input /media/inter/ssteindl/DEST/DEST2_NHM/collapsed/PoolSNP/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz \
-  --output results/PoolSNP_full_collapsed.ps
-
-python scripts/PrivateSNPs.py \
-  --input /media/inter/mkapun/projects/ImPoolation/data/dest.PoolSeq.SNAPE.NA.NA.25Feb2023.norep.ann.vcf.gz \
-  --output results/SNAPE_full.ps
-
-## and now classify the samples in R and plot summary Figures
-echo '''
 setwd("/media/inter/mkapun/projects/DESTv2_data_paper/misc/PnPs/")
 
 library(tidyverse)
@@ -288,6 +243,4 @@ ggsave("results/Figure2_collapsed.png",
        FP,
        width=15,
        height=9)
-''' >scripts/ClassifyNplot_collapsed.r
 
-Rscript scripts/ClassifyNplot_collapsed.r
