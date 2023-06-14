@@ -53,3 +53,10 @@ seasonality.R \
 ${SLURM_ARRAY_TASK_ID} \
 "NoCore20_NoProblems_Steep_Neg_seas" \
 10
+
+Rscript \
+--vanilla \
+seasonality.R \
+${SLURM_ARRAY_TASK_ID} \
+"NoProblems_Steep_Pos_seas" \
+10
