@@ -8,7 +8,27 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1; pops="NoCore20_NoProblems_Steep_Neg_seas"; nPerm=2
+  #jobId=8; pops="NoCore20_NoProblems_Steep_Neg_seas"; nPerm=2
+
+### does file already exist?
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
+  output_dir = paste(output_dir, pops, "/", sep="")
+  output_dir_final = paste(output_dir, "Loc_Ran_PCA", "/", sep="")
+  file = paste(output_dir_final,
+               "GLM_out.",
+               jobId,
+               ".",
+               pops,
+               ".",
+               "omnibus",
+               ".",
+               "*",
+               ".Rdata", sep = "")
+  if(nchar(list.files(output_dir_final, paste("GLM_out.", jobId, ".", pops, ".*.Rdata", sep="")))>0) {
+    message("already done")
+    q("no")
+
+  }
 
 ### libraries
   library(data.table)
