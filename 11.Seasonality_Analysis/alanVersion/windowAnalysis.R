@@ -111,8 +111,8 @@
   load("~/NoCore20_NoProblems_NoFlip_seas_LocRan.windows.Rdata")
 
   ggplot(data=win.out[perm!=0]) +
-    geom_line(aes(x=pos_mean, y=-log10(rnp.binom.p), group=perm), alpha=.5) +
-    geom_line(data=win.out[perm==0],aes(x=pos_mean, y=-log10(rnp.binom.p)), color="red") +
+    geom_line(aes(x=pos_mean, y=-log10(wZa.p), group=perm), alpha=.5) +
+    geom_line(data=win.out[perm==0],aes(x=pos_mean, y=-log10(wZa.p)), color="red") +
     facet_grid(~chr)
 
   win.out.pa <- win.out[,list(wZa.pa=p.adjust(wZa.p, "bonferroni"), win), list(perm)]

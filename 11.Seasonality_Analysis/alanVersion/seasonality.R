@@ -8,7 +8,28 @@
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
 
-  #jobId=1; pops="NoCore20_NoProblems_Steep_Pos_seas"; nPerm=2
+  #jobId=88; pops="NoCore20_NoProblems_Steep_Neg_seas"; nPerm=2
+
+### does file already exist?
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
+  output_dir = paste(output_dir, pops, "/", sep="")
+  output_dir_final = paste(output_dir, "Loc_Ran_PCA", "/", sep="")
+  file = paste(output_dir_final,
+               "GLM_out.",
+               jobId,
+               ".",
+               pops,
+               ".",
+               "omnibus",
+               ".",
+               "*",
+               ".Rdata", sep = "")
+
+  if(length(list.files(output_dir_final, paste("GLM_out.", jobId, ".", pops, ".*.Rdata", sep="")))>0) {
+    message("already done")
+    q("no")
+
+  }
 
 ### libraries
   library(data.table)
@@ -26,35 +47,49 @@
 ### load data
 
 # General metadata
-  #samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
-  samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")
+  samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
+  #samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")
 
 ### seasonal pairs
   #seasonal.sets <- get(load("/project/berglandlab/DEST2.0_working_data/DEST2.seasonals.plusCore20.flip.met.Rdata"))
-  seasonal.sets <- get(load("/project/berglandlab/jcbnunez/Shared_w_Alan/seasonal_classification/DEST2.seasonals.plusCore20.flip.met.Rdata"))
-  setDT(seasonal.sets)
-  table(seasonal.sets[,.N,loc.y]$N)
-  dim(seasonal.sets)
+  # seasonal.sets <- get(load("/project/berglandlab/jcbnunez/Shared_w_Alan/seasonal_classification/DEST2.seasonals.plusCore20.flip.met.Rdata"))
+  # setDT(seasonal.sets)
+  # table(seasonal.sets[,.N,loc.y]$N)
+  # dim(seasonal.sets)
 
-### add phylo cluster
-  phylo_clust <- as.data.table(get(load("~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/phylocluster_data.Rdata")))
-  setnames(phylo_clust, "smapleId", "sampleId")
-
-  dim(seasonal.sets)
-  seasonal.sets <- merge(seasonal.sets, phylo_clust, by="sampleId", all.x=T)
-  dim(seasonal.sets)
-
-  seasonal.sets$cluster[is.na(seasonal.sets$cluster)] = 1
+### add phylo cluster for 26April2023 version
+  #phylo_clust <- as.data.table(get(load("~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/phylocluster_data.Rdata")))
+  #setnames(phylo_clust, "smapleId", "sampleId")
+  #
+  #dim(seasonal.sets)
+  #seasonal.sets <- merge(seasonal.sets, phylo_clust, by="sampleId", all.x=T)
+  #dim(seasonal.sets)
+  #
+  #seasonal.sets$cluster[is.na(seasonal.sets$cluster)] = 1
 
 ### add in sample metadata
-  dim(seasonal.sets)
-  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation", "exactDate", "continent")], by="sampleId")
-  seasonal.sets[is.na(exactDate)]
-  dim(seasonal.sets)
+  # dim(seasonal.sets)
+  # seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation", "exactDate", "continent", "cluster1.0", "cluster2.0_k4",  "cluster2.0_k5", "cluster2.0_k8")], by="sampleId")
+  # seasonal.sets[is.na(exactDate)]
+  # dim(seasonal.sets)
 
-  table(seasonal.sets$Recommendation)
-  table(seasonal.sets$exactDate)
-  table(seasonal.sets$cluster, seasonal.sets$continent)
+### set phylo_cluster
+  # table(seasonal.sets$Recommendation)
+  # table(seasonal.sets$exactDate)
+  # table(seasonal.sets$cluster, seasonal.sets$continent)
+#
+  # table(seasonal.sets$Recommendation, seasonal.sets$cluster2.0_k4)
+  # table(seasonal.sets$Recommendation, seasonal.sets$cluster2.0_k5)
+  # table(seasonal.sets$Recommendation, seasonal.sets$cluster2.0_k8)
+
+  #seasonal.sets[,cluster:=cluster2.0_k8]
+
+### get PCA values
+  load("/project/berglandlab/jcbnunez/Shared_w_Alan/seasonal_classification/seasonalpair.pca.meta.Rdata")
+  seasonal.sets <- seasonalpair.pca.meta
+  seasonal.sets[,cluster:=cluster2.0_k8]
+
+  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation"), with=F], by="sampleId")
 
 ### trim out ghost samples and leftover pair
   seasonal.sets.ag <- seasonal.sets[,.N,loc.y]
@@ -90,9 +125,9 @@
     seasonal.sets <- seasonal.sets[J(seasonal.sets.N[N==2])]
     dim(seasonal.sets)
 
-  } else if(pops== "NoCore20_NoProblems_NoFlip_seas") {
+  } else if(pops== "NoCore20_NoProblems_Steep_Neg_seas") {
 
-    message("chosen model --> NoCore20_NoFlip_seas")
+    message("chosen model --> NoCore20_NoProblems_Steep_Neg_seas")
     #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][Core20_sat==F][delta.T.sign==-1][delta.T.mag=="Steep"]
     seasonal.sets[,.N,loc.y]
@@ -118,7 +153,8 @@
 
 ### gds object
   message("open genofile")
-  genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
+  #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
+  genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.gds")
 
 ### get basic index
   message("get snp table")
@@ -231,39 +267,46 @@
         ### iterate through model types
 
           # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
-          foreach(model_features = c("LocBinomial", "LocRan"),  .combine="rbind", .errorhandling="remove")%do%{
+          foreach(model_features = c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
+                                        "Loc_Binomial_PCA",  "Loc_Ran_PCA"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
             # model_features <- "LocBinomial"
-            if(model_features == "LocBinomial"){
+            if(model_features == "yearPop_Binomial"){
               # message("Loc model")
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= binomial)
               t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= binomial)
-            } else if(model_features == "LocQB"){
-              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= quasibinomial)
-              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= quasibinomial)
-            } else if(model_features == "PhyloQB" ){
-              # message("Phylo model")
-              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster,          data=tmp,  family = quasibinomial)
-              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster, data=tmp,  family = quasibinomial)
-            } else if(model_features == "Loc_PhyloQB" ){
-              # message("Loc_Phylo model")
-              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + year_pop,          data=tmp,  family = quasibinomial)
-              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + year_pop, data=tmp,  family = quasibinomial)
-            } else if(model_features == "LocRan" ){
+              t3.sing <- t4.sing <- NA
+            } else if(model_features =="Phylo_yearPop_Binomial") {
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop + cluster,          data = tmp, family= binomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop + cluster, data = tmp, family= binomial)
+              t3.sing <- t4.sing <- NA
+
+            } else if(model_features == "yearPop_Ran" ){
               # message("LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
               t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
-              #t5.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (season | locality) + (1|year_pop), data=tmp, family = binomial)
-              #anova(t5.real, t4.real)
-              #anova(t3.real, t4.real)
+              t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
 
-
-            } else if(model_features == "Phylo_LocRan" ){
+            } else if(model_features == "Phylo_yearPop_Ran" ){
               # message("Phylo_LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
               t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop), data=tmp, family = binomial)
+              t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
+
+            } else if(model_features == "Loc_Binomial_PCA"){
+              # message("Loc model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ locality + Dim.1 + Dim.2 + Dim.3,          data = tmp, family= binomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + locality + Dim.1 + Dim.2 + Dim.3, data = tmp, family= binomial)
+              t3.sing <- t4.sing <- NA
+
+            } else if(model_features == "Loc_Ran_PCA" ){
+              # message("LocRan model")
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + Dim.1 + Dim.2 + Dim.3 + (1 | locality),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + Dim.1 + Dim.2  + Dim.3 + (1 | locality), data=tmp, family = binomial)
+              t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
+
             }
 
             if(grepl("Ran", model_features)) {
@@ -290,7 +333,7 @@
                          seas.AIC = seas.AIC,
                          null.AIC = null.AIC,
                          spring.frac = mean(tmp$season=="spring", na.rm=T),
-                         ran=runif(1, 0,1e6))
+                         ran=runif(1, 0,1e6), singular=paste(t3.sing, t4.sing, sep="_"))
               return(obs)
           } # iterate through models
       } # iterate through perms
