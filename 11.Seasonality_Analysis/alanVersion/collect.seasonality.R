@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c5 -p dev --mem=40G
+# ijob -A berglandlab_standard -c5 -p largemem --mem=40G
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 ### libraries
@@ -15,9 +15,10 @@
   message(jobId)
 
 ### jobs
-  job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_NoFlip_seas"),
-                        mf=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))
-  job.dt <- rbind(job.dt, data.table(pops=c("NoCore20_NoProblems_Steep_Pos_seas", "NoProblems_Steep_Pos_seas"), mf="LocRan"))
+  job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_Steep_Neg_seas", "NoProblems_Steep_Pos_seas"),
+                        mf=c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
+                            "Loc_Binomial_PCA",  "Loc_Ran_PCA"))
+
 
   # jobId=1:dim(job.dt)[1]
   # jobId=which(job.dt$pops=="NoCore20_NoProblems_NoFlip_seas")
@@ -26,7 +27,7 @@
   message(job.dt[jobId,])
 
 ### get files
-  fns <- paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
+  fns <- paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
   fl <- unlist(sapply(fns, list.files, full.names=T))
   length(fl)
 
@@ -80,7 +81,7 @@
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
 
-      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output/", p, "_", mf, ".Rdata", sep=""))
+      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/glm_output/", p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
 
       #mod.out[,list(N=make_bins(p_lrt, size=.001, ret="my_sum"), thr=make_bins(p_lrt, size=.001, ret="my")), list(perm)]
@@ -114,5 +115,5 @@
 
     }
   }
-  #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"]
-  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))
+  #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"][pops=="NoCore20_NoProblems_Steep_Neg_seas"][chr=="2L"][inv==T]
+  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))

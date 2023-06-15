@@ -13,8 +13,8 @@
 ###9060
 
 ### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/launch.seasonality.June13.sh
-### sacct -j 50643576
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50623725_100.err
+### sacct -j 50644000
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50644000_989.out
 ### cat /scratch/aob2x/DESTv2_output_SNAPE/logs/runSnakemake.49369837*.err
 ### cd /scratch/aob2x/DEST2_analysis/seasonality/logs/; perl -e 'for(<*>){unlink}'; cd -
 

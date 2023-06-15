@@ -12,7 +12,7 @@
 
 ###9060
 
-### sbatch --array=1-26 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/collect.seasonality.sh
+### sbatch --array=1-30 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/collect.seasonality.sh
 ###
 ### sacct -j 50363657
 ### seff 50160609_376
