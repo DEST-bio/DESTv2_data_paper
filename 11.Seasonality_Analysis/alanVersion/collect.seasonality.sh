@@ -5,7 +5,7 @@
 #SBATCH -N 1 # on one node
 #SBATCH -t 00:30:00 #<= this may depend on your resources
 #SBATCH --mem 15G #<= this may depend on your resources
-#SBATCH -p standard
+#SBATCH -p largemem
 #SBATCH -A berglandlab_standard
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.%A_%a.err # Standard error
@@ -14,9 +14,9 @@
 
 ### sbatch --array=1-30 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/collect.seasonality.sh
 ###
-### sacct -j 50363657
+### sacct -j 50692379
 ### seff 50160609_376
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.50362606_1.out
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.50363657_1.err
 
 
 
