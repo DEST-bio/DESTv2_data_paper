@@ -67,7 +67,7 @@
   #o[,list(zero=sum( p_lrt==0, na.rm=T)), list(perm, model_features)]
   #table(o$p_lrt==1)
   #table(o[nObs>19]$p_lrt<.05, o[nObs>19]$perm, o[nObs>19]$model_features)
-  #table(o[nObs>20][model_features=="LocBinomial"]$p_lrt<.05, o[nObs>20][model_features=="LocBinomial"]$perm, o[nObs>20][model_features=="LocBinomial"]$chr)
+  #table(o[nObs>20]$p_lrt<.05, o[nObs>20]$perm, o[nObs>20]$chr)
 #
   #table(o$nFixed)
 
@@ -80,6 +80,8 @@
       # mf="LocRan"; p="NoCore20_NoProblems_NoFlip_seas"; p.i=0; chr.i="2L"; inv.i=T
       message(paste("saving: ", mf, p, sep=" / "))
       mod.out <- o[J(data.table(model_features=mf, pops=p, key="model_features,pops"))]
+
+      message(head(mod.out))
 
       save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/glm_output/", p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
@@ -116,4 +118,6 @@
     }
   }
   #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"][pops=="NoCore20_NoProblems_Steep_Neg_seas"][chr=="2L"][inv==T]
+  message(oo)
+
   save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))
