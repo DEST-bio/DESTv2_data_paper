@@ -3,7 +3,7 @@
 #SBATCH -J glmOmn # A single job name for the array
 #SBATCH -c 5
 #SBATCH -N 1 # on one node
-#SBATCH -t 02:30:00 #<= this may depend on your resources
+#SBATCH -t 03:30:00 #<= this may depend on your resources
 #SBATCH --mem 15G #<= this may depend on your resources
 #SBATCH -p standard
 #SBATCH -A berglandlab_standard

@@ -15,7 +15,7 @@
   message(jobId)
 
 ### jobs
-  job.dt <- expand.grid(pops=c("Core20_bad", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_Steep_Neg_seas", "NoProblems_Steep_Pos_seas"),
+  job.dt <- expand.grid(pops=c("Core20_seas", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_Steep_Neg_seas", "NoProblems_Steep_Pos_seas"),
                         mf=c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
                             "Loc_Binomial_PCA",  "Loc_Ran_PCA"))
 
@@ -118,6 +118,6 @@
     }
   }
   #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"][pops=="NoCore20_NoProblems_Steep_Neg_seas"][chr=="2L"][inv==T]
-  message(oo)
+  head(oo)
 
   save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))
