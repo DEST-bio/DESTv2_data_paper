@@ -1,10 +1,43 @@
 ###
 ###
 
+### libraries
 library(FactoMineR)
 library(factoextra)
+library(SeqArray)
+library(data.table)
+library(foreach)
 library(tidyverse)
+library(magrittr)
 library(vroom)
+library(poolfstat)
+
+####
+meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
+samps <- fread(meta_git)
+setDT(samps)
+
+### open GDS
+genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds", allow.duplicate=T)
+
+###
+seqResetFilter(genofile)
+seqSetFilter(genofile, sample.id=samps$sampleId)
+snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
+                      pos=seqGetData(genofile, "position"),
+                      variant.id=seqGetData(genofile, "variant.id"),
+                      nAlleles=seqNumAllele(genofile),
+                      missing=seqMissing(genofile, .progress=T),
+                      allele=seqGetData(genofile, "allele")) %>%
+  separate(allele, into = c("ref_allele","alt_allele"), sep = ",")
+
+snps.dt <- snps.dt[nAlleles==2][missing < 0.1][chr %in% c("2L","2R","3L","3R")]
+
+snps.dt %<>% mutate(SNP_id = paste(chr, pos, sep = "_")) 
+snps.dt %>% dim
+
+
+
 
 ###
 dat.o <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))
@@ -61,7 +94,7 @@ dat.o.nsim.noBeij[,SNP.selector] %>%
 
 save(pca.object, file = "pca.object.Rdata")
 
-####
+#### Plot
 
 pca.object$ind$coord %>%
   as.data.frame() %>% 
@@ -80,7 +113,7 @@ pca.meta.dim %>%
   theme_bw() ->
   PCA12.dim
 
-ggsave(PCA12.dim, file = "PCA12.dim.pdf", w = 5, h =4)
+#ggsave(PCA12.dim, file = "PCA12.dim.pdf", w = 5, h =4)
 
 pca.meta.dim %>%
   ggplot(aes(
@@ -92,4 +125,4 @@ pca.meta.dim %>%
   theme_bw() ->
   PCA13.dim
 
-ggsave(PCA13.dim, file = "PCA13.dim.pdf", w = 5, h =4)
+#ggsave(PCA13.dim, file = "PCA13.dim.pdf", w = 5, h =4)
