@@ -1,22 +1,24 @@
 #!/bin/bash
 # -----------------------------Name of the job-------------------------
-#SBATCH --job-name=ReLERNN
-#-----------------------------Output files-----------------------------
-#SBATCH --output=logs/ReLERNN_%j.out
-#SBATCH --error=logs/ReLERNN_%j.err
-#-----------------------------Required resources-----------------------
-#SBATCH -p gpu
-#SBATCH --gres=gpu:1
-#SBATCH --ntasks=32
-#SBATCH --mem 200GB
 
+#SBATCH -J ReLERNN # A single job name for the array
+#SBATCH --ntasks=32
+#SBATCH -t 24:00:00 #<= this may depend on your resources
+#SBATCH --mem 200G #<= this may depend on your resources
+#SBATCH --gres=gpu:p100:1
+#SBATCH -p gpu
+#SBATCH -A jcbnunez
+#SBATCH -o ./slurmOut/ReLERNN.%A_%a.out # Standard output
+#SBATCH -e ./slurmOut/ReLERNN.%A_%a.err # Standard error
 
 #-----------------------------Modules----------------------------------
-module load Miniconda3/4.9.2
-module load GCC/10.2.0
-module load BCFtools/1.11
-source activate dest
+module purge
+module load gcc anaconda/2020.11-py3.8
 
+module load bcftools
+module load vcftools
+
+source activate relernn2
 #-----------------------------Launch script----------------------------
 # Example
 # sbatch --array=1-10 run_relernn2.sh
@@ -24,13 +26,18 @@ source activate dest
 #-----------------------------Working paths----------------------------
 ## !!! Modify DIR and DIRDATA: DIR is where ReLERNN2 will write results,
 ## !!! DIRDATA where the DEST2 vcf is 
-DIR="/lustre/home/ibe/mcoronado/scratch/DEST_v2/ANALYSIS/recombination/ReLERNN_analysis"
-DIRDATA=/lustre/home/ibe/mcoronado/scratch/DEST_v2/DATA
+DIR="/scratch/yey2sn/DEST2_analysis/relernn_runs"
+DIRDATA="/project/berglandlab/DEST/vcf/"
 VCFFILE="${DIRDATA}/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz"
 SAMPLE="$(cat $DIR/0-selected_samples.txt | sed "${SLURM_ARRAY_TASK_ID}q;d" )"
+METADATA="dest_v2.samps_8Jun2023.csv"
 
-
+echo $SAMPLE
 #-----------------------------Create sample VCF------------------------
+# This takes a couple minutes
+
+#tabix -p vcf $VCFFILE <-- file must be indexed
+
 VCF="$DIR/VCF"
 mkdir -p $VCF/$SAMPLE
 bcftools view -c1 -Oz -s $SAMPLE -o $VCF/$SAMPLE/$SAMPLE.vcf.gz $VCFFILE
@@ -59,15 +66,20 @@ vcftools --depth --gzvcf $VCF/$SAMPLE/$SAMPLE.biallelic_snps.sort.X.vcf.gz --out
 sampleDepthAut=$(cut -f3 $DEPTH/$SAMPLE/$SAMPLE.aut.idepth | tail -n+2 | cut -f1 -d'.')
 sampleDepthX=$(cut -f3 $DEPTH/$SAMPLE/$SAMPLE.X.idepth | tail -n+2 | cut -f1 -d'.')
 
+echo $sampleDepthAut
+echo $sampleDepthX
 #-----------------------------Number of flies in pool---------------------
-nFlies=$(awk  -F,  -v sample="$SAMPLE" ' $1 == sample ' $DIRDATA/dest_v2.samps_8Jun2023.csv | cut -f24 -d',')
+nFlies=$(awk  -F,  -v sample="$SAMPLE" ' $1 == sample ' $METADATA | cut -f24 -d',')
 nFliesAut=$(( nFlies * 2 ))
+
+echo $nFlies
+echo $nFliesAut
 
 #-----------------------------Run ReLERNN---------------------
 mkdir -p ReLERNN_OUTPUT/$SAMPLE/aut
 mkdir -p ReLERNN_OUTPUT/$SAMPLE/X
 
-conda activate relernn2
+#conda activate relernn2 #<-- this happens above
 
 # ReLERNN parameters
 SIMULATE="ReLERNN_SIMULATE_POOL"
@@ -144,3 +156,8 @@ ${PREDICT} \
 ${BSCORRECT} \
     --projectDir ${RELERNNDIRX} \
     --nCPU 32
+    
+rm -rf ${RELERNNDIRAUT}/train
+
+rm -rf ${RELERNNDIRX}/train
+rm -rf $VCF/$SAMPLE
