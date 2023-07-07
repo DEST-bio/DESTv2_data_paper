@@ -12,7 +12,7 @@ library(foreach)
 
 #### Obtain results
 
-root_folder <- "/scratch/yey2sn/DEST2_analysis/admix_samps/Jun6.admix"
+root_folder <- "/scratch/yey2sn/DEST2_analysis/admix_samps/Jun8.admix"
 files_r <- system(paste("ls",root_folder, sep = " "), inter = T)
 
 # Now load all results using a foreach loop with rbind as .combine
@@ -33,6 +33,4 @@ setDT(samps)
 samps %<>% mutate(focal = sampleId)
 left_join(f3_results, samps) -> f3_meta
 
-#### Plot
-f3_meta %>%
-filter(continent == "North_America")
+save(f3_meta, file = "f3_meta.joint.R")

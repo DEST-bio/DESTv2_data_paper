@@ -3,9 +3,9 @@
 
 #SBATCH -J ReLERNN # A single job name for the array
 #SBATCH --ntasks=32
-#SBATCH -t 24:00:00 #<= this may depend on your resources
+#SBATCH -t 36:00:00 #<= this may depend on your resources
 #SBATCH --mem 200G #<= this may depend on your resources
-#SBATCH --gres=gpu:p100:1
+#SBATCH --gres=gpu:a100
 #SBATCH -p gpu
 #SBATCH -A jcbnunez
 #SBATCH -o ./slurmOut/ReLERNN.%A_%a.out # Standard output
@@ -127,6 +127,9 @@ ${BSCORRECT} \
     --projectDir ${RELERNNDIRAUT} \
     --nCPU 32
 
+### clean up files from training rounds -- autosomes
+rm -rf ${RELERNNDIRAUT}/train
+
 # FOR THE X
 # Simulate data
 ${SIMULATE} \
@@ -156,8 +159,9 @@ ${PREDICT} \
 ${BSCORRECT} \
     --projectDir ${RELERNNDIRX} \
     --nCPU 32
-    
-rm -rf ${RELERNNDIRAUT}/train
 
+### clean up files from training rounds -- X chromosomes
 rm -rf ${RELERNNDIRX}/train
+
+### clean up vcf folder
 rm -rf $VCF/$SAMPLE
