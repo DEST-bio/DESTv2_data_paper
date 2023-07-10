@@ -15,6 +15,6 @@ module load gcc/7.1.0 openmpi/3.1.4 R/4.1.1 gdal proj
 
 Rscript \
 --vanilla \
-3.1.launch_mine.pca.sh \
+3.mine.new.pca.loadings.R \
 ${SLURM_ARRAY_TASK_ID}
 
