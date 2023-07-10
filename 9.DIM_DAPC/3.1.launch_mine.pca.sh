@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#SBATCH -J explo # A single job name for the array
+#SBATCH -J minepca # A single job name for the array
 #SBATCH -c 5
 #SBATCH -N 1 # on one node
 #SBATCH -t 24:00:00 #<= this may depend on your resources
