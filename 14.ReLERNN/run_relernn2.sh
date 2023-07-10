@@ -3,7 +3,7 @@
 
 #SBATCH -J ReLERNN # A single job name for the array
 #SBATCH --ntasks=32
-#SBATCH -t 36:00:00 #<= this may depend on your resources
+#SBATCH -t 72:00:00 #<= this may depend on your resources
 #SBATCH --mem 200G #<= this may depend on your resources
 #SBATCH --gres=gpu:a100
 #SBATCH -p gpu
