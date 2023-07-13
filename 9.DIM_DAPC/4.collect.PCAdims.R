@@ -25,7 +25,7 @@ pc.objc$eig[1:40,] %>%
 object.to.select.gims$selected_snps %>% sum()
 #### load and select SNPS
 
-root = "/scratch/yey2sn/DEST2_analysis/dapc_dims"
+root = "/scratch/yey2sn/DEST2_analysis/dapc_dims/pca_mining"
 
 GIMs.DEST2.0 =
 foreach(i = 1:40, 
@@ -33,7 +33,7 @@ foreach(i = 1:40,
 
   message(i)
   
-  fil <- paste("PC.",i,".new.mod.correlations.txt", sep = "")
+  fil <- paste("PC.",i,".new.mod.noInvnoCd.250thinned.correlations.txt", sep = "")
   
   fil.root = paste(root, fil, sep = "/")
   
