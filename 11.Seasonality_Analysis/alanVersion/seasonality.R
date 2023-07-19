@@ -11,9 +11,12 @@
   #jobId=88; pops="NoCore20_NoProblems_Steep_Neg_seas"; nPerm=2
 
 ### does file already exist?
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
+  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/"
+  
   output_dir = paste(output_dir, pops, "/", sep="")
+  
   output_dir_final = paste(output_dir, "Loc_Ran_PCA", "/", sep="")
+  
   file = paste(output_dir_final,
                "GLM_out.",
                jobId,
@@ -146,10 +149,25 @@
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][delta.T.sign==1][delta.T.mag=="Steep"]
     seasonal.sets[,.N,loc.y]
 
+  } else if(pops== "NoProblems_Steep_Neg_seas_EUE") {
+
+    message("chosen model --> NoProblems_Steep_Neg_seas_EUE")
+    #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
+   
+    seasonal.sets <- seasonal.sets[Recommendation == "Pass"][delta.T.sign==-1][delta.T.mag=="Steep"][cluster2.0_k8==8]
+
+    seasonal.sets[,.N,loc.y] %>%
+    filter(N == 2) %>% .$loc.y -> sites.to.keep
+
+	seasonal.sets = seasonal.sets[loc.y %in% sites.to.keep]
+	
   } else {
     message("population set is not specified")
     q("no")
   }
+
+
+
 
 ### gds object
   message("open genofile")
@@ -242,7 +260,12 @@
   # tmp.ids <- tmp.ids[1:3]
 
 ### iterate through
+### iterate through
+### iterate through
+
+
   message("iterate")
+  
   o <- foreach(i=1:length(tmp.ids), .combine="rbind", .errorhandling="remove")%do%{
     #i <- 1; tmp.ids <- 678513
     message(paste(i, length(tmp.ids), sep=" / "))
@@ -266,9 +289,16 @@
         message(j)
         ### iterate through model types
 
-          # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
-          foreach(model_features = c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
-                                        "Loc_Binomial_PCA",  "Loc_Ran_PCA"),  .combine="rbind", .errorhandling="remove")%do%{
+        # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
+          foreach(model_features = c(
+          #"yearPop_Binomial", 
+          #"Phylo_yearPop_Binomial",
+          #"yearPop_Ran",
+          #"Phylo_yearPop_Ran",
+          #"Loc_Binomial_PCA",
+          "Loc_Ran_PCA"
+          ),  
+          .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
@@ -346,8 +376,9 @@
   o <- merge(o, snp.dt, by="variant.id")
 
 #### SAVE O
+
   message("save")
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
+  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_JULY_19_2023/"
   if(!dir.exists(output_dir)) {
     message("makding new dir:")
     message(output_dir)
@@ -369,6 +400,7 @@
       message(output_dir_final)
       dir.create(output_dir_final)
     }
+    
     oo <- o[model_features==mf]
     save(oo,
          file = paste(output_dir_final,
