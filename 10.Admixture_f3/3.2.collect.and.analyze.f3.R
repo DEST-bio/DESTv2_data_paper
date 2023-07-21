@@ -33,4 +33,4 @@ setDT(samps)
 samps %<>% mutate(focal = sampleId)
 left_join(f3_results, samps) -> f3_meta
 
-save(f3_meta, file = "f3_meta.joint.R")
+save(f3_meta, file = "f3_meta.joint.Rdata")

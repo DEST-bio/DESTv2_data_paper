@@ -44,7 +44,7 @@
   #library(tidyverse)
   library(lme4)
   library(dplyr)
-
+  library(magrittr)
   #setwd("/scratch/aob2x")
 
 ### load data
@@ -161,6 +161,68 @@
 
 	seasonal.sets = seasonal.sets[loc.y %in% sites.to.keep]
 	
+  } else if(pops== "Europe_jday30") {
+	#start Europe jday 30
+	#start Europe jday 30
+    message("chosen model --> Europe_jday30")
+
+	samps %<>% mutate(loc_year = paste(locality, year, sep = "|"))
+	
+	samps %>% filter(continent == "Europe") %>%
+	filter(set %in% c("DrosEU","DrosEU_3") ) %>%
+	group_by(locality, year) %>%
+	summarize(N = n()) %>%
+	filter(N>=2) %>%
+	mutate(loc_year = paste(locality, year, sep = "|")) %>%
+	.$loc_year -> relEU_locs
+	
+	samps %>%
+	filter(loc_year %in% relEU_locs) ->
+	samps.eu_relaxed
+	
+	#create spring samples
+	samps.eu_relaxed %>%
+	group_by(loc_year) %>%
+	slice_min(jday, with_ties = FALSE) -> spring_samps
+	
+	#create fall samples
+	samps.eu_relaxed %>%
+	group_by(loc_year) %>%
+	slice_max(jday, with_ties = FALSE) -> fall_samps
+	
+	#Merge samps,seasonal
+	rbind(
+	mutate(spring_samps, season = "spring"), 
+	mutate(fall_samps, season = "fall")
+	) -> seasonal.sets.pre
+	
+	###sanity check
+	seasonal.sets.pre %>%
+	dcast(loc_year ~ season, value.var = "jday") %>%
+	mutate(jday_delta = abs(fall-spring)) %>%
+	filter(jday_delta > 30) %>%
+	.$loc_year -> seasonal_filter_passed
+	
+	seasonal.sets.pre %>%
+	filter(loc_year %in% seasonal_filter_passed) ->
+	seasonal.sets
+
+#==#library(tidyverse)	
+#==#seasonal.sets %>%
+#==#ggplot(aes(
+#==#x=jday,
+#==#y=lat,
+#==#color=season)) +
+#==#geom_line(aes(group=loc_year), color = "black")+
+#==#geom_point() +
+#==#facet_grid(~year) +
+#==#ggtitle("Europe Seaonal Relaxed Filter") ->
+#==#seas.plot.new
+#==#
+#==#ggsave(seas.plot.new, file = "seas.plot.new.pdf", h = 4, w = 9)
+		
+	#close jday 30
+	#close jday 30
   } else {
     message("population set is not specified")
     q("no")
