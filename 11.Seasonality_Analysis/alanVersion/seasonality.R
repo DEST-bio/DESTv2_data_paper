@@ -170,10 +170,10 @@
 
 	seasonal.sets = seasonal.sets[loc.y %in% sites.to.keep]
 	
-  } else if(pops== "Europe_jday30") {
-	#start Europe jday 30
-	#start Europe jday 30
-    message("chosen model --> Europe_jday30")
+  } else if(pops== "Europe_jdayDelta") {
+	#start Europe jday 
+	#start Europe jday 
+    message("chosen model --> Europe_jdayDelta")
 
 	samps %<>% mutate(loc_year = paste(locality, year, sep = "|"))
 	
@@ -209,7 +209,7 @@
 	seasonal.sets.pre %>%
 	dcast(loc_year ~ season, value.var = "jday") %>%
 	mutate(jday_delta = abs(fall-spring)) %>%
-	filter(jday_delta > 30) %>%
+	filter(jday_delta > 45) %>%
 	.$loc_year -> seasonal_filter_passed
 	
 	seasonal.sets.pre %>%
@@ -230,8 +230,8 @@
 #==#
 #==#ggsave(seas.plot.new, file = "seas.plot.new.pdf", h = 4, w = 9)
 		
-	#close jday 30
-	#close jday 30
+	#close jday 
+	#close jday 
   } else {
     message("population set is not specified")
     q("no")
