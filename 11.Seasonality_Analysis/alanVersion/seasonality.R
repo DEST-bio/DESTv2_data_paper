@@ -7,15 +7,24 @@
   pops=as.character(args[2]) # all_seas ; NoCore20_seas ; Core20_seas
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
+  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omni_EuropeJday30/"
+
+#######
+#######
+#######
+#######
+#######
+#######
+#######
 
   #jobId=88; pops="NoCore20_NoProblems_Steep_Neg_seas"; nPerm=2
 
 ### does file already exist?
-  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/"
+  #output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/"
   
-  output_dir = paste(output_dir, pops, "/", sep="")
+  #output_dir = paste(output_dir, pops, "/", sep="")
   
-  output_dir_final = paste(output_dir, "Loc_Ran_PCA", "/", sep="")
+  output_dir_final = paste(output_dir, "yearPop_Ran", "/", sep="")
   
   file = paste(output_dir_final,
                "GLM_out.",
@@ -355,10 +364,10 @@
           foreach(model_features = c(
           #"yearPop_Binomial", 
           #"Phylo_yearPop_Binomial",
-          #"yearPop_Ran",
+          "yearPop_Ran",
           #"Phylo_yearPop_Ran",
           #"Loc_Binomial_PCA",
-          "Loc_Ran_PCA"
+          #"Loc_Ran_PCA"
           ),  
           .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
@@ -440,7 +449,6 @@
 #### SAVE O
 
   message("save")
-  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_JULY_19_2023/"
   if(!dir.exists(output_dir)) {
     message("makding new dir:")
     message(output_dir)
