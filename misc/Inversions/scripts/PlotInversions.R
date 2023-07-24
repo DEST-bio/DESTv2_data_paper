@@ -1,4 +1,5 @@
 library(ggplot2)
+library(dplyr)
 
 meta <- read.csv("/media/DEST2_NHM/data/dest_v2.samps_25Feb2023.csv", row.names=1)
 nhm_inversion <- read.delim("/media/DEST2_NHM/results/PoolSNP_nhm_inversion.af", row.names=1)
@@ -41,47 +42,57 @@ for (i in inversions){
   }
 
 
-## Additional Analysis for North American and European samples
+## Additional Analysis for North American and European samplesbbbbbb
 NAm <- subset(data, continent=="North_America" )
 Europe <- subset(data, continent=="Europe" )
 
-# North America per Year
+#get overview of how many samples are there per year 
+table(Europe$year)
+table(NAm$year)
+
+#select only years with enough samples
+
+# North America per Year (years)
 N12t18 <- subset(NAm, year>=2012 & year <=2018)
 N12t18$year <- as.factor(paste(N12t18$year))
-ggplot(N12t18,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"), formula = y ~ x, alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("North American Samples: 2012-2018")+theme(plot.title = element_text(hjust=0.5)) 
+#ggplot(N12t18,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"), formula = y ~ x, alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("North American Samples: 2012-2018")+theme(plot.title = element_text(hjust=0.5)) 
 
 E14t21 <- subset(Europe, year>=2014 & year <=2021)
 E14t21$year <- as.factor(paste(E14t21$year))
-ggplot(E14t21,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"),alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("European Samples: 2014-2021")+theme(plot.title = element_text(hjust=0.5)) 
-
-##linear regression for years north america
-lm_result_na <- lm(In.3R.Payne ~ year, data = N12t18)
-summary(lm_result_na)
-##linear regression for europe
-lm_result_e <- lm(In.3R.Payne ~ year, data = E14t21)
-summary(lm_result_e)
+#ggplot(E14t21,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"),alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("European Samples: 2014-2021")+theme(plot.title = element_text(hjust=0.5)) 
+ggplot(E14t21,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"),alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("European Samples: 2014-2021")+theme(plot.title = element_text(hjust=0.5, size=30), axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), panel.background = element_rect(fill="white"),     panel.grid.major = element_line(color = "lightgrey", size = 0.2), panel.grid.minor = element_blank())
 
 
-###Cochra's Q Test
-# Subset the data for the years 2012-2018
-N12t18 <- subset(NAm, year >= 2012 & year <= 2018)
 
-# Create a contingency table of the counts
-cont_table <- table(N12t18$In.3R.Payne, N12t18$year)
-cont_table <- table(E14t21$In.3R.Payne, E14t21$year)
-
-# Define a function to calculate the Cochran's Q test
-cochrans_q <- function(cont_table) {
-  k <- nrow(cont_table)  # Number of rows (categories)
-  n <- ncol(cont_table)  # Number of columns (time points)
-  Q <- sum((rowSums(cont_table) - n/k)^2 / (n*(k-1)))  # Calculate the test statistic
-  df <- k - 1  # Degrees of freedom
-  p_value <- 1 - pchisq(Q, df)  # Calculate the p-value
-  return(list(Q = Q, df = df, p_value = p_value))
+#####
+# Function to perform GLM or linear regression for each year
+##works??
+fit_glm_for_group <- function(data, year) {
+  if (nrow(data) > 10) {  # Filter to have at least 10 samples for each year
+    glm_model <- glm(In.2L.t ~ lat, data = data, family = binomial)
+    # For linear regression, use: lm(In3Payner ~ lat, data = data)
+    return(data.frame(year = year, coef_glm = coef(glm_model)["lat"]))
+  } else {
+    return(NULL)  # Return NULL for years with less than 10 samples (insufficient data)
+  }
 }
-# Perform Cochran's Q test
-cochransq_result <- cochrans_q(cont_table)
-# Print the test results
-print(cochransq_result)
 
+# Group the data by "year" and fit GLM for each year
+glm_results_Europe <- Europe %>%
+  group_by(year) %>%
+  filter(n() > 10) %>%
+  do(fit_glm_for_group(., year = first(.$year))) %>%
+  ungroup()
+
+glm_results_NA <- northA %>%
+  group_by(year) %>%
+  filter(n() > 10) %>%
+  do(fit_glm_for_group(., year = first(.$year))) %>%
+  ungroup()
+
+anova_result <- aov(coef_glm ~ year, data = glm_results_Europe)
+print(glm_results_Europe)
+print(summary(anova_result))
+
+print(glm_results_NA)
 

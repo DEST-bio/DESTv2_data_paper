@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(car)
 library(readr)
 library(knitr)
+library(ggplot2)
+library(dplyr)
 ```
 
 ```{r prepare_data, include=FALSE}
@@ -174,6 +176,46 @@ summary(inversions)
 SDs
 ```
 
+# Regression Slope across Years
+```{r regressionSlopes, include=FALSE} 
+meta <- read.csv("/media/DEST2_NHM/data/dest_v2.samps_25Feb2023.csv", row.names=1)
+nhm_inversion <- read.delim("/media/DEST2_NHM/results/PoolSNP_nhm_inversion.af", row.names=1)
+for (col in colnames(nhm_inversion)){
+  nhm_inversion[[col]] <- as.numeric(paste(nhm_inversion[[col]]))
+}  
+
+joined_table <- merge(meta[3:5], nhm_inversion, by = "row.names")
+rownames(joined_table) <- rownames(meta)
+data <- merge(meta[13:14], joined_table, by ="row.names")
+data2 <- na.omit(data) 
+
+NAm <- subset(data2, continent=="North_America" )
+Europe <- subset(data2, continent=="Europe" )
+
+fit_glm_for_group <- function(data, year) {
+  if (nrow(data) > 10) {  # Filter to have at least 10 samples for each year
+    glm_model <- glm(In.2L.t ~ lat, data = data, family = binomial)
+    # For linear regression, use: lm(In3Payner ~ lat, data = data)
+    return(data.frame(year = year, coef_glm = coef(glm_model)["lat"]))
+  } else {
+    return(NULL)  # Return NULL for years with less than 10 samples (insufficient data)
+  }
+}
+
+glm_results_Europe <- Europe %>%
+  group_by(year) %>%
+  filter(n() > 10) %>%
+  do(fit_glm_for_group(., year = first(.$year))) %>%
+  ungroup()
+anova_result <- aov(coef_glm ~ year, data = glm_results_Europe)
+
+
+```
+
+```{r regressionSlopesResults} 
+print(glm_results_Europe)
+print(summary(anova_result))
+```
 
 
 
