@@ -3,3 +3,5 @@ DESTv2_Inversions/
 DESTv2/
 results/Inversions/
 output/
+results/AdditionalStatistics/InversionStats.pdf
+results/AdditionalStatistics/InversionStats.Rmd

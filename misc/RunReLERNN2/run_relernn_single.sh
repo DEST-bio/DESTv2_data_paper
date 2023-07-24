@@ -17,7 +17,7 @@
 ## !!! DIRDATA where the DEST2 vcf is 
 DIR="/media/ssteindl/DESTv2_data_paper/misc/RunReLERNN2/results"
 DIRDATA="/media/ssteindl/DESTv2_data_paper/misc/RunReLERNN2/data"
-PBS_ARRAY_INDEX=49
+PBS_ARRAY_INDEX=58
 #PBS_ARRAY_INDEX=$(cat /media/ssteindl/DESTv2_data_paper/misc/RunReLERNN2/index.txt)
 
 VCFFILE="${DIRDATA}/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz"
@@ -85,16 +85,16 @@ GENOME_X="$DIR/X.bed"
 
 # FOR AUTOSOMES
 ##Simulate data
-#${SIMULATE} \
-#    --pool ${POOL_AUT} \
-#    --sampleDepth ${nFliesAut} \
-#    --genome ${GENOME_AUT} \
-#    --projectDir ${RELERNNDIRAUT} \
-#    --assumedMu ${MU} \
-#    --assumedGenTime ${GENTIME} \
-#    --upperRhoThetaRatio ${URTR} \
-#    --nCPU 32
-## Train network
+${SIMULATE} \
+    --pool ${POOL_AUT} \
+    --sampleDepth ${nFliesAut} \
+    --genome ${GENOME_AUT} \
+    --projectDir ${RELERNNDIRAUT} \
+    --assumedMu ${MU} \
+    --assumedGenTime ${GENTIME} \
+    --upperRhoThetaRatio ${URTR} \
+    --nCPU 32
+# Train network
 ${TRAIN} \
     --projectDir ${RELERNNDIRAUT} \
     --readDepth ${sampleDepthAut} \
@@ -113,16 +113,16 @@ ${BSCORRECT} \
     --nCPU 32
 
 ## FOR THE X
-## Simulate data
-#${SIMULATE} \
-#    --pool ${POOL_X} \
-#    --sampleDepth ${nFlies} \
-#    --genome ${GENOME_X} \
-#    --projectDir ${RELERNNDIRX} \
-#    --assumedMu ${MU} \
-#    --assumedGenTime ${GENTIME} \
-#    --upperRhoThetaRatio ${URTR} \
-#    --nCPU 32
+# Simulate data
+${SIMULATE} \
+    --pool ${POOL_X} \
+    --sampleDepth ${nFlies} \
+    --genome ${GENOME_X} \
+    --projectDir ${RELERNNDIRX} \
+    --assumedMu ${MU} \
+    --assumedGenTime ${GENTIME} \
+    --upperRhoThetaRatio ${URTR} \
+    --nCPU 32
 
 ## Train network
 ${TRAIN} \

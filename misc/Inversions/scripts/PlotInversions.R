@@ -54,3 +54,34 @@ E14t21 <- subset(Europe, year>=2014 & year <=2021)
 E14t21$year <- as.factor(paste(E14t21$year))
 ggplot(E14t21,aes(x=lat,y=In.3R.Payne,col=year))+ geom_point()+ geom_smooth(method = "glm", method.args = list(family="binomial"),alpha=.15, aes(fill=year))+  guides(fill=FALSE) + ggtitle("European Samples: 2014-2021")+theme(plot.title = element_text(hjust=0.5)) 
 
+##linear regression for years north america
+lm_result_na <- lm(In.3R.Payne ~ year, data = N12t18)
+summary(lm_result_na)
+##linear regression for europe
+lm_result_e <- lm(In.3R.Payne ~ year, data = E14t21)
+summary(lm_result_e)
+
+
+###Cochra's Q Test
+# Subset the data for the years 2012-2018
+N12t18 <- subset(NAm, year >= 2012 & year <= 2018)
+
+# Create a contingency table of the counts
+cont_table <- table(N12t18$In.3R.Payne, N12t18$year)
+cont_table <- table(E14t21$In.3R.Payne, E14t21$year)
+
+# Define a function to calculate the Cochran's Q test
+cochrans_q <- function(cont_table) {
+  k <- nrow(cont_table)  # Number of rows (categories)
+  n <- ncol(cont_table)  # Number of columns (time points)
+  Q <- sum((rowSums(cont_table) - n/k)^2 / (n*(k-1)))  # Calculate the test statistic
+  df <- k - 1  # Degrees of freedom
+  p_value <- 1 - pchisq(Q, df)  # Calculate the p-value
+  return(list(Q = Q, df = df, p_value = p_value))
+}
+# Perform Cochran's Q test
+cochransq_result <- cochrans_q(cont_table)
+# Print the test results
+print(cochransq_result)
+
+
