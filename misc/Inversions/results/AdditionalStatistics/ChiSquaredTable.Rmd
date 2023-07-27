@@ -1,0 +1,139 @@
+---
+title: ''
+author: ''
+date: ''
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Chi-Squared Table for Inversions
+Table content structure: Chi-Squared, Degrees Of Freedom and (if necessary) Significance Code
+
+Significance threshold signs used in the table:
+
+<0.05 \*
+
+<0.01 \**
+
+<0.001 \***
+
+
+
+```{r libraries, include=FALSE}
+library(car)
+library(readr)
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(kableExtra)
+```
+
+
+```{r prepare_data, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+meta <- read.csv("/media/ssteindl/DESTv2_data_paper/misc/Inversions/data/dest_v2.samps_25Feb2023.csv", row.names=1)
+
+#POOL-SNP
+nhm_inversion <- read.delim("/media/DEST2_NHM/results/PoolSNP_nhm_inversion.af", row.names=1)
+for (col in colnames(nhm_inversion)){
+  nhm_inversion[[col]] <- as.numeric(paste(nhm_inversion[[col]]))
+}  
+
+joined_table <- merge(meta[3:5], nhm_inversion, by = "row.names")
+rownames(joined_table) <- rownames(meta)
+data <- merge(meta[13:14], joined_table, by ="row.names")
+
+##Get Coverages for corresponding data set
+mean_coverages <- read.csv("/media/DEST2_NHM/output/CoveragesPoolSNP.csv", header=FALSE)
+cov <- t(round(mean_coverages))
+data$cov <- cov[,1] 
+data <- na.omit(data) 
+
+#Inversions
+inversions=c("In.3R.Payne", "In.2L.t", "In.2R.Ns", "In.3R.C", "In.3R.K", "In.3L.P","In.3R.Mo")
+#inversions=c("In.3R.Mo", "In.3L.P")
+
+for (i in 8:14){
+  #print(data[i])
+  x <- paste("ANOV_",colnames(data[i]),"_1", sep="")
+  x2 <- paste("ANOV_",colnames(data[i]),"_2", sep="")
+  v <- round(data[i]*data$cov)
+  v2 <- round(data$cov - round(data[i]*data$cov,0),0)
+  p <- assign(x,v)
+  p2 <- assign(x2,v2)
+  colnames(p) <- x
+  colnames(p2) <- x2
+  data <- cbind(data,p)
+  data <- cbind(data,p2)
+}
+
+my_splits <- split(data, data$continent)
+split_names <- c("Africa",           
+                 "Asia",
+                 "Europe",
+                 "North_America","Oceania", "South_America")
+for (i in 1:length(my_splits)) {       
+  assign(split_names[i], my_splits[[i]])
+}
+ContList <- list(Africa, Asia, Europe, North_America, Oceania, South_America)
+
+#ANOVA Type3 
+#function for 3 parameters including continent, usable globally 
+extract_signif <- function(test_result){
+  mod_summary_sign <- test_result$`Pr(>Chisq)`  # Pull out p-values
+  mod_summary_stars <- NA                             # Named vector with significance stars
+  mod_summary_stars[mod_summary_sign < 0.1] <- ""
+  mod_summary_stars[mod_summary_sign < 0.05] <- "*"
+  mod_summary_stars[mod_summary_sign < 0.01] <- "**"
+  mod_summary_stars[mod_summary_sign < 0.001] <- "***"
+  mod_summary_stars[is.na(mod_summary_stars)] <- ""
+  names(mod_summary_stars) <- names(mod_summary_sign)
+  return(invisible(mod_summary_stars))
+} 
+
+
+latloncont <- function(subs){
+  data=subs
+  rrow=list()
+  for (inv in inversions){
+    index <- which(inversions==inv)
+    t <- paste(inv,"_test", sep="")
+    c1 <- paste("ANOV_",inv,"_1", sep="")
+    c2 <- paste("ANOV_",inv,"_2", sep="")
+    #print(data[[c1]] )
+    x <- glm(cbind(data[[c1]] ,data[[c2]])~lat*long*continent,data=data,family="binomial" )
+    r <- car::Anova(x, type=3)
+    chi.sq <- round(r$`LR Chisq`,4)
+    deg.f <-  gsub("([0-9.]+)", "(df=\\1)", as.character(r$Df))
+    #print(chi.sq)
+    #print(deg.f)
+    #cat("\n")
+    sign.code <- extract_signif(r)
+    res=paste(chi.sq,deg.f,sign.code, sep=" ")
+    #print(res)
+    rrow[[index]] <- res
+    result_df <- as.data.frame(do.call(rbind, rrow))
+  }
+  rownames(result_df) <- inversions
+  colnames(result_df) <- rownames(r)
+  return(invisible(result_df))
+}
+
+chi_data <- latloncont(data)
+```
+
+
+```{r makeAtable, echo=FALSE} 
+kable(head(chi_data,7), booktabs = TRUE) %>%
+  kable_styling(font_size = 12, latex_options="scale_down", "HOLD_position") %>% kableExtra::landscape()
+
+```
+
+
