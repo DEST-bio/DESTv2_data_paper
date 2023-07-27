@@ -20,11 +20,12 @@ library(readr)
 library(knitr)
 library(ggplot2)
 library(dplyr)
+library(kableExtra)
 ```
 
 ```{r prepare_data, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-meta <- read.csv("/media/DEST2_NHM/data/dest_v2.samps_25Feb2023.csv", row.names=1)
+meta <- read.csv("/media/ssteindl/DESTv2_data_paper/misc/Inversions/data/dest_v2.samps_25Feb2023.csv", row.names=1)
 
 #POOL-SNP
 nhm_inversion <- read.delim("/media/DEST2_NHM/results/PoolSNP_nhm_inversion.af", row.names=1)
@@ -36,7 +37,7 @@ joined_table <- merge(meta[3:5], nhm_inversion, by = "row.names")
 rownames(joined_table) <- rownames(meta)
 data <- merge(meta[13:14], joined_table, by ="row.names")
 
-##Get Coverages for correspronding data set
+##Get Coverages for corresponding data set
 mean_coverages <- read.csv("/media/DEST2_NHM/output/CoveragesPoolSNP.csv", header=FALSE)
 cov <- t(round(mean_coverages))
 data$cov <- cov[,1] 
@@ -70,9 +71,7 @@ for (i in 1:length(my_splits)) {
 ContList <- list(Africa, Asia, Europe, North_America, Oceania, South_America)
 
 #ANOVA Type3 
-
-
-#function for 3 paramters inclduing continent, usable globally 
+#function for 3 parameters including continent, usable globally 
 latloncont <- function(subs){
   data=subs
   for (inv in inversions){
@@ -87,8 +86,6 @@ latloncont <- function(subs){
     #assign(t,x)
   } 
 }
-
-
 
 ###
 
@@ -212,7 +209,7 @@ anova_result <- aov(coef_glm ~ year, data = glm_results_Europe)
 
 ```
 
-```{r regressionSlopesResults} 
+```{r regressionSlopesResults, include=FALSE} 
 print(glm_results_Europe)
 print(summary(anova_result))
 ```
