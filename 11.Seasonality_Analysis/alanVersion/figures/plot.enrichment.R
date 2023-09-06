@@ -6,7 +6,7 @@
   library(foreach)
 
 ### compile data
-  fl <- list.files("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/enrichment", full.names=T)
+  fl <- list.files("/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omnibus_JULY_19_2023/compiled/enrichment", full.names=T)
 
   oo <- foreach(fl.i=fl, .combine="rbind")%do%{
     # fl.i <- fl[1]
@@ -40,20 +40,32 @@
 
     p1 <-
     ggplot(data=oo[perm!=0][chr=="genome"][pops==pops.i]) +
-    geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
-    geom_line(data=oo[perm==0][chr=="genome"][pops==pops.i], aes(x=log10(max_p), y=(N), group=perm), color="red") +
-    facet_grid(model_features~chr, scales="free_y")
+    geom_line(aes(x=log10(max_p), 
+    y=(N), 
+    group=perm),
+     alpha=.5) +
+    geom_line(data=oo[perm==0][chr=="genome"][pops==pops.i],
+     aes(x=log10(max_p), 
+     y=(N), 
+     group=perm), 
+     color="red") +
+     facet_grid(#model_features
+     ~chr, scales="free_y")
+ggsave(p1,file = "p1.pdf")
 
     p2 <-
     ggplot(data=oo[perm!=0][chr!="genome"][pops==pops.i]) +
     geom_line(aes(x=log10(max_p), y=(N), group=perm), alpha=.5) +
     geom_line(data=oo[perm==0][chr!="genome"][pops==pops.i], aes(x=log10(max_p), y=(N), group=perm), color="red") +
-    facet_grid(model_features~chr, scales="free_y")
+    facet_grid(#model_features
+    ~chr, scales="free_y")
+ggsave(p2,file = "p2.pdf")
 
     layout <-
     "ABBBB"
 
     mega <- p1 + p2 + plot_layout(design=layout) +  plot_annotation(title = pops.i)
-    ggsave(mega, file=paste("~/modelEnrichment.new.", pops.i, ".png", sep=""), h=8, w=8)
+    
+    ggsave(mega, file=paste("./modelEnrichment.new.", pops.i, ".png", sep=""), h=8, w=8)
 
   }

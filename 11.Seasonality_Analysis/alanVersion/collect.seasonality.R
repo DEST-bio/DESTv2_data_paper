@@ -8,17 +8,29 @@
   registerDoMC(5)
   library(dplyr)
 
+	
 ### get jobs
   args = commandArgs(trailingOnly=TRUE)
 
   jobId=as.numeric(args[1])
   message(jobId)
 
-### jobs
-  job.dt <- expand.grid(pops=c("Core20_seas", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_Steep_Neg_seas", "NoProblems_Steep_Pos_seas"),
-                        mf=c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
-                            "Loc_Binomial_PCA",  "Loc_Ran_PCA"))
+folder =  "/sfs/weka/scratch/yey2sn/DEST2_analysis/New_Scratch/seasonality/GLM_omni_EuropeJday_delta"
 
+system(paste("mkdir", paste(folder, "compiled", sep = "/")))
+system(paste("mkdir", paste(folder, "compiled/glm_output", sep = "/")))
+system(paste("mkdir", paste(folder, "compiled/enrichment", sep = "/")))
+
+
+
+### jobs
+#  job.dt <- expand.grid(pops=c("Core20_seas", "NoCore20_seas", "NoCore20_NoProblems_seas", "NoCore20_NoProblems_Steep_Neg_seas", "NoProblems_Steep_Pos_seas"),
+#                        mf=c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran", "Loc_Binomial_PCA",  "Loc_Ran_PCA"))
+
+job.dt <- expand.grid(
+pops=c("Europe_jdayDelta"),
+mf=c("yearPop_Ran")
+)
 
   # jobId=1:dim(job.dt)[1]
   # jobId=which(job.dt$pops=="NoCore20_NoProblems_NoFlip_seas")
@@ -26,8 +38,10 @@
   # jobId <- 3
   message(job.dt[jobId,])
 
+
 ### get files
-  fns <- paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023", job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
+  fns <- paste(folder, job.dt$pops[jobId], job.dt=job.dt$mf[jobId], sep="/")
+  
   fl <- unlist(sapply(fns, list.files, full.names=T))
   length(fl)
 
@@ -83,7 +97,8 @@
 
       message(head(mod.out))
 
-      save(mod.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/glm_output/", p, "_", mf, ".Rdata", sep=""))
+folder_out = paste(folder, "/compiled/glm_output/", sep = "")
+save(mod.out, file=paste(folder_out, p, "_", mf, ".Rdata", sep=""))
       setkey(mod.out, perm)
 
       #mod.out[,list(N=make_bins(p_lrt, size=.001, ret="my_sum"), thr=make_bins(p_lrt, size=.001, ret="my")), list(perm)]
@@ -120,4 +135,23 @@
   #oo[max_p==.001][perm<=2][order(model_features)][chr=="2L"][pops=="NoCore20_NoProblems_Steep_Neg_seas"][chr=="2L"][inv==T]
   head(oo)
 
-  save(oo, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/enrichment/enrichment.", p, "_", mf, ".Rdata", sep=""))
+
+  save(oo, file=paste(paste(folder, "/compiled/enrichment/", sep = ""),"/enrichment.", p, "_", mf, ".Rdata", sep=""))
+
+#### ==> Some tests: 
+
+#==#library(tidyverse)
+#==#oo %>%
+#==#ggplot(
+#==#aes(
+#==#x=-log10(as.numeric(max_p)),
+#==#y=N,
+#==#color=perm==0,
+#==#group=as.factor(perm)
+#==#)) +
+#==#geom_line(aes(group=as.factor(perm))) +
+#==#facet_grid(inv~chr) ->
+#==#enrich.test
+#==#
+#==#ggsave(enrich.test, file = "enrich.test.pdf")
+

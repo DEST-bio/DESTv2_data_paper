@@ -4,10 +4,10 @@
   args = commandArgs(trailingOnly=TRUE)
 
   jobId=as.numeric(args[1])
-  pops=as.character(args[2]) # all_seas ; NoCore20_seas ; Core20_seas
+  pops=as.character(args[2]) # all_seas ; NoCore20_seas ; Core20_seas; Europe_jdayDelta
   nPerm = as.numeric(args[3])
   #model_features=as.character(args[4]) #No_Phylo; Phylo_LocRan; PhyloRan_LocRan; Phylo_Loc; LocRan
-  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omni_EuropeJday30/"
+  output_dir = "/sfs/weka/scratch/yey2sn/DEST2_analysis/seasonality/GLM_omni_EuropeJday_delta/"
 
 #######
 #######
@@ -110,6 +110,9 @@
   seasonal.sets <- seasonal.sets[J(seasonal.sets.ag[N==2])]
   dim(seasonal.sets)
 
+###
+Core20_pops =  seasonal.sets %>% filter(Core20_sat == TRUE)
+###
 
 #### population selector
   if(pops == "all_seas") {
@@ -178,6 +181,7 @@
 	samps %<>% mutate(loc_year = paste(locality, year, sep = "|"))
 	
 	samps %>% filter(continent == "Europe") %>%
+	filter(!set %in% Core20_pops) %>%
 	filter(set %in% c("DrosEU","DrosEU_3") ) %>%
 	group_by(locality, year) %>%
 	summarize(N = n()) %>%
@@ -215,6 +219,8 @@
 	seasonal.sets.pre %>%
 	filter(loc_year %in% seasonal_filter_passed) ->
 	seasonal.sets
+
+##seasonal.sets$sampleId %in% Core20_pops$sampleId
 
 #==#library(tidyverse)	
 #==#seasonal.sets %>%
@@ -351,12 +357,14 @@
     ### iterate through permutations
       set.seed(1234)
       o <- foreach(j=0:nPerm, .combine="rbind", .errorhandling="remove")%dopar%{
+      
         if(j==0) {
           tmp <- af
         } else if(j>0) {
           tmp <- af
           tmp[,season:=sample(season)]
         }
+        
         message(j)
         ### iterate through model types
 
@@ -364,7 +372,7 @@
           foreach(model_features = c(
           #"yearPop_Binomial", 
           #"Phylo_yearPop_Binomial",
-          "yearPop_Ran",
+          "yearPop_Ran" #,
           #"Phylo_yearPop_Ran",
           #"Loc_Binomial_PCA",
           #"Loc_Ran_PCA"
@@ -435,8 +443,10 @@
                          null.AIC = null.AIC,
                          spring.frac = mean(tmp$season=="spring", na.rm=T),
                          ran=runif(1, 0,1e6), singular=paste(t3.sing, t4.sing, sep="_"))
+                         
               return(obs)
           } # iterate through models
+          
       } # iterate through perms
 
       #
