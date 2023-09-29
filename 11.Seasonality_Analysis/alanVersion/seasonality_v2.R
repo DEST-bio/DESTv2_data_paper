@@ -96,7 +96,7 @@
     seasonal.sets <- seasonal.sets[Recommendation == "Pass"][delta.T.sign==1][delta.T.mag=="Steep"]
     seasonal.sets[,.N,loc.y]
 
-  } else if(pps== "NoCore20_seas_europe") {
+  } else if(pops== "NoCore20_seas_europe") {
     message("chosen model --> NoCore20_seas_europe")
     #seasonal.sets = seasonal.sets %>% filter(Core20_sat == TRUE) %>% filter(delta.T.sign==-1) %>% filter(delta.T.mag$Steep)
 
