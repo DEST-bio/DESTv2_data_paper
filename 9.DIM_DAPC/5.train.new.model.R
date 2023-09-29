@@ -10,30 +10,50 @@ library(FactoMineR)
 library(adegenet)
 library(zoo)
 
+library(SeqArray)
+library(gdsfmt)
+library(SNPRelate)
+
+
 setwd("/scratch/yey2sn/DEST2_analysis/dapc_dims")
 
-load("DEST.2.0.GIMS.Rdata")
+gims.snps <- get(load("DEST.2.0.GIMS.Rdata"))
 #####
 message("now loading AF")
-AF.d <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))
-samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
-##
-######
+####
+
+meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
+
+samps <- fread(meta_git)
+setDT(samps)
+
 grep( "SIM" , samps$sampleId) -> sim.pos
 grep( "CN_Bei_Bei_1_1992-09-16" , samps$sampleId) -> Beijing.pos
 
 samps[-c(sim.pos, Beijing.pos),] -> samps.o.nsim.noBeij
-#grep( "SIM" , dat.o.nsim.noBeij$sampleId)
 
-unique(GIMs.DEST2.0$SNP_id) -> GIMS.snps.ids
 
-#AF.d[-c(sim.pos, Beijing.pos), GIMS.snps.ids] -> gims.AF
-##
-##gims.AF %>% 
-##  PCA(graph = F, ncp = 5) ->
-##  pca.object.gims
-##
-##save(pca.object.gims, file = "pca.object.gims.Rdata")
+###
+genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds", allow.duplicate=T)
+
+seqResetFilter(genofile)
+seqSetFilter(genofile, sample.id=samps$sampleId)
+snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
+                      pos=seqGetData(genofile, "position"),
+                      variant.id=seqGetData(genofile, "variant.id"),
+                      nAlleles=seqNumAllele(genofile),
+                      missing=seqMissing(genofile, .progress=T))
+
+snps.dt <- snps.dt[nAlleles==2][missing < 0.1][chr %in% c("2L","2R","3L","3R")]
+
+snps.dt %<>% mutate(SNP_id = paste(chr, pos, sep = "_")) 
+snps.dt %>% dim
+
+snps.dt %>%
+filter(SNP_id %in% gims.snps$SNP_id ) -> 
+snps.dt.gims
+
+###
 ### Remove singletons
 samps.o.nsim.noBeij %>% 
   group_by(province) %>%
@@ -46,18 +66,31 @@ samps.o.nsim.noBeij %>%
 
 gim.samps$province = gsub("Kiev City", "Kiev", gim.samps$province)
 
-AF.d[gim.samps$sampleId, GIMS.snps.ids] -> gims.flt.AF
+####
+  seqSetFilter(genofile, 
+               sample.id=gim.samps$sampleId, 
+               variant.id=snps.dt.gims$variant.id)
+####
+  ad <- seqGetData(genofile, "annotation/format/AD")
+  dp <- seqGetData(genofile, "annotation/format/DP")
+  ad.matrix = ad$data
+  dat <- ad.matrix/dp
+  dim(dat)
+  colnames(dat) <- paste(seqGetData(genofile, "chromosome"),
+                         seqGetData(genofile, "position") 
+                         , sep="_")
+  rownames(dat) <- seqGetData(genofile, "sample.id")
 
 ### clean AF tables from NA
 #apply(gims.flt.AF, 2, function(x) sum(is.na(x)) ) -> Count.of.NAs
 message("now na.aggregate")
 
-gims.flt.AF_naImp = na.aggregate(gims.flt.AF)
+dat_naImp = na.aggregate(dat)
 
 
 ###
 message("now training xval")
-xval_province <- xvalDapc(gims.flt.AF_naImp, 
+xval_province <- xvalDapc(dat_naImp, 
                           as.factor(gim.samps$province), 
                           n.pca.max = 300, 
                           training.set = 0.9,

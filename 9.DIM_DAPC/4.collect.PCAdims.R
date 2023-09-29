@@ -11,10 +11,10 @@ library(FactoMineR)
 library(adegenet)
 library(zoo)
 
-setwd("/scratch/yey2sn/DEST2_analysis/dapc_dims")
+##setwd("/scratch/yey2sn/DEST2_analysis/dapc_dims")
 
 #### load PCA obj
-pc.objc = get(load("../pca/pca.object.Rdata"))
+pc.objc = get(load("/scratch/yey2sn/DEST2_analysis/pca/pca.object.noInvnoCd.250thinned.Rdata"))
 
 pc.objc$eig[1:40,] %>%
   as.data.frame() %>%
@@ -25,13 +25,15 @@ pc.objc$eig[1:40,] %>%
 object.to.select.gims$selected_snps %>% sum()
 #### load and select SNPS
 
-root = "/scratch/yey2sn/DEST2_analysis/pca/PCA_dimdescs"
+root = "/scratch/yey2sn/DEST2_analysis/dapc_dims/pca_mining"
 
 GIMs.DEST2.0 =
-foreach(i = 1:40, .combine = "rbind")%do%{
+foreach(i = 1:40, 
+.combine = "rbind")%do%{
+
   message(i)
   
-  fil <- paste("PC.",i,".new.mod.correlations.txt", sep = "")
+  fil <- paste("PC.",i,".new.mod.noInvnoCd.250thinned.correlations.txt", sep = "")
   
   fil.root = paste(root, fil, sep = "/")
   
