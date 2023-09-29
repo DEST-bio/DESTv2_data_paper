@@ -26,7 +26,7 @@ cd /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion
 
 Rscript \
 --vanilla \
-seasonality.R \
+seasonality_v2.R \
 ${SLURM_ARRAY_TASK_ID} \
 "NoCore20_seas_europe" \
 100
