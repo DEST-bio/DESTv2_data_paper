@@ -14,9 +14,9 @@
 
 ### sbatch --array=1-30 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/collect.seasonality.sh
 ###
-### sacct -j 50692379
+### sacct -j 50769062
 ### seff 50160609_376
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.50363657_1.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/collectSeasonality.50692434_2.err
 
 
 

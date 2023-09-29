@@ -48,6 +48,20 @@
 # General metadata
   samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
 
+#### get PCA values
+#  load("/project/berglandlab/jcbnunez/Shared_w_Alan/seasonal_classification/seasonalpair.pca.meta.Rdata")
+#  seasonal.sets <- seasonalpair.pca.meta
+#  seasonal.sets[,cluster:=cluster2.0_k8]
+#
+#  seasonal.sets <- merge(seasonal.sets, samps[,c("sampleId", "Recommendation"), with=F], by="sampleId")
+#
+#### trim out ghost samples and leftover pair
+#  seasonal.sets.ag <- seasonal.sets[,.N,loc.y]
+#  setkey(seasonal.sets, loc.y)
+#  dim(seasonal.sets)
+#  seasonal.sets <- seasonal.sets[J(seasonal.sets.ag[N==2])]
+#  dim(seasonal.sets)
+
 
 #### population selector
   if(pops == "all_seas") {
@@ -105,7 +119,7 @@
                                                                    sampleId=c(sampleId[which.min(jday)], sampleId[which.max(jday)]),
                                                                    jday=c(jday[which.min(jday)], jday[which.max(jday)]),
                                                                    diff=c(jday[which.min(jday)]-jday[which.max(jday)])),
-                                                                list(country, locality, year, loc_rep, cluster2.0_k5)][N>1][abs(diff)>30]
+                                                                list(country, loc.y=locality, year, loc_rep, cluster2.0_k5)][N>1][abs(diff)>30]
 
   } else {
     message("population set is not specified")
@@ -115,8 +129,8 @@
 ### gds object
   message("open genofile")
   #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
-  genofile <- seqOpen("/scratch/aob2x/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.gds")
-  #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.10March2023.ann.gds")
+  #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.gds")
+  genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.10March2023.ann.gds")
 
 
 ### get basic index
@@ -218,32 +232,56 @@
       af <- af[af_nEff>0 & af_nEff<1]
 
     ### iterate through permutations
+      set.seed(1234)
       o <- foreach(j=0:nPerm, .combine="rbind", .errorhandling="remove")%dopar%{
-        # j<-0
         if(j==0) {
           tmp <- af
         } else if(j>0) {
           tmp <- af
-          set.seed(j)
           tmp[,season:=sample(season)]
         }
         message(j)
         ### iterate through model types
 
-          foreach(model_features = c("yearPop_Binomial", "yearPop_Ran"),  .combine="rbind", .errorhandling="remove")%do%{
+          # c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan")
+          foreach(model_features = c("yearPop_Binomial",    "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
+                                        "Loc_Binomial_PCA",  "Loc_Ran_PCA"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
             # model_features <- "LocBinomial"
             if(model_features == "yearPop_Binomial"){
-              message("yearPop_Binomial model")
+              # message("Loc model")
               t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop,          data = tmp, family= binomial)
               t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop, data = tmp, family= binomial)
               t3.sing <- t4.sing <- NA
+            } else if(model_features =="Phylo_yearPop_Binomial") {
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ year_pop + cluster,          data = tmp, family= binomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + year_pop + cluster, data = tmp, family= binomial)
+              t3.sing <- t4.sing <- NA
+
             } else if(model_features == "yearPop_Ran" ){
-              message("yearPop_Ran model")
+              # message("LocRan model")
               t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
               t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
+              t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
+
+            } else if(model_features == "Phylo_yearPop_Ran" ){
+              # message("Phylo_LocRan model")
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ cluster + (1 | year_pop),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + cluster + (1 | year_pop), data=tmp, family = binomial)
+              t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
+
+            } else if(model_features == "Loc_Binomial_PCA"){
+              # message("Loc model")
+              t3.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ locality + Dim.1 + Dim.2 + Dim.3,          data = tmp, family= binomial)
+              t4.real <- glm(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + locality + Dim.1 + Dim.2 + Dim.3, data = tmp, family= binomial)
+              t3.sing <- t4.sing <- NA
+
+            } else if(model_features == "Loc_Ran_PCA" ){
+              # message("LocRan model")
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + Dim.1 + Dim.2 + Dim.3 + (1 | locality),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + Dim.1 + Dim.2  + Dim.3 + (1 | locality), data=tmp, family = binomial)
               t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
 
             }
@@ -286,7 +324,7 @@
 
 #### SAVE O
   message("save")
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/glm_test_SEPT_29_2023/"
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/"
   if(!dir.exists(output_dir)) {
     message("makding new dir:")
     message(output_dir)

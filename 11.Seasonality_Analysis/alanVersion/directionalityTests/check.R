@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c5 -p dev --mem=40G
+# ijob -A berglandlab_standard -c5 -p largemem --mem=40G
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 ### libraries
@@ -9,18 +9,42 @@
   library(dplyr)
 
 ### wd
-  setwd("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output")
 
 ### load in datasets
-  ### focal
+  ### new
+    setwd("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/glm_output")
+
+    load("NoCore20_NoProblems_Steep_Neg_seas_yearPop_Ran.Rdata")
+    nObs.thr <- quantile(mod.out$nObs, .25, na.rm=T); nObs.thr
+    newr <- mod.out[nObs>=nObs.thr][!is.na(p_lrt)][nFixed==0][af>.05 & af<.95]
+
+  ### old
+    setwd("/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/glm_output")
+
     load("NoCore20_NoProblems_NoFlip_seas_LocRan.Rdata")
     nObs.thr <- quantile(mod.out$nObs, .25, na.rm=T); nObs.thr
-    focal <- mod.out[nObs>=nObs.thr][!is.na(p_lrt)][nFixed==0][af>.05 & af<.95]
+    oldr <- mod.out[nObs>=nObs.thr][!is.na(p_lrt)][nFixed==0][af>.05 & af<.95]
 
-  ### tester
-    load("NoCore20_NoProblems_Steep_Pos_seas_LocRan.Rdata")
-    nObs.thr <- quantile(mod.out$nObs, .25, na.rm=T); nObs.thr
-    tester <- mod.out[nObs>=nObs.thr][!is.na(p_lrt)][nFixed==0][af>.05 & af<.95]
+### merge
+  setkey(newr, chr, pos, perm)
+  setkey(oldr, chr, pos, perm)
+
+  m <- merge(newr, oldr, all=T)
+
+  table(m$chr, is.na(m$p_lrt.x))
+
+  table(m[chr=="2L"]$p_lrt.x < 1e-3,  m[chr=="2L"]$p_lrt.y <1e-3, m[chr=="2L"]$perm)
+
+
+###
+  table(newr$p_lrt<1e-3, newr$perm, newr$chr)
+  table(oldr$p_lrt<1e-4, oldr$perm, oldr$chr)
+
+
+
+
+
+
 
   ### clean up
     rm(mod.out)

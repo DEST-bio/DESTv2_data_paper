@@ -1,5 +1,5 @@
 ### MAke Figure 1.yes
-### 
+###
 
 library(data.table)
 library(tidyverse)
@@ -9,7 +9,7 @@ library(ggpattern) ##--> remotes::install_github("coolbutuseless/ggpattern")
 library(magick)
 
 setwd("/Users/jcbnunez/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE1/")
-#### samps ---> 
+#### samps --->
 samps <- fread("code/dest_v2.samps_25Feb2023.csv")
 
 ####
@@ -33,19 +33,19 @@ pnps %>%
 pre.dat <-get(load("code/Miss.Cov.PCRdup.sim.joint.Rdata"))
 pre.dat %>%
   filter(Var == "Cov") %>%
-  dplyr::select(sampleId, Cov = Value) -> 
+  dplyr::select(sampleId, Cov = Value) ->
   cov.info
 
 pre.dat %>%
   filter(Var == "Miss") %>%
-  dplyr::select(sampleId, Miss = Value) -> 
+  dplyr::select(sampleId, Miss = Value) ->
   Miss.info
 
 full_join(contam, duprate) %>%
   full_join(pnps.sub) %>%
   full_join(cov.info) %>%
   full_join(Miss.info) %>%
-  full_join(samps) -> 
+  full_join(samps) ->
   metadata.seq
 
 ####
@@ -59,7 +59,7 @@ metadata.seq %>%
   )) ->metadata.seq
 
 ### Panel A
-### 
+###
 
 samps %>%
   mutate(collapse = case_when(collector == "Fournier-Level et al" ~ "Yes", TRUE ~ "No")) %>%
@@ -82,12 +82,12 @@ samps %>%
   PanelA
 
 ### Panel B
-### 
+###
 
 
 samps %>%
   group_by(year, city) %>%
-  filter(set != "dest_plus") %>% 
+  filter(set != "dest_plus") %>%
   summarize(N = n()) %>%
   .[complete.cases(.),] %>%
   filter(year > 2006) %>%
@@ -101,7 +101,7 @@ samps %>%
   theme_classic() + theme(axis.text = element_text(size = 6)) -> PanelB
 
 ### Panel C
-### 
+###
 
 world <- map_data("world")
 
@@ -119,7 +119,7 @@ samps %>%
                                set %in% "dgn" ~ "DGN"
   )) ->samps.map
 
-base_world + 
+base_world +
   geom_point(
     data = samps.map,
     aes(x=long,
@@ -161,5 +161,3 @@ ggsave(PanelC, file = "PanelC.pdf",
 
 ggsave(PanelD, file = "PanelD.pdf",
        w= 8, h = 3)
-
-

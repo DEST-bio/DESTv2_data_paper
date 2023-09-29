@@ -15,20 +15,22 @@
     oo
   }
 
-  save(oo, file="~/mega_enrichment.Rdata")
+  save(oo, file="/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_5_2023/compiled/mega_enrichment.JUNE_13_2023.Rdata")
 
 ### plot
   library(ggplot2)
   library(data.table)
 
-  system("scp aob2x@rivanna.hpc.virginia.edu:~/mega_enrichment.Rdata ~/.")
-  load("~/mega_enrichment.Rdata")
+  system("scp aob2x@rivanna.hpc.virginia.edu:/scratch/aob2x/DEST2_analysis/seasonality/GLM_omnibus_JUNE_13_2023/compiled/mega_enrichment.JUNE_5_2023.Rdata ~/.")
+  load("~/mega_enrichment.JUNE_13_2023.Rdata")
 
 ### collapse
 
   oo <- oo[,list(N=sum(N)), list(min_p, max_p, perm, pops, model_features, chr)]
 
-  oo[,model_features:=factor(model_features, levels=c("LocBinomial", "LocQB", "PhyloQB", "Loc_PhyloQB", "LocRan", "Phylo_LocRan"))]
+  oo[,model_features:=factor(model_features,
+                      levels=c("yearPop_Binomial", "Phylo_yearPop_Binomial",      "yearPop_Ran",      "Phylo_yearPop_Ran",
+                                "Loc_Binomial_PCA",  "Loc_Ran_PCA"))]
 
   oo.ag <- oo[,list(N=sum(N), chr="genome"), list(perm, max_p, model_features, pops)]
 
@@ -54,6 +56,6 @@
     "ABBBB"
 
     mega <- p1 + p2 + plot_layout(design=layout) +  plot_annotation(title = pops.i)
-    ggsave(mega, file=paste("~/modelEnrichment.new.", pops.i, ".png", sep=""), h=8, w=8)
+    ggsave(mega, file=paste("~/modelEnrichment.JUNE_13_2023.", pops.i, ".png", sep=""), h=8, w=8)
 
   }
