@@ -2,10 +2,26 @@
 scp mkapun@10.95.0.14:/media/DEST2_NHM/output/* /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data
 scp mkapun@10.95.0.14:/media/DEST2_NHM/data/SNAPE.header.txt /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/
 
+mkdir /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data
+
+## PoolSNP
+gunzip -c /media/inter/ssteindl/DEST/DEST2_NHM/collapsed/PoolSNP/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz |
+    parallel \
+        --jobs 200 \
+        --pipe \
+        -k \
+        --cat python3 /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/scripts/VCF2sync.py \
+        --input {} |
+    gzip >/media/inter/ssteindl/DEST/DEST2_NHM/collapsed/PoolSNP/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.sync.gz
+
 ## recode missing data confoming with Grenedalf .:.:.:.:.:. > 0:0:0:0:0:0
 pigz -dc /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/dest.PoolSeq.SNAPE.NA.NA.25Feb2023.norep.gz |
     sed 's/.:.:.:.:.:./0:0:0:0:0:0/g' |
     pigz >/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/DEST2_snape.sync.gz
+
+pigz -dc /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/dest.all.PoolSNP.001.50.25Feb2023.norep.gz |
+    sed 's/.:.:.:.:.:./0:0:0:0:0:0/g' |
+    pigz >/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/DEST2_poolsnp.sync.gz
 
 pigz -dc /media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen/data/dest.all.PoolSNP.001.50.25Feb2023.norep.gz |
     sed 's/.:.:.:.:.:./0:0:0:0:0:0/g' |
