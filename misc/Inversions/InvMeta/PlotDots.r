@@ -49,7 +49,7 @@ Zi=-0.1#min(In.2L.t)-0.1
 Za=1#max(In.2L.t)+0.1
 plot(newmap,xlim=X,ylim=Y,col=rgb(0,0,0,0.2),ylab="Latitude",xlab="Longitude",cex.lab=3)
 map.axes(cex.axis=2)
-points(Longitude,Latitude,pch=21,cex=2.5,col=DEST,bg=color(100)[as.numeric(cut(In.2L.t,breaks = 100))])
+points(Longitude,Latitude,pch=DEST,cex=2.5,col="black",bg=color(100)[as.numeric(cut(In.2L.t,breaks = 100))])
 legend.col(color(100),seq(Zi,Za,0.01))
 dev.off()
 
@@ -59,7 +59,7 @@ Zi=-0.1#min(In.2L.t)-0.1
 Za=1#max(In.2L.t)+0.1
 plot(newmap,xlim=X,ylim=Y,col=rgb(0,0,0,0.2),ylab="Latitude",xlab="Longitude",cex.lab=3)
 map.axes()
-points(Longitude,Latitude,pch=21,cex=2.5,col=DEST,bg=color(100)[as.numeric(cut(In.2R.Ns,breaks = 100))])
+points(Longitude,Latitude,pch=DEST,cex=2.5,col="black",bg=color(100)[as.numeric(cut(In.2R.Ns,breaks = 100))])
 legend.col(color(100),seq(Zi,Za,0.01))
 dev.off()
 
@@ -69,7 +69,7 @@ Zi=-0.1#min(In.2L.t)-0.1
 Za=1#max(In.2L.t)+0.1
 plot(newmap,xlim=X,ylim=Y,col=rgb(0,0,0,0.2),ylab="Latitude",xlab="Longitude",cex.lab=3)
 map.axes()
-points(Longitude,Latitude,pch=21,cex=2.5,col=DEST,bg=color(100)[as.numeric(cut(In.3L.P,breaks = 100))])
+points(Longitude,Latitude,pch=DEST,cex=2.5,col="black",bg=color(100)[as.numeric(cut(In.3L.P,breaks = 100))])
 legend.col(color(100),seq(Zi,Za,0.01))
 dev.off()
 
@@ -79,7 +79,7 @@ Zi=-0.1#min(In.2L.t)-0.1
 Za=1#max(In.2L.t)+0.1
 plot(newmap,xlim=X,ylim=Y,col=rgb(0,0,0,0.2),ylab="Latitude",xlab="Longitude",cex.lab=3)
 map.axes()
-points(Longitude,Latitude,pch=21,cex=2.5,col=DEST,bg=color(100)[as.numeric(cut(as.numeric(In.3R.Payne),breaks = 100))])
+points(Longitude,Latitude,pch=DEST,cex=2.5,col="black",bg=color(100)[as.numeric(cut(as.numeric(In.3R.Payne),breaks = 100))])
 legend.col(color(100),seq(Zi,Za,0.01))
 dev.off()
 
