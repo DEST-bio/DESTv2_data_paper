@@ -20,10 +20,10 @@
   source("https://raw.githubusercontent.com/j-a-thia/genomalicious/master/R/outflank_input_freqs.R")
   source("https://raw.githubusercontent.com/j-a-thia/genomalicious/master/R/outflank_mod_fst_correct.R")
   source("https://raw.githubusercontent.com/j-a-thia/genomalicious/master/R/outflank_mod_fst_nocorrect.R")
-  source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/OutFLANK.R")
-  source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/Likelihood%20functions%20for%20OutFLANK.R")
-  source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/Fst%20Diploids.R")
-  source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/FST%20functions.R")
+  # source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/OutFLANK.R")
+  # source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/Likelihood%20functions%20for%20OutFLANK.R")
+  # source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/Fst%20Diploids.R")
+  # source("https://raw.githubusercontent.com/whitlock/OutFLANK/master/R/FST%20functions.R")
 
 ### load this function
   getData <- function(snps=snp.dt[pos==14617051 & chr=="2L"], samples=samps) {
