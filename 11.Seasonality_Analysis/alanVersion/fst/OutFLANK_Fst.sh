@@ -10,7 +10,7 @@
 #SBATCH -p standard
 #SBATCH --account biol4559-aob2x
 
-### run as: sbatch --array=1-1086 PATH_TO_THIS_FILE
+### run as: sbatch --array=1-215 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/fst/OutFLANK_Fst.sh
 ### sacct -j XXXXXXXXX
 ### cat /scratch/COMPUTE_ID/logs/fst.*.err
 
@@ -19,4 +19,4 @@
   module load intel/18.0  intelmpi/18.0 R/4.1.1
 
 ### run window
-  Rscript --vanilla /scratch/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/fst/OutFLANK_Fst.R ${SLURM_ARRAY_TASK_ID}
+  Rscript --vanilla ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/fst/OutFLANK_Fst.R ${SLURM_ARRAY_TASK_ID}
