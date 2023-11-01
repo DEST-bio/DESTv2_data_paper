@@ -8,7 +8,7 @@
 
 ### libraries
   #.libPaths(c("/scratch/aob2x/biol4559-R-packages-newer")); .libPaths()
-  install.packages("curl")
+  #install.packages("curl")
   library(curl)
   library(SeqArray)
   library(data.table)
