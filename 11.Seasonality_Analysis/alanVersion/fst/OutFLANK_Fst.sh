@@ -11,8 +11,8 @@
 #SBATCH --account biol4559-aob2x
 
 ### run as: sbatch --array=1-215 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/fst/OutFLANK_Fst.sh
-### sacct -j 54723734
-### cat /scratch/aob2x/logs/dest_fst.54723734_136.err
+### sacct -j 54723955
+### cat /scratch/aob2x/logs/dest_fst.54723955_46.out
 
 
 ### modules

@@ -62,7 +62,7 @@
                      muller="all"),
                 list(samp=tstrsplit(samp, "/")[[3]])]
 
-  
+
 
 
 
@@ -76,7 +76,7 @@
 
 
 ### load in kmer
-  kmer <- as.data.table(read_excel("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/readDepth_vs_kmer_v3/dest_kmer_screening.xls"))
+  kmer <- as.data.table(read_excel("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/contamination_estimation/dest_kmer_screening.xls"))
   setnames(kmer, "File", "samp")
   setnames(kmer, "Dsimu/(Dmela+Dsimu)", "simRate_kmer")
 

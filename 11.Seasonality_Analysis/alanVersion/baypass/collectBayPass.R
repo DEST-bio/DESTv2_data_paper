@@ -1,12 +1,16 @@
+
 # ijob -A berglandlab -c5 -p largemem --mem=250G
+# ijob -A biol4559-aob2x -c37 -p standard --mem=100G
+
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 ### libraries
   library(data.table)
   library(foreach)
   library(doMC)
-  registerDoMC(5)
+  registerDoMC(37)
   library(dplyr)
+  library(SeqArray)
 
 ### SNPs
    snps <- fread("/standard/vol186/bergland-lab/Gio/subbaypass/dest_pos_table.txt")
@@ -110,10 +114,45 @@
   m <- merge(m, cont.ag)
   m[,q:=p.adjust(p_lrt, "fdr")]
 
+
+### get annotation
+  genofile <- seqOpen("/scratch/aob2x/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.gds")
+  annotation <- foreach(i=1:dim(m)[1], .errorhandling="remove")%dopar%{
+
+    if(i%%100==0) print(paste(i, dim(m)[1], sep=" / "))
+
+    seqSetFilter(genofile, variant.id=m[i]$variant.id)
+
+    ### get annotations
+    message("Annotations")
+    tmp <- seqGetData(genofile, "annotation/info/ANN")
+    len1 <- tmp$length
+    len2 <- tmp$data
+
+    snp.dt1 <- data.table(len=rep(len1, times=len1),
+                          ann=len2,
+                          id=rep(m[i]$variant.id, times=len1))
+
+    # Extract data between the 2nd and third | symbol
+    snp.dt1[,class:=tstrsplit(snp.dt1$ann,"\\|")[[2]]]
+    snp.dt1[,gene:=tstrsplit(snp.dt1$ann,"\\|")[[4]]]
+
+    # Collapse additional annotations to original SNP vector length
+    snp.dt1.an <- snp.dt1[,list(n=length(class), col_all= paste(class, collapse=","), gene_all=paste(gene, collapse=",")),
+                          list(variant.id=id)]
+    snp.dt1.an[,col:=tstrsplit(snp.dt1.an$col_all,"\\,")[[1]]]
+    snp.dt1.an[,gene:=tstrsplit(snp.dt1.an$gene_all,"\\,")[[1]]]
+
+    return(snp.dt1.an)
+  }
+  annotation <- rbindlist(annotation)
+  m <- merge(m, annotation)
+
 ### save
-  save(m, file="~/dest2_glm_baypass.Rdata")
+  save(m, file="~/dest2_glm_baypass_annotation.Rdata")
+
   fisher.test(table(m$rnp<.05, m$XtXst_median>450))
-  fisher.test(table(m$rnp<.05, m$C2_std_median>5))
+  fisher.test(table(-log10(m$p_lrt)>3.5, m$C2_std_median>5))
   fisher.test(table(m$q.x<.0005, m$q.y<.05))
 
   fisher.test(table(m$q.x<.0005 & m$q.y<.05, m$q<.05))
@@ -141,9 +180,9 @@
   ggplot(data=m[XtXst_median>200], aes(y=XtXst_median, x=pos, color=invName.x!="noInv")) +
   geom_point() + facet_grid( ~ chr)
 
-  ggplot(data=m[C2_std_median>5], aes(y=C2_std_mean, x=pos, color=invName.x)) +
-  geom_point(size=.5, alpha=.5) +
-  facet_grid( ~ chr)
+  ggplot(data=m[C2_std_median>3], aes(y=C2_std_mean, x=pos, color=invName.x!="noInv")) +
+  geom_point(size=.75, alpha=.5) +
+  facet_grid( ~ chr) + geom_hline(yintercept=5.5)
 
 m[C2_std_median>20][chr=="3R"]
 
@@ -153,3 +192,8 @@ m[C2_std_median>20][chr=="3R"]
 
 
   fisher.test(table(m[chr=="2R"]$XtXst_median>350, m[chr=="2R"]$rnp<.05))
+  table(m[chr=="2L"]$C2_std_median>5.5, m[chr=="2L"]$p_lrt<.0005)%>%fisher.test()
+  table(m[chr=="2R"]$C2_std_median>5.5, m[chr=="2R"]$p_lrt<.0005)%>%fisher.test()
+  table(m[chr=="3L"]$C2_std_median>5.5, m[chr=="3L"]$p_lrt<.0005)%>%fisher.test()
+  table(m[chr=="3R"]$C2_std_median>5.5, m[chr=="3R"]$p_lrt<.0005)%>%fisher.test()
+  m[,C2_p:=1-pchisq(C2_std_median, 1)]

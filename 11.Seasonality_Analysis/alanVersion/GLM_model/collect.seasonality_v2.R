@@ -56,6 +56,9 @@
 
   }
   o <- rbindlist(o, fill=T)
+  o <- o[nObs>100][af>.05 & af<.95][neff>20]
+  o.perm.quan <- o[,list(q999=quantile(-log10(p_lrt), .999)), list(perm)]
+
 
   o <- o[perm==0][nObs>100][af>.05 & af<.95][neff>20][,list(chr,pos,invName,variant.id,p_lrt)]
   save(o, file="/standard/vol186/bergland-lab/DEST_v2/GLMER_output_EuropeSeasonality.Rdata")
