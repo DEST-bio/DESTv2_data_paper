@@ -71,10 +71,16 @@
   kmer.sim[,nSim_individuals:=n.ind.simu]
   setnames(kmer.sim, names(kmer.sim), gsub(" ", "_", names(kmer.sim)))
   setnames(kmer.sim, names(kmer.sim), gsub("\\.", "", names(kmer.sim)))
-  kmer.sim[,sim.Rate:=nSim_individuals/80]
+  kmer.sim[,simRate:=nSim_individuals/80]
+  kmer.sim[,method:="kmer"]
+  kmer.sim[,simRate_norm:=Nmin5_conf095/100]
 
-  
+  kmer.sim[,c("simRate_norm", "method", "simRate"), with=F]
+  sim.idx.ag[,method:="samtools"]
+  sim.idx.ag <- rbind(kmer.sim, sim.idx.ag, fill=T)
+
 ### real data
+
   load("/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/data/simContam_destv2.Rdata") ### made by '/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/old/readDepth_vs_kmer_v3/readDepth_contamination.R'
 
   dat <- simContam
@@ -136,6 +142,17 @@
 ### save
   save(real.idx.ag, file="/Users/alanbergland/Documents/GitHub/DESTv2_data_paper/4.contamination/contamination_estimation/simulans_rates.Rdata")
 
+
+### kmer long
+  kl <- melt(kmer[,-c("Dmela+Dsimu+Wolb", "simRate_kmer"), with=F], id.vars="samp")
+  kl.ag <- kl[,list(max_rate=max(value), mean_rate=mean(value)), list(variable)]
+  kl.ag[,r:=rank(-max_rate)]
+  kl.ag <- kl.ag[order(-r)]
+  kl.ag[,sp.factor:=factor(variable, levels=kl.ag$variable)]
+  kl <- merge(kl, kl.ag, by="variable")
+  kl <- merge(kl, samps[,c("sampleId", "nFlies", "set"), with=F], by.x="samp", by.y="sampleId")
+
+
 ### plot
   mylog10_trans <- function (base = 10) {
     trans <- function(x) log(x + 1, base)
@@ -145,11 +162,10 @@
   }
 
   model_plot <-
-  ggplot(data=sim.pred, aes(x=simRate, y=pred)) +
+  ggplot(data=sim.idx.ag, aes(x=simRate, y=simRate_norm, group=method, color=method)) +
   geom_abline(slope=1, intercept=0) +
   geom_line() +
-  geom_point(data=sim.idx.ag, aes(x=simRate, y=I(nSim/(nSim+nMel)))) +
-
+  geom_point() +
   xlab("Estimated simulans contamination") + ylab("\'True\' simulans contamination rate\n(simulated)")
 
   C <- ggplot(data=real.idx.ag, aes(x=simRate, y=simRate_kmer/100)) + geom_point() + geom_abline(intercept=0, slope=1) + ylim(0,1) + xlim(0,1)
@@ -164,6 +180,8 @@
                   scale_y_continuous(trans = "mylog10") +
                   theme(axis.text.x=element_text(size=8, angle=90))
 
+  wacky <-   ggplot(data=kl[max_rate>1], aes(x=sp.factor, y=plogis(value/100 * nFlies), group=samp)) +
+    geom_point() + geom_line() + facet_grid(~set) + coord_flip()
 
   layout <- "
   AB
@@ -171,8 +189,8 @@
   CC
   DD"
 
-  mega <- model_plot + C + distributionA + distributionB + plot_layout(design=layout) + plot_annotation(tag_level="A")
-  ggsave(mega, file="~/contamination.pdf", height=8.5, width=11)
+  mega <- model_plot + C + distributionA + wacky + plot_layout(design=layout) + plot_annotation(tag_level="A")
+  ggsave(mega, file="~/contamination.pdf", height=7, width=8)
 
 
 
@@ -185,7 +203,8 @@
   model_plot + A + B + C + distribution + plot_layout(design=layout) + plot_annotation(tag_levels = 'A')
 
 
-
+#### stas
+  sim.idx.ag[,list(rmse=sqrt(mean(abs(simRate_norm - simRate), na.rm=T)), cor=cor(simRate_norm, simRate)), list(method)]
 
 
 
@@ -215,17 +234,6 @@
   ggplot(data=wolb.l, aes(x=simRate_kmer, y=FPKM, color=chr)) + geom_point() + facet_grid(chr~set)
   ggplot(data=wolb.l, aes(x=Wolb, y=FPKM, color=chr)) + geom_point() + facet_grid(chr~set)
   ggplot(data=wolb.wide, aes(x=W_pipientis, y=sim_wMel)) + geom_point()
-### kmer long
-  kl <- melt(kmer[,-c("Dmela+Dsimu+Wolb", "simRate_kmer"), with=F], id.vars="samp")
-  kl.ag <- kl[,list(max_rate=max(value), mean_rate=mean(value)), list(variable)]
-  kl.ag[,r:=rank(-max_rate)]
-  kl.ag <- kl.ag[order(-r)]
-  kl.ag[,sp.factor:=factor(variable, levels=kl.ag$variable)]
-  kl <- merge(kl, kl.ag, by="variable")
-  kl <- merge(kl, samps[,c("sampleId", "nFlies", "set"), with=F], by.x="samp", by.y="sampleId")
-
-  ggplot(data=kl[max_rate>1], aes(x=sp.factor, y=value/100 * nFlies, group=samp)) +
-  geom_point() + geom_line() + facet_grid(~set) + coord_flip()
 
   kmer.samp <- merge(kmer, samps[,c("sampleId", "nFlies", "set"), with=F], by.x="samp", by.y="sampleId")
 

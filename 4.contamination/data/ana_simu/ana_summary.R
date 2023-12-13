@@ -26,8 +26,8 @@ layout(tmp.layout)
 #Relative percentage of Dsimu
 tmp.d=100*res[,,1]/(res[,,1]+res[,,2])
 rmse=sqrt(colSums((tmp.d/100-n.ind.simu/80)**2)/nrow(tmp.d))
-# Nmin1 conf0.9  Nmin5 conf0.9 Nmin1 conf0.95 Nmin5 conf0.95 
-# 0.05222908     0.05531143     0.04926308     0.05207857 
+# Nmin1 conf0.9  Nmin5 conf0.9 Nmin1 conf0.95 Nmin5 conf0.95
+# 0.05222908     0.05531143     0.04926308     0.05207857
 matplot(n.ind.simu,tmp.d,xlab="Number of D. simulans indiv. in simulation",
         ylab="%",pch=16,type="b",lty=2,main="A) Relative Proportion of simulans vs. melanogaster seq")
 points(n.ind.simu,100*n.ind.simu/80,type="l",col="grey",lty=1)
@@ -62,8 +62,8 @@ legend("top",paste0("Nk>",cdt[,1]," C>",cdt[,2]),col=1:4,pch=16,lty=2,ncol=2)
 ps=as.matrix(n.ind.simu/80)
 tmp.d=100*(res[,,1]+ps%*%res[41,,4])/(res[,,1]+res[,,2]+ps%*%res[41,,4]+(1-ps)%*%res[1,,4])
 rmse=sqrt(colSums((tmp.d/100-n.ind.simu/80)**2)/nrow(tmp.d))
-# Nmin1 conf0.9  Nmin5 conf0.9 Nmin1 conf0.95 Nmin5 conf0.95 
-# 0.01669223     0.01538168     0.01419915     0.01177608 
+# Nmin1 conf0.9  Nmin5 conf0.9 Nmin1 conf0.95 Nmin5 conf0.95
+# 0.01669223     0.01538168     0.01419915     0.01177608
 matplot(n.ind.simu,tmp.d,xlab="Number of D. simulans indiv. in simulation",
         ylab="%",pch=16,type="b",lty=2,main="F) Relative Proportion of simulans vs. melanogaster seq (with emp. correction for unequal Wolbachia contamination)")
 points(n.ind.simu,100*n.ind.simu/80,type="l",col="grey",lty=1)

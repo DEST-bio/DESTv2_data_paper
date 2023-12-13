@@ -1,6 +1,6 @@
 
 # ijob -A berglandlab -c5 -p largemem --mem=250G
-# ijob -A biol4559-aob2x -c37 -p standard --mem=100G
+# ijob -A biol4559-aob2x -c20 -p standard --mem=100G
 
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
@@ -8,14 +8,14 @@
   library(data.table)
   library(foreach)
   library(doMC)
-  registerDoMC(37)
+  registerDoMC(20)
   library(dplyr)
   library(SeqArray)
 
 ### SNPs
-   snps <- fread("/standard/vol186/bergland-lab/Gio/subbaypass/dest_pos_table.txt")
-   setnames(snps, "subpoolMRK", "MRK")
-   setkey(snps, chr, pos)
+  snps <- fread("/standard/vol186/bergland-lab/Gio/subbaypass/dest_pos_table.txt")
+  setnames(snps, "subpoolMRK", "MRK")
+  setkey(snps, chr, pos)
 
 ### load SNP definition files
   fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/", "snpdet", full.name=T)
@@ -62,9 +62,14 @@
   save(xtx, file="/scratch/aob2x/xtx_dest2.raw.Rdata")
 
 ### average
+  xtx[negLog10P==Inf, negLog10P:=max(xtx[negLog10P!=Inf]$negLog10P)]
+
   xtx.ag <- xtx[,list(XtXst_median=median(XtXst), XtXst_mean=mean(XtXst),
-                      neglogp_median=median(negLog10P), neglogp_mean=mean(negLog10P)), list(MRK, subpool, chr, pos, invName)]
+                      xtx_neglogp_median=median(negLog10P), xtx_neglogp_mean=mean(negLog10P), af=mean(M_P)), list(MRK, subpool, chr, pos, invName)]
   xtx.ag[order(subpool)]
+  xtx.ag[xtx_neglogp_median>15]
+  xtx.ag[,xtx.p:=10^(-xtx_neglogp_mean)]
+  xtx.ag[,xtx.q:=p.adjust(xtx.p, "fdr")]
   table(xtx.ag$XtXst_mean>200, xtx.ag$chr, xtx.ag$invName!="noInv")
 
 ##########
@@ -97,10 +102,11 @@
 
 ### average
   cont.ag <- cont[,list(C2_std_median=median(C2_std), C2_std_mean=mean(C2_std),
-                        neglogp_median=median(negLog10P), neglogp_mean=mean(negLog10P)), list(MRK, subpool, chr, pos)]
+                        C2_neglogp_median=median(negLog10P), C2_neglogp_mean=mean(negLog10P)), list(MRK, subpool, chr, pos)]
+  cont.ag[C2_neglogp_median==Inf]
 
-  cont.ag[,p:=10^(-neglogp_mean)]
-  cont.ag[,q:=p.adjust(p, "fdr")]
+  cont.ag[,cont.p:=10^(-C2_neglogp_median)]
+  cont.ag[,cont.q:=p.adjust(cont.p, "fdr")]
   table(cont.ag$q<.15, cont.ag$chr)
 
 ### GLM
@@ -112,7 +118,7 @@
 
   m <- merge(o, xtx.ag)
   m <- merge(m, cont.ag)
-  m[,q:=p.adjust(p_lrt, "fdr")]
+  m[,glm.q:=p.adjust(p_lrt, "fdr")]
 
 
 ### get annotation
@@ -146,7 +152,10 @@
     return(snp.dt1.an)
   }
   annotation <- rbindlist(annotation)
-  m <- merge(m, annotation)
+
+  #annotation <- m[,c("variant.id", "col_all", "gene_all", "col", "gene"), with=F]
+  save(annotation, file="/scratch/aob2x/dest2_europe_glm_annotation.Rdata")
+  m <- merge(m, annotation, by="variant.id")
 
 ### save
   save(m, file="~/dest2_glm_baypass_annotation.Rdata")
@@ -154,6 +163,12 @@
   fisher.test(table(m$rnp<.05, m$XtXst_median>450))
   fisher.test(table(-log10(m$p_lrt)>3.5, m$C2_std_median>5))
   fisher.test(table(m$q.x<.0005, m$q.y<.05))
+  fisher.test(table(m$rnp<.005, m$col=="missense_variant"))
+  fisher.test(table(m$XtXst_median>350, m$col=="missense_variant"))
+
+
+  m[XtXst_median>350][col=="missense_variant"]
+
 
   fisher.test(table(m$q.x<.0005 & m$q.y<.05, m$q<.05))
 

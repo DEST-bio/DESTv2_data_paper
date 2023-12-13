@@ -24,11 +24,11 @@
   xlab("-log10(p_lrt)")
 
 
-  lab <- paste("Odds Ratio=", round(as.numeric(fisher.test(table(-log10(m$p_lrt)>3.5, m$C2_std_median>5))$estimate)), sep="")
+  lab <- paste("Odds Ratio=", round(as.numeric(fisher.test(table(-log10(m$p_lrt)>3.5, m$C2_std_median>5.5))$estimate)), sep="")
   baypass_plot <- ggplot(m) +
   geom_hex(aes(x=-log10(p_lrt), y=C2_std_median)) +
   geom_vline(xintercept=3.3, color="red") +
-  geom_hline(yintercept=5.5, color="red") + geom_text(aes(x=6, y=20, label="fuck you"))
+  geom_hline(yintercept=5.5, color="red") + geom_text(aes(x=6, y=20, label=lab))
 
 
   samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
