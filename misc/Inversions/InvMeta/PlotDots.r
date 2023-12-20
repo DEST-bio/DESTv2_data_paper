@@ -75,3 +75,9 @@ ggsave("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/InvMeta/P
     world_plot,
     width=12,
     height=6)
+
+ggsave("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/InvMeta/PlotDots.png",
+    world_plot,
+    width = 12,
+    height = 6
+)
