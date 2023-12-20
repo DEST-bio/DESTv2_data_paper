@@ -257,7 +257,7 @@ for (p in c("poolsnp","snape")){
             image(K,zlim=c(Zi,Za),col=color(100),xlim=X,ylim=Y)
             plot(newmap,col=rgb(0,0,0,0.2),add=T,xlim=X1,ylim=Y1)
             points(DATA.pi.summary$Longitude,DATA.pi.summary$Latitude,pch=16,cex=2)
-            legend.col(color(100),seq(Zi,Za,0.0001))
+            #legend.col(color(100),seq(Zi,Za,0.0001))
             dev.off()
         }
     }
