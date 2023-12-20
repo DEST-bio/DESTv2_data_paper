@@ -34,6 +34,7 @@ legend.col <- function(col, lev) {
 library(rworldmap)
 library(kriging)
 library(tidyverse)
+library(plyr)
 library(maps)
 library(viridis)
 dataset <- read.table("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/InvMeta/FullInvDestv2.txt", header = T, na.string = "NA")
@@ -44,10 +45,11 @@ attach(dataset)
 
 data_long <- gather(dataset, Inversion, Frequency, In.2L.t:In.3R.Payne, factor_key = TRUE)
 
-data_long$DEST[data_long$DEST == 21] <- "previous data"
+data_long$DEST[data_long$DEST == 21] <- "Kapun & Flatt (2019)"
 data_long$DEST[data_long$DEST == 22] <- "DEST dataset"
 
-panel.grid.major = element_blank(), panel.grid.minor = element_blank()
+data_long$Inversion <- as.factor(data_long$Inversion)
+data_long$Inversion <- revalue(data_long$Inversion, c("In.2L.t" = "In(2L)t", "In.2R.Ns" = "In(2R)Ns", "In.3L.P" = "In(3L)P", "In.3R.Payne" = "In(3R)Payne"))
 
 data_long$DataSource <- as.factor(data_long$DEST)
 world_map <- map_data("world")
@@ -66,15 +68,18 @@ world_plot <- ggplot() +
     xlab("Longitude") +
     ylab("Latitude") +
     theme_bw() +
-    theme(panel.background = element_rect(fill = "lightblue"),
-    panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank())
+    theme(
+        panel.background = element_rect(fill = "lightblue"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+    )
 world_plot
 
 ggsave("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/InvMeta/PlotDots.pdf",
     world_plot,
-    width=12,
-    height=6)
+    width = 12,
+    height = 6
+)
 
 ggsave("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/InvMeta/PlotDots.png",
     world_plot,
