@@ -22,7 +22,31 @@ for (inv in inversions) {
         newdat <- data %>%
             filter(continent == cont)
 
-        A=anova(lm(newdat[[inv]] ~ newdat$lat * newdat$lon)) %>%
+        A <- anova(lm(newdat[[inv]] ~ newdat$lat * newdat$lon)) %>%
+            kable(caption = paste0(inv, "_", cont))
+    }
+}
+sink()
+
+sink("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/results/AdditionalStatistics/InversionStats.txt")
+for (inv in inversions) {
+    for (cont in levels(data$continent)) {
+        newdat <- data %>%
+            filter(continent == cont)
+
+        A <- anova(lm(newdat[[inv]] ~ newdat$lat * newdat$lon)) %>%
+            kable(caption = paste0(inv, "_", cont))
+    }
+}
+sink()
+
+sink("/media/inter/mkapun/projects/DESTv2_data_paper/misc/Inversions/results/AdditionalStatistics/InversionStats_temp.txt")
+for (inv in inversions) {
+    for (cont in levels(data$continent)) {
+        newdat <- data %>%
+            filter(continent == cont)
+
+        print(anova(lm(asin(sqrt(newdat[[inv]])) ~ newdat$lat * newdat$lon * newdat$year)) %>%
             kable(caption = paste0(inv, "_", cont)))
     }
 }
