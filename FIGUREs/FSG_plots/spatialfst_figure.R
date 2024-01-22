@@ -13,6 +13,8 @@ library(tibble)
 library(pheatmap)
 library(scales)
 
+load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FSG_plots/spatialFST_figure.RData")
+
 # main figure spatial fst
 figureA <- ggplot(a1[a1$type=="Including\nheterochromatin",], aes(color = chrom, y = mean, x = stat)) +
   geom_errorbar(aes(ymin = mean - se,
