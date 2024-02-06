@@ -95,7 +95,7 @@ nSNP_thr <- 150
   setkey(m, chr, pos)
   cSNPs <- m[J(data.table(chr=candidate$chr, pos=candidate$pos_min:candidate$pos_max, key="chr,pos")), nomatch=0]
 
-  
+
 
   C2_SNPs <- ggplot(data=cSNPs, aes(x=pos, y=C2_neglogp_mean)) + geom_line() + geom_hline(yintercept=quantile(m$C2_neglogp_mean, .995)) +
           geom_point(data=cSNPs[!annot%in%c("intergenic", "intronic")], aes(color=annot))
