@@ -24,7 +24,7 @@ samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populatio
 #### Many winters
 #### Many winters
 
-load("fst.winter.newTimePops.Rdata")
+load("../fst.winter.newTimePops.Rdata")
 setDT(fst.winter.between) 
 
 fst.winter.between %<>%
@@ -193,7 +193,11 @@ ti.ob.1y %>%
 cor.test(logit(abs(Tur$FST)), Tur$lat.m )
 cor.test(logit(abs(Tur$FST)), Tur$T.mean )
 
+model <- aov(logit(abs(ti.ob.1y$FST)) ~ lat.m, data = ti.ob.1y)
+summary(model)
+Anova(model)
 
+###
 ###
 ti.ob.1y %>%
   ggplot(aes(
@@ -211,7 +215,6 @@ ti.ob.1y %>%
 ggsave(lat.fst.plot, 
        file = "lat.fst.plot.pdf", 
        w = 6, h = 5)
-
 
 ti.ob.1y %>%
   ggplot(aes(
@@ -250,6 +253,20 @@ ggsave(lat.fst.plot.day_diff,
        file = "lat.fst.plot.day_diff.pdf", 
        w = 6, h = 4)
 
+### Comparing variance in temperature and in FST
 
+ti.ob.1y %>%
+  group_by(pop1) %>%
+  summarize(mean.lat = mean(lat.m), varT = var(T.mean, na.rm = T)) %>%
+  ggplot(aes(
+    y=varT,
+    x=mean.lat
+  )) +
+  geom_point() ->
+  var.plot
+
+ggsave(var.plot, 
+       file = "var.plot.pdf", 
+       w = 6, h = 4)
 
 
