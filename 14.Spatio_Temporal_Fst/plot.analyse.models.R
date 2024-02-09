@@ -198,41 +198,42 @@ summary(model)
 Anova(model)
 
 ###
-###
 ti.ob.1y %>%
   ggplot(aes(
     x=lat.m,
     y=logit(abs(ti.ob.1y$FST)),
-    fill=T.mean,
-    shape = pop1=="Yesiloz") 
+    fill=T.mean#,
+    #shape = pop1=="Yesiloz"
+    ) 
   ) +
   geom_point(size = 3) +
   geom_smooth(method = "lm") +
   theme_bw() +
+  facet_wrap(min(y1,y2)+max(y1,y2))+
   scale_shape_manual(values = c(21,22)) +
-  scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
+  scale_fill_gradient2(low= "steelblue", high="firebrick4", midpoint = 5) ->
   lat.fst.plot
 ggsave(lat.fst.plot, 
        file = "lat.fst.plot.pdf", 
-       w = 6, h = 5)
+       w = 12, h = 12)
 
 ti.ob.1y %>%
+  filter(pop1 == "Yesiloz") %>%
+  mutate(year_l = paste(year1,year2)) %>%
   ggplot(aes(
     x=T.mean,
-    y=logit(abs(ti.ob.1y$FST)),
-    fill=T.mean,
-    shape = pop1=="Yesiloz") 
+    y=logit(abs(.$FST)),
+    fill=as.numeric(T.mean)) 
   ) +
-  geom_point(size = 3) +
+  geom_point(size = 3, shape = 21) +
   geom_smooth(method = "lm") +
   theme_bw() +
-  facet_grid(pop1=="Yesiloz"~.) +
-  scale_shape_manual(values = c(21,22)) +
+  facet_wrap(~year_l=="2020 2021") +
   scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
   lat.fst.plot.temp
 ggsave(lat.fst.plot.temp, 
-       file = "lat.fst.plot.temp.pdf", 
-       w = 6, h = 4)
+       file = "Yesiloz.lat.fst.plot.temp.pdf", 
+       w = 5, h = 3)
 
 
 ti.ob.1y %>%
