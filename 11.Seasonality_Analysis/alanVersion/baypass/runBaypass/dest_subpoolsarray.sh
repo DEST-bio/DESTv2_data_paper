@@ -20,6 +20,7 @@ for i in $OPTS; do declare "opt$a=$i"; ((a++)); done
 echo $opt2
 echo $opt1
 
+module load gcc/11.4.0
 
 baypass="/home/aob2x/baypass_public/sources/g_baypass"
 

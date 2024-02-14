@@ -1,4 +1,8 @@
 # ijob -A berglandlab -c5 -p largemem --mem=250G
+### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
+
+### libraries
+  .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
 ### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
 
 ### libraries

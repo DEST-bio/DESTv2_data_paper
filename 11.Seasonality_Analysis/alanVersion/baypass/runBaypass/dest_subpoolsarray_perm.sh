@@ -5,12 +5,12 @@
 #SBATCH --mem 9G
 #SBATCH -t 20:30:00
 #SBATCH -p standard
-#SBATCH -A berglandlab
+#SBATCH -A berglandlab_standard
 #SBATCH -o /scratch/aob2x/logs/dest_baypass.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/logs/dest_baypass.%A_%a.err # Standard error
 
-### sbatch --array=1-2500 /scratch/aob2x/GioMazzeoDESTWork/alan/dest_subpoolsarray_perm.sh
-### sacct -j 54474211
+### sbatch --array=1-2500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/runBaypass/dest_subpoolsarray_perm.sh
+### sacct -j 58263977
 ### cat /scratch/aob2x/logs/dest_baypass.54474211_1.out
 
 # ijob -A berglandlab -c16 -p standard --mem=10G
