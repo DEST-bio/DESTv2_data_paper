@@ -1,4 +1,4 @@
-# ijob -A berglandlab -c5 -p largemem --mem=250G
+# ijob -A berglandlab_standard -c5 -p largemem --mem=250G
 ### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
 ### libraries
