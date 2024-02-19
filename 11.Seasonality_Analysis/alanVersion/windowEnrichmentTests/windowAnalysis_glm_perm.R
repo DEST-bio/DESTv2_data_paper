@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c10 -p largemem --mem=250G
+# ijob -A berglandlab_standard -c20 -p standard --mem=15G
 ### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
 ### libraries
@@ -13,8 +13,10 @@
   args = commandArgs(trailingOnly=TRUE)
   jobId=as.numeric(args[1])
 
+  #jobId=1
+
 ### load data
-  permId<- jobId-1
+  permId<- jobId - 1
 
   load(paste("/scratch/aob2x/DEST2_analysis/seasonality/perms/glmer_dest_perm", permId, ".Rdata", sep=""))
   m <- glmer.dest
@@ -92,4 +94,5 @@
 
   }
 
-  save(win.out, paste("/scratch/aob2x/DEST2_analysis/seasonality/window_perms/glm_perm_", permId, ".Rdata", sep="")
+
+  save(win.out, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/window_perms/glm_perm_", permId, ".Rdata", sep=""))
