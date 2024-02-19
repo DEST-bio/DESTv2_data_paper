@@ -11,7 +11,7 @@
 
 ### sbatch --array=1-2500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/runBaypass/dest_subpoolsarray_perm.sh
 ### sacct -j 58264320
-### cat /scratch/aob2x/logs/dest_baypass.54474211_1.out
+### cat /scratch/aob2x/logs/dest_baypass.58264320_1.out
 
 # ijob -A berglandlab -c16 -p standard --mem=10G
 # SLURM_ARRAY_TASK_ID=1

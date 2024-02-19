@@ -1,12 +1,12 @@
-# ijob -A biol4559-aob2x -c10 -p largemem --mem=240G
-### module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1; R
+# ijob -A berglandlab_standard -c10 -p largemem --mem=250G
+### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
 ### libraries
+  .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
   library(data.table)
   library(foreach)
   library(doMC)
-  registerDoMC(10)
-  library(tidyr)
+  registerDoMC(5)
   library(dplyr)
 
 ### load data
@@ -65,6 +65,7 @@
 
   ggplot(data=m, aes(prod)) + geom_density() +
   geom_density(data=data.table(prod=rchisq(10000, 2)), color="red")
+
 ### run windows
 
   setkey(m, chr, pos)
