@@ -1,6 +1,11 @@
 # ijob -A berglandlab_standard -c10 -p largemem --mem=250G
 ### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
+### capture slurm id
+  args <- commandArgs(trailingOnly=TRUE)
+  subPool <- as.numeric(args[1])
+
+
 ### libraries
   .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
   library(data.table)
@@ -78,7 +83,7 @@
   contrast=as.numeric(read.table("/standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt")[1,])
 
 ### load standardized allele freq estimates
-  subPool <- 1
+
   fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass", "yij", full.name=T)
   fl.use <- fl[grepl(paste("subpool_", subPool, "_", sep=""), fl)]
 
