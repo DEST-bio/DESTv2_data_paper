@@ -32,3 +32,9 @@ $baypass -gfile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/sub
 -nthreads 16  \
 -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
 -seed $opt2
+
+
+tar -czvf ~/baypass_example.tar.gz \
+/standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_21_2_summary_yij_pij.out \
+/standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_21_2_summary_contrast.out \
+/standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt
