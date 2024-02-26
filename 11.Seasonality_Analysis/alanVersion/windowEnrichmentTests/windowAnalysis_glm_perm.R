@@ -51,7 +51,7 @@
   setkey(m, chr, pos)
 
   win.out <- foreach(win.i=1:dim(wins)[1], .errorhandling = "remove", .combine = "rbind"  )%dopar%{
-    # win.i <- 888
+    # win.i <- 888; win.i<-46
     message(paste(win.i, dim(wins)[1], sep=" / "))
 
 

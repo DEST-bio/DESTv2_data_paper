@@ -5,7 +5,6 @@
   args <- commandArgs(trailingOnly=TRUE)
   subPool <- as.numeric(args[1])
 
-
 ### libraries
   .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
   library(data.table)
@@ -116,3 +115,4 @@
 
 ### save()
   save(c2.dt.ag, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/contrast_perm_subpool_", subPool, ".Rdata", sep=""))
+  save(c2.dt, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/RAW_contrast_perm_subpool_", subPool, ".Rdata", sep=""))

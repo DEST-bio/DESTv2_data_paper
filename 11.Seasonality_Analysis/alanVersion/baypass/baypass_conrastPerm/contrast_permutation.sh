@@ -10,8 +10,8 @@
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
-### sbatch --array=1-50 DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_conrastPerm/contrast_permutation.sh
-### sacct -j 58486535
+### sbatch --array=1-50 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_conrastPerm/contrast_permutation.sh
+### sacct -j 58525234
 ### sacct -j 58486535 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
 ### seff 50160643_1
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.58486488_10.err
