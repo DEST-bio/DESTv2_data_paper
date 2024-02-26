@@ -18,6 +18,197 @@ library(car)
 ###
 samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
 
+########
+########
+######## ---> one year analysis
+######## ---> one year analysis
+######## ---> one year analysis
+######## ---> one year analysis
+######## ---> one year analysis
+######## ---> one year analysis
+
+
+###
+fld.1y = "/gpfs2/scratch/jcnunez/DEST2.0_analysis/spa_temp_fst/weather_fst_1y"
+
+###
+ti.f.1y = system(paste("ls ", fld.1y, sep = "" ), intern = T)
+
+##
+ti.ob.1y =
+  foreach(i=ti.f.1y,
+          .combine = "rbind"
+  )%do%{
+    tmp = get(load(paste(fld.1y,i, sep = "/")))
+    return(tmp)
+  }
+
+#load("fst.winter.1y.Rdata")
+setDT(ti.ob.1y)
+ti.ob.1y %<>%
+  filter(pop1 != "Providence")
+###
+unique(ti.ob.1y$pop1)
+unique(ti.ob.1y$pop2)
+
+###
+samps %>%
+  group_by(pop1=city) %>%
+  summarize(lat.m = mean(lat)) -> lats
+
+left_join(ti.ob.1y, lats) -> ti.ob.1y
+####
+cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$day_diff )
+cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$lat.m )
+
+cor.test(ti.ob.1y$T.mean, ti.ob.1y$lat.m )
+
+ti.ob.1y %>%
+  filter(pop1 != "Yesiloz") -> noTur
+cor.test(logit(abs(noTur$FST)), noTur$lat.m )
+cor.test(logit(abs(noTur$FST)), noTur$T.mean )
+
+
+ti.ob.1y %>%
+  filter(pop1 == "Yesiloz") -> Tur
+cor.test(logit(abs(Tur$FST)), Tur$lat.m )
+cor.test(logit(abs(Tur$FST)), Tur$T.mean )
+
+model <- aov(logit(abs(ti.ob.1y$FST)) ~ lat.m, data = ti.ob.1y)
+model$coefficients
+summary(model)
+Anova(model)
+
+
+### Make plot of FST and latitude
+ti.ob.1y %>%
+  ggplot(aes(
+    x=lat.m,
+    y=logit(abs(ti.ob.1y$FST)),
+    fill=T.mean,
+    )) +
+  geom_point(size = 3, shape = 21) +
+  geom_smooth(method = "lm", color = "black") +
+  theme_bw() +
+  scale_fill_gradient2(low= "steelblue", 
+                       high="firebrick4", 
+                       midpoint = 12) ->
+  lat.fst.plot
+ggsave(lat.fst.plot, 
+       file = "lat.fst.plot.pdf", 
+       w = 5, h = 3)
+
+### Permute findings
+perms_overw = 
+foreach(i=1:500, .combine = "rbind")%do%{
+    data.frame(
+      i = i,
+      cor=cor.test(logit(abs(ti.ob.1y$FST)), sample(ti.ob.1y$lat.m) )$estimate 
+    )
+}
+
+rbind(
+data.frame(i = 0, cor = cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$lat.m )$estimate),
+perms_overw) %>% 
+  mutate(perm.stat = case_when(i == 0 ~ "real",
+                               TRUE ~ "perm") ) -> perm.test
+## plot permutations
+ggplot() +
+  geom_density(data = filter(perm.test, perm.stat == "perm"),
+               aes(cor), fill = "grey"
+               ) + 
+  geom_vline(data = filter(perm.test, perm.stat == "real"),
+             aes(xintercept=cor), color = "red") +
+  theme_bw() ->
+  perm.plots
+ggsave(perm.plots, file = "perm.plots.pdf", w = 4, h = 4)
+
+
+### Permute findings of temperature
+perms_overw.T = 
+  foreach(i=1:500, .combine = "rbind")%do%{
+    data.frame(
+      i = i,
+      cor=cor.test(logit(abs(ti.ob.1y$FST)), sample(ti.ob.1y$T.var) )$estimate 
+    )
+  }
+
+rbind(
+  data.frame(i = 0, cor = cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$T.var )$estimate),
+  perms_overw) %>% 
+  mutate(perm.stat = case_when(i == 0 ~ "real",
+                               TRUE ~ "perm") ) -> perm.test.Temp
+
+## plot permutations
+ggplot() +
+  geom_density(data = filter(perm.test.Temp, perm.stat == "perm"),
+               aes(cor), fill = "grey"
+  ) + 
+  geom_vline(data = filter(perm.test.Temp, perm.stat == "real"),
+             aes(xintercept=cor), color = "red") +
+  theme_bw() ->
+  perm.plots.Temp
+ggsave(perm.plots.Temp, file = "perm.plots.Temp.pdf", w = 4, h = 4)
+
+
+
+####
+ti.ob.1y %>%
+  filter(pop1 == "Yesiloz") %>%
+  mutate(year_l = paste(year1,year2)) %>%
+  ggplot(aes(
+    x=T.mean,
+    y=logit(abs(.$FST)),
+    fill=as.numeric(T.mean)) 
+  ) +
+  geom_point(size = 3, shape = 21) +
+  geom_smooth(method = "lm") +
+  theme_bw() +
+  facet_wrap(~year_l=="2020 2021", scale = "free_x") +
+  scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
+  lat.fst.plot.temp
+ggsave(lat.fst.plot.temp, 
+       file = "Yesiloz.lat.fst.plot.temp.pdf", 
+       w = 6, h = 3)
+
+####
+ti.ob.1y %>%
+  filter(pop1 != "Yesiloz") %>%
+  ggplot(aes(
+    x=lat.m,
+    y=T.var,
+    fill=as.numeric(T.mean)) 
+  ) +
+  geom_point(size = 3, shape = 21) +
+  geom_smooth(method = "lm") +
+  theme_bw() +
+  scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
+  lat.fst.plot.tempvar
+ggsave(lat.fst.plot.tempvar, 
+       file = "lat.fst.plot.tempvar.pdf", 
+       w = 6, h = 3)
+
+
+
+### Comparing variance in temperature and in FST
+
+ti.ob.1y %>%
+  group_by(pop1) %>%
+  summarize(mean.lat = mean(lat.m), varT = var(T.mean, na.rm = T)) %>%
+  ggplot(aes(
+    y=varT,
+    x=mean.lat
+  )) +
+  geom_point() ->
+  var.plot
+
+ggsave(var.plot, 
+       file = "var.plot.pdf", 
+       w = 6, h = 4)
+
+
+
+
 #### Many winters
 #### Many winters
 #### Many winters
@@ -46,24 +237,24 @@ foreach(i=unique(fst.winter.between$pop1),
           message(i)
           tmp = fst.winter.between %>%
             filter(pop1 == i)
-    
-      cor.test(logit(abs(tmp$FST)), tmp$T.mean)-> tp
-      cor.test(logit(abs(tmp$FST)), tmp$T.min)-> tmin
-      cor.test(logit(abs(tmp$FST)), tmp$T.max)-> tmax
-      cor.test(logit(abs(tmp$FST)), tmp$day_diff)-> timep
-      
-      data.frame(
-        pop=i,
-        meanT.p = tp$p.value,
-        minT.corr = tmin$estimate,
-        minT.p = tmin$p.value,
-        maxT.corr = tmax$estimate,
-        maxT.p = tmax$p.value,
-        meanT.corr = tp$estimate,
-        Time.p = timep$p.value,
-        Time.corr = timep$estimate
-      )
-      
+          
+          cor.test(logit(abs(tmp$FST)), tmp$T.mean)-> tp
+          cor.test(logit(abs(tmp$FST)), tmp$T.min)-> tmin
+          cor.test(logit(abs(tmp$FST)), tmp$T.max)-> tmax
+          cor.test(logit(abs(tmp$FST)), tmp$day_diff)-> timep
+          
+          data.frame(
+            pop=i,
+            meanT.p = tp$p.value,
+            minT.corr = tmin$estimate,
+            minT.p = tmin$p.value,
+            maxT.corr = tmax$estimate,
+            maxT.p = tmax$p.value,
+            meanT.corr = tp$estimate,
+            Time.p = timep$p.value,
+            Time.corr = timep$estimate
+          )
+          
         }
 
 ####
@@ -138,136 +329,5 @@ fst.winter.between %>%
 ggsave(Twinbet.ti.plot.pop, 
        file = "Twinbet.ti.plot.pop.pdf", 
        w = 4, h = 3)
-
-########
-########
-######## ---> one year analysis
-######## ---> one year analysis
-######## ---> one year analysis
-######## ---> one year analysis
-######## ---> one year analysis
-######## ---> one year analysis
-
-
-###
-fld.1y = "/gpfs2/scratch/jcnunez/DEST2.0_analysis/spa_temp_fst/weather_fst_1y"
-
-###
-ti.f.1y = system(paste("ls ", fld.1y, sep = "" ), intern = T)
-
-##
-ti.ob.1y =
-  foreach(i=ti.f.1y,
-          .combine = "rbind"
-  )%do%{
-    tmp = get(load(paste(fld.1y,i, sep = "/")))
-    return(tmp)
-  }
-
-#load("fst.winter.1y.Rdata")
-setDT(ti.ob.1y)
-ti.ob.1y %<>%
-  filter(pop1 != "Providence")
-###
-unique(ti.ob.1y$pop1)
-unique(ti.ob.1y$pop2)
-
-###
-samps %>%
-  group_by(pop1=city) %>%
-  summarize(lat.m = mean(lat)) -> lats
-
-left_join(ti.ob.1y, lats) -> ti.ob.1y
-####
-cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$day_diff )
-cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$lat.m )
-
-ti.ob.1y %>%
-  filter(pop1 != "Yesiloz") -> noTur
-cor.test(logit(abs(noTur$FST)), noTur$lat.m )
-cor.test(logit(abs(noTur$FST)), noTur$T.mean )
-
-
-ti.ob.1y %>%
-  filter(pop1 == "Yesiloz") -> Tur
-cor.test(logit(abs(Tur$FST)), Tur$lat.m )
-cor.test(logit(abs(Tur$FST)), Tur$T.mean )
-
-model <- aov(logit(abs(ti.ob.1y$FST)) ~ lat.m, data = ti.ob.1y)
-summary(model)
-Anova(model)
-
-###
-ti.ob.1y %>%
-  ggplot(aes(
-    x=lat.m,
-    y=logit(abs(ti.ob.1y$FST)),
-    fill=T.mean#,
-    #shape = pop1=="Yesiloz"
-    ) 
-  ) +
-  geom_point(size = 3) +
-  geom_smooth(method = "lm") +
-  theme_bw() +
-  facet_wrap(min(y1,y2)+max(y1,y2))+
-  scale_shape_manual(values = c(21,22)) +
-  scale_fill_gradient2(low= "steelblue", high="firebrick4", midpoint = 5) ->
-  lat.fst.plot
-ggsave(lat.fst.plot, 
-       file = "lat.fst.plot.pdf", 
-       w = 12, h = 12)
-
-ti.ob.1y %>%
-  filter(pop1 == "Yesiloz") %>%
-  mutate(year_l = paste(year1,year2)) %>%
-  ggplot(aes(
-    x=T.mean,
-    y=logit(abs(.$FST)),
-    fill=as.numeric(T.mean)) 
-  ) +
-  geom_point(size = 3, shape = 21) +
-  geom_smooth(method = "lm") +
-  theme_bw() +
-  facet_wrap(~year_l=="2020 2021") +
-  scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
-  lat.fst.plot.temp
-ggsave(lat.fst.plot.temp, 
-       file = "Yesiloz.lat.fst.plot.temp.pdf", 
-       w = 5, h = 3)
-
-
-ti.ob.1y %>%
-  ggplot(aes(
-    x=day_diff,
-    y=logit(abs(ti.ob.1y$FST)),
-    fill=T.mean,
-    shape = pop1=="Yesiloz") 
-  ) +
-  geom_point(size = 3) +
-  geom_smooth(method = "lm") +
-  theme_bw() +
-  facet_grid(pop1=="Yesiloz"~.) +
-  scale_shape_manual(values = c(21,22)) +
-  scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
-  lat.fst.plot.day_diff
-ggsave(lat.fst.plot.day_diff, 
-       file = "lat.fst.plot.day_diff.pdf", 
-       w = 6, h = 4)
-
-### Comparing variance in temperature and in FST
-
-ti.ob.1y %>%
-  group_by(pop1) %>%
-  summarize(mean.lat = mean(lat.m), varT = var(T.mean, na.rm = T)) %>%
-  ggplot(aes(
-    y=varT,
-    x=mean.lat
-  )) +
-  geom_point() ->
-  var.plot
-
-ggsave(var.plot, 
-       file = "var.plot.pdf", 
-       w = 6, h = 4)
 
 

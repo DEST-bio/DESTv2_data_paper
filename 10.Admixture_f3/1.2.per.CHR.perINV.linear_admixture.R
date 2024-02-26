@@ -17,20 +17,21 @@ filto=as.character(args[2]) # chr2L, chr2R, chr3L, chr3R, noINV, 2Lt, 2RNS, 3RK,
   
 ### open GDS
 
-dat.o <- get(load("/project/berglandlab/DEST2.0_working_data/Filtered_30miss/AFmatrix.flt.Rdata"))
+dat.o <- get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/DEST2.0_working_data/AFmatrix.flt.Rdata"))
 
 ### open metadata
-samps <- get(load("/project/berglandlab/DEST2.0_working_data/joint.metadata.Rdata"))
+#samps <- get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/DEST2.0_working_data/joint.metadata.Rdata"))
+samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
 #####
 #grep( "SIM" , samps$sampleId) -> sim.pos
 #grep( "CN_Bei_Bei_1_1992-09-16" , samps$sampleId) -> Beijing.pos
 ####
 
-snpdt.obj <- get(load("/project/berglandlab/Dmel_genomic_resources/Filtering_files/snp_dt.Rdata"))
+snpdt.obj <- get(load("/netfiles/nunezlab/Drosophila_resources/Filtering_files/snp_dt.Rdata"))
 setDT(snpdt.obj)
 snpdt.obj %<>% mutate(SNP_id = paste(chr, pos, sep = "_"))
 
-annotation <- get(load("/project/berglandlab/DEST_Charlottesville_TYS/DEST_metadata/DEST_Cville_SNP_Metadata.Rdata"))
+annotation <- get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/DEST2.0_working_data/DEST_Cville_SNP_Metadata.Rdata"))
 setDT(annotation)
 
 annotation %>% filter(!Putative_impact %in% c("LOW","MEDIUM","HIGH")) %>% .$SNP_id -> func.ids
@@ -85,8 +86,8 @@ if(filto == "all"){
 
 ###
 ### define test pops
-  af_pop <- samps[continent=="Africa"][nFlies>100]$sampleId
-  eu_pop <- samps[continent=="Europe"]$sampleId[k]
+  af_pop <- samps[continent=="Africa"][locality=="GN_Dal_Don"]$sampleId
+  eu_pop <- samps[continent=="Europe"][cluster1.0 == 2]$sampleId[k]
 
     ### AUS
      AUS_samps = samps[continent=="Oceania"]$sampleId
@@ -131,16 +132,16 @@ if(filto == "all"){
        file = 
          paste("linear_admix/Australia/AU.Admix", filto, eu_pop, "Rdata", sep ="." ))     
 
-  oa.g.m %>%
-    ggplot(aes(
-      x= lat,
-      y = Estimate,
-      color = source_pop
-    )) +
-      geom_smooth(method = "lm") +
-    geom_point() ->
-    aus.plot
-  ggsave(aus.plot, file = "aus.plot.pdf")
+#  oa.g.m %>%
+#    ggplot(aes(
+#      x= lat,
+#      y = Estimate,
+#      color = source_pop
+#    )) +
+#      geom_smooth(method = "lm") +
+#    geom_point() ->
+#    aus.plot
+#  ggsave(aus.plot, file = "aus.plot.pdf")
     
   
   ### NAM.
