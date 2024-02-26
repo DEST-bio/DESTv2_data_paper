@@ -10,9 +10,9 @@
   library(reshape2)
   
 ### open GDS
-aus <- system("ls /scratch/yey2sn/DEST2_analysis/admix_samps/linear_admix/Australia/*", intern = T)
-nam <- system("ls /scratch/yey2sn/DEST2_analysis/admix_samps/linear_admix/N.America/*", intern = T)
-sam <- system("ls /scratch/yey2sn/DEST2_analysis/admix_samps/linear_admix/S.America/*", intern = T)
+aus <- system("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/f3_revist/linear_admix/Australia/*", intern = T)
+nam <- system("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/f3_revist/linear_admix/N.America/*", intern = T)
+sam <- system("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/f3_revist/linear_admix/S.America/*", intern = T)
 
 aus.samps = 
   foreach(fil = aus, .combine = "rbind")%do%{
@@ -89,13 +89,13 @@ filter =  filter.i))
 regression.coeffs %>%
   reshape2::dcast(filter~mod, value.var = "p")
 
-linear.admix.dat %>%
+linear.admix.dat.filters %>%
   filter(admix.set == "N.America" & source_pop == "AFRICA") %>%
   arrange(lat)
 ####
 linear.admix.dat.filters %>%
   filter(source_pop == "AFRICA") %>%
-  filter(filter %in% c("noINV","silent")) %>%
+  filter(filter %in% c("noINV","All")) %>%
 ggplot(aes(
   x=lat,
   y=mean.est,
