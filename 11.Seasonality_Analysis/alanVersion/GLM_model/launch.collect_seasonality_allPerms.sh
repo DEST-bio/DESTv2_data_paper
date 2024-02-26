@@ -11,9 +11,8 @@
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
 ### sbatch /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/GLM_model/launch.collect_seasonality_allPerms.sh
-### sacct -j 53885553 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
-### seff 50160643_1
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.50142438_1000.out
+### sacct -j 58265536
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.58265536*.err
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.53669286_1.err
 
 
