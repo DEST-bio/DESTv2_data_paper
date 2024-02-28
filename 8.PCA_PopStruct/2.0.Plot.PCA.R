@@ -5,6 +5,7 @@ library(tidyverse)
 library(magrittr)
 library(reshape2)
 library(vroom)
+library(data.table)
 
 library(rnaturalearth)
 library(rnaturalearthdata)
@@ -13,7 +14,7 @@ library(foreach)
 
 ###
 
-all.dat.pca <- get(load("PCA.results.df.Rdata"))
+all.dat.pca <- get(load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE2_PCA/data_for_reproduction/PCA.results.df.Rdata"))
 setDT(all.dat.pca)
 
 ### Plot ->
@@ -45,7 +46,7 @@ ggsave(PC13.chrs, file = "PC13.chrs.pdf", w = 8, h = 3.0)
 
 #### see perc explained
 #### 
-perc <- get(load("pca.var.exp.Rdata"))
+perc <- get(load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE2_PCA/data_for_reproduction/pca.var.exp.Rdata"))
 perc = do.call(rbind, perc)
 setDT(perc)
 perc %>%
