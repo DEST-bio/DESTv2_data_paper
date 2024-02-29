@@ -42,6 +42,7 @@ ti.ob.1y =
     tmp = get(load(paste(fld.1y,i, sep = "/")))
     return(tmp)
   }
+save(ti.ob.1y, file = "ti.ob.1y.Rdata")
 
 #load("fst.winter.1y.Rdata")
 setDT(ti.ob.1y)
