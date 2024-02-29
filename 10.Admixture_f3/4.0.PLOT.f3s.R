@@ -28,7 +28,7 @@ class(world)
 
 ### Load file
 
-f3.admix.dat <- get(load("/scratch/yey2sn/DEST2_analysis/admix_samps/f3_meta.joint.Rdata"))
+f3.admix.dat <- get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/f3_data/f3_meta.joint.Rdata"))
 
 f3.admix.dat %<>%
 filter(!is.na(`Z-score`)) %>%
