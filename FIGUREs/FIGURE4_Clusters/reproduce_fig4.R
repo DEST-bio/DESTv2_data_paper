@@ -91,23 +91,8 @@ ggsave(Suture_ZoneAM, file = "Suture_ZoneAM.pdf",  w = 7, h = 3.5)
 
 
 #### Make panels E-G --> Linear admixture plots
-#files = "/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/linear_admix"
-#files_lo = system(paste("find ", files, "", sep = "" ), intern = T)
-
-o =
-foreach(i=files_lo, .combine = "rbind", 
-        .errorhandling = "remove")%do%{
- oin = get(load(paste(i)))
- setDT(oin)
- 
- if(length(oin$filter) > 0){} else {oin[,filter:="NA"]}
- 
- oin[,c("Estimate","Std. Error","t value","Pr(>|t|)", "parent_eu",
-        "parent_af","sampleId", "admix.set", "source_pop","filter")]
- return(oin)
-}
-
-#load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE4_Clusters/data_for_reproduction/linear.admix.dat.Guinea.EUW.Rdata")
+load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE4_Clusters/data_for_reproduction/Zambia.linear.admix.dat.Jan9.2024.Rdata")
+#load("/gpfs2/scratch/jcnunez/DEST2.0_analysis/f3_revist/Zambia.linear.admix.dat.Jan9.2024.Rdata")
 
 linear.admix.dat.filters %>%
   filter(source_pop == "AFRICA") %>%
