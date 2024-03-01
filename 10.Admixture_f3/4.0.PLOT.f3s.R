@@ -14,7 +14,7 @@
   library(ggExtra)
   library(foreach)
   
-meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv"
+meta_git <- "https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv"
 samps <- fread(meta_git)
 setDT(samps)
 
@@ -39,6 +39,17 @@ left_join(samps.focal)
 f3.admix.dat %<>%
 mutate(admix_evidence = case_when(`Z-score` < -1.65 ~ "admix",
 `Z-score` >= -1.65 ~ "notadmix"))
+
+samps[,european_parent:=sampleId]
+samps[,european_cluster:=cluster2.0_k8]
+
+Tot_admx = dim(f3.admix.dat[admix_evidence == "admix"])[1]
+
+f3.admix.dat %>%
+filter(admix_evidence == "admix") %>%
+left_join(samps[,c("european_parent","european_cluster")], by = "european_parent") %>%
+group_by(european_cluster) %>%
+summarize(N=n()/Tot_admx)
 
 
 
