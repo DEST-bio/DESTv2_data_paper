@@ -42,8 +42,25 @@ mutate(admix_evidence = case_when(`Z-score` < -1.65 ~ "admix",
 
 samps[,european_parent:=sampleId]
 samps[,european_cluster:=cluster2.0_k8]
+samps[,european_country:=country]
+
+samps[,african_parent:=sampleId]
+samps[,african_cluster:=cluster2.0_k8]
+samps[,african_country:=country]
 
 Tot_admx = dim(f3.admix.dat[admix_evidence == "admix"])[1]
+
+f3.admix.dat %>%
+filter(admix_evidence == "admix") %>%
+left_join(samps[,c("african_parent","african_cluster","african_country")], by = "african_parent") %>%
+group_by(african_country) %>%
+summarize(N=n()/Tot_admx)
+
+f3.admix.dat %>%
+filter(admix_evidence == "admix") %>%
+left_join(samps[,c("african_parent","african_cluster")], by = "african_parent") %>%
+group_by(country) %>%
+summarize(N=n()/Tot_admx)
 
 f3.admix.dat %>%
 filter(admix_evidence == "admix") %>%
@@ -52,6 +69,11 @@ group_by(european_cluster) %>%
 summarize(N=n()/Tot_admx)
 
 
+f3.admix.dat %>%
+filter(admix_evidence == "admix") %>%
+left_join(samps[,c("european_parent","european_cluster","european_country")], by = "european_parent") %>%
+group_by(european_country) %>%
+summarize(N=n()/Tot_admx) %>% arrange(-N)
 
 
 ####
