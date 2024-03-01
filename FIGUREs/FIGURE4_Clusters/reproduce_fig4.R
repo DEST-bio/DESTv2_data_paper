@@ -91,7 +91,8 @@ ggsave(Suture_ZoneAM, file = "Suture_ZoneAM.pdf",  w = 7, h = 3.5)
 
 
 #### Make panels E-G --> Linear admixture plots
-load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE4_Clusters/data_for_reproduction/linear.admix.dat.Guinea.EUW.Rdata")
+load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE4_Clusters/data_for_reproduction/Zambia.linear.admix.dat.Jan9.2024.Rdata")
+#load("/gpfs2/scratch/jcnunez/DEST2.0_analysis/f3_revist/Zambia.linear.admix.dat.Jan9.2024.Rdata")
 
 linear.admix.dat.filters %>%
   filter(source_pop == "AFRICA") %>%
