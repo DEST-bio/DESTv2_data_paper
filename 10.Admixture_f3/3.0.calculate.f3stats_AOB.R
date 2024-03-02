@@ -77,7 +77,7 @@
 
 #### Begin analyses
   setkey(samps, locality)
-  f3.o.au = foreach(test_pop = c(1:dim(tests)[1])[1:5], .combine = "rbind", .errorhandling = "remove")%do%{
+  f3.o.au = foreach(test_pop = c(1:dim(tests)[1]), .combine = "rbind", .errorhandling = "remove")%do%{
        #test_pop = 4
        tests[test_pop]
 
