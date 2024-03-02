@@ -11,12 +11,12 @@
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/f3.%A_%a.err # Standard error
 
 ### sbatch --array=1-4912 /home/aob2x/DESTv2_data_paper/10.Admixture_f3/3.1.launch_lf3stat_AOB.sh
-### sacct -j 59036995
+### sacct -j 59068285
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.58265536*.err
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/f3.59036995_174.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/f3.59068285_21.err
 
 
-module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1
+module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
 
 Rscript \
 --vanilla \
