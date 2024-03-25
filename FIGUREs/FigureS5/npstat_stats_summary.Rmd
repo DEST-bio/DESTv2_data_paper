@@ -1,0 +1,68 @@
+---
+title: "Summary of npstat pop-gen stats estimates"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library("here")
+library("ggplot2")
+library("plyr")
+```
+
+```{r}
+pops_data<-read.csv(here::here("rdata","dest_v2.samps_8Jun2023.csv"),header=TRUE)
+genome_data<-read.csv(here::here("rdata","chroms_file.csv"),header=FALSE)
+colnames(genome_data)<-c("chrom","len")
+```
+
+Plotting:
+Here I load either the table of all stats or the .RData object.
+```{r}
+win<-"win10000"
+ld<-"rdata"
+if(ld=="rdata"){
+ load(here::here("rdata/npstat",paste("npstat_",win,".RData",sep="")))
+  }else{
+  pop_genome_stats<-read.table(here::here("rdata/npstat",paste("all_pops.",win,".stats",sep="")),sep="\t",header=TRUE)
+}
+pop_genome_stats$pi_sites<-pop_genome_stats$pi/pop_genome_stats$chrom_len
+nrow(pop_genome_stats)
+```
+
+
+Summarise across chromosomes (weighted mean)
+Remove X chromosome
+```{r}
+pop_genome_stats_summary<-ddply(pop_genome_stats[which(pop_genome_stats$chrom!="X"),],
+                                .variables = c("pop"),summarise,
+                                "pi_wt_mean"=weighted.mean(pi_sites,chrom_len/sum(chrom_len)),
+                                "tajD_wt_mean"=weighted.mean(med_tajD,chrom_len/sum(chrom_len)))
+# Add continent info to pop_genome_stats_summary
+pop_genome_stats_summary$continent<-pops_data$continent[match(pop_genome_stats_summary$pop,pops_data$sampleId)]
+head(pop_genome_stats_summary)
+
+```
+
+```{r}
+# Plot pi
+ggplot()+
+  geom_boxplot(data=pop_genome_stats_summary,
+               aes(x=continent,y=pi_wt_mean),width=0.5)+
+  xlab("Continent")+
+  ylab(expression(paste(pi)))+
+  theme(axis.text=element_text(size=16),
+        axis.title=element_text(size=16))
+
+# Plot Tajima's D
+ggplot()+
+  geom_boxplot(data=pop_genome_stats_summary,
+               aes(x=continent,y=tajD_wt_mean),width=0.5)+
+  xlab("Continent")+
+  ylab("Tajima's D")+
+  theme(axis.text=element_text(size=16),
+        axis.title=element_text(size=16))
+
+```
+
