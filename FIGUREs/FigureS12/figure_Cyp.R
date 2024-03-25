@@ -56,11 +56,12 @@ gene_plot<-ggplot(genes, aes(xmin = start, xmax = end, y = molecule, group = gen
   )) 
 gene_plot
 
-plot_grid(fgt_all, fst_plot,gene_plot, align = "hv", nrow = 3, rel_heights = c(0.5,1,0.3))
+panelA <- plot_grid(fgt_all, fst_plot,gene_plot, align = "hv", nrow = 3, rel_heights = c(0.5,1,0.3))
 ggsave(filename="FGT_EU_NA_Cyp6g1.pdf", plot_grid(fgt_all, fst_plot,gene_plot, align = "hv", nrow = 3, rel_heights = c(0.5,1,0.2)), width = 23, height = 13)
 
-plot_grid(fgt_all_NA_EU,fgt_all_NA_SA,fgt_all_SA_E, align = "hv", nrow = 3)
+panelB<-plot_grid(fgt_all_NA_EU,fgt_all_NA_SA,fgt_all_SA_E, align = "hv", nrow = 3)
 ggsave(filename="FGT_all.pdf", plot_grid(fgt_all_NA_EU,fgt_all_NA_SA,fgt_all_SA_E+labs(x="Chromosome 2R"), align = "hv", nrow = 3), width = 15, height = 6)
 
+plot_grid(panelB,panelA,ncol=1,labels="AUTO",rel_heights = c(1,0.7))
 
-
+ggsave(filename="FigureS12.pdf", width = 15, height = 22)
