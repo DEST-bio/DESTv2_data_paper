@@ -98,7 +98,9 @@ linear.admix.dat.filters = o
 
 linear.admix.dat.filters %>%
   filter(source_pop == "AFRICA") %>%
-  filter(filter %in% c("noINV","All")) %>%
+  filter(filter %in% c("noINV","NA")) %>%
+  group_by(locality, source_pop, filter, admix.set, lat) %>%
+  summarise(mean.est = mean(Estimate), sd.est = sd(Estimate) ) %>%
   ggplot(aes(
     x=lat,
     y=mean.est,
@@ -113,11 +115,32 @@ linear.admix.dat.filters %>%
              color = "black", aes(shape = filter)) +
   theme_bw() +
   scale_shape_manual(values = 21:22) +
-  facet_grid(.~admix.set, scales = "free_x")->
+  facet_grid(.~admix.set, scales = "free_x") ->
   plot.admix.flt
 
 ggsave(plot.admix.flt, file = "plot.admix.flt.pdf", w = 10, h  =3)
 
+### Some additional exploration
+setDT(linear.admix.dat.filters)
+setDT(samps)
+samps[,parent_eu:=sampleId]
+
+linear.admix.dat.filters[source_pop=="AFRICA", c("parent_eu","Estimate","sampleId", 
+                                                "admix.set", "filter","lat")] %>%
+  left_join(samps[,c("parent_eu", "cluster2.0_k8")], by = "parent_eu") %>%
+  filter(filter %in% c("noINV")) %>%
+  .[complete.cases(cluster2.0_k8),] %>%
+  ggplot(aes(
+    x=Estimate,
+    color = as.factor(cluster2.0_k8)
+  )) + 
+  geom_density(adjust = 2) +
+  theme_bw() +
+  scale_shape_manual(values = 21:22) +
+  facet_grid(filter~admix.set, scales = "free_x") -> ancs.EUEEUW
+ggsave(ancs.EUEEUW, file = "ancs.EUEEUW.pdf", h = 2.5, w = 6)
+
+ 
 ### Panels H-J
 load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE4_Clusters/data_for_reproduction/spatialFST_figure.RData")
 
