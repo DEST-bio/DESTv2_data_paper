@@ -10,32 +10,4 @@ Moreover, I had to replace the missing data fields `.:.:.:.:.:.` in the SYNC fil
 
 I obtained chromosome-wise estimates and the took the average weighted by the chromosome-length to calculate genome-wide estimates.
 
-These can be found below and in the following TSV files for [PoolSNP](results/Grenedalf_poolsnp.summary) and [SNAPE](results/Grenedalf_snape.summary);
-
-![Grenedalf.png](results/Grenedalf.png)
-
-Below, I am further showing the correlation between the estimates of SNAPE and PoolSNP.
-
-![Grenedalf_corr.png](results/Grenedalf_corr.png)
-
-## Is there any geographic structure?
-
-Below, I show a few maps where I interpolated population genetic parameters acording to geographic distribution of the samples
-
-### $\theta_{\pi}$ based on PoolSNP in Europe and North America 
-
-![Grenedalf_pi_Europe](results/Grenedalf_poolsnp_Europe_theta_pi_abs.png)
-
-![Grenedalf_pi_NA](results/Grenedalf_poolsnp_North_America_theta_pi_abs.png)
-
-### $\theta_{Watterson}$ based on PoolSNP in Europe and North America 
-
-![Grenedalf_watterson_Europe](results/Grenedalf_poolsnp_Europe_theta_watterson_abs.png)
-
-![Grenedalf_watterson_NA](results/Grenedalf_poolsnp_North_America_theta_watterson_abs.png)
-
-### Tajima's _D_ based on PoolSNP in Europe and North America 
-
-![Grenedalf_tajimas_d_Europe](results/Grenedalf_poolsnp_Europe_tajimas_d.png)
-
-![Grenedalf_tajimas_d_NA](results/Grenedalf_poolsnp_North_America_tajimas_d.png)
+![Grenedalf.png](results/figures/Grenedalf_Stats.png)
