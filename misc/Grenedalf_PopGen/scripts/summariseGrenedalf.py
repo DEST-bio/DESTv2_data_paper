@@ -12,9 +12,11 @@ group = OptionGroup(parser, '< put description here >')
 #########################################################   CODE   #########################################################################
 
 parser.add_option("--input", dest="IN", help="Input file")
-parser.add_option("--output", dest="OUT", help="Output file")
+parser.add_option("--coverage", dest="COV", help="Output file")
 parser.add_option("--meta", dest="MET",
                   help="logical parameter")
+parser.add_option("--chrom", dest="chromosome",
+                  help="logical parameter", action="store_true")
 
 
 (options, args) = parser.parse_args()
@@ -36,6 +38,23 @@ def load_data(x):
 Chrom = ("4", "2L", "2R", "3L", "3R", "X")
 Lengths = (1348131, 23513712, 25286936, 28110227, 32079331, 23542271)
 
+CHROMDICT = {k: v for k, v in zip(*[Chrom, Lengths])}
+
+if options.chromosome:
+    Cov = d(lambda: d(str))
+
+    for l in load_data(options.COV):
+        a = l.rstrip().split()
+        if a[1] not in CHROMDICT:
+            continue
+        Cov[a[0]][a[1]] = CHROMDICT[a[1]]-int(a[4])
+else:
+    Cov = d(lambda: d(lambda: d(str)))
+
+    for l in load_data(options.COV):
+        a = l.rstrip().split()
+        Cov[a[0]][a[1]][(int(a[2])+int(a[3]))/2] = int(a[3]) - \
+            int(a[2])-1-int(a[4])
 
 header = ""
 META = d(lambda: d())
@@ -50,41 +69,54 @@ for l in load_data(options.MET):
     META[a[0]]["lat"] = DATA["lat"]
     META[a[0]]["long"] = DATA["long"]
 
+header = ""
+for l in load_data(options.IN):
+    a = l.rstrip().split(",")
+    chrom, start, end = a[:3]
+    pops = a[3:]
+    if header == "":
+        header = pops
+        continue
+    DATA = {k: v for k, v in zip(*[header, pops])}
+    for ID, v in sorted(DATA.items()):
+        # print(ID)
+        k, Type = ID.split(".")
 
-FULL = d(lambda: d(lambda: d(float)))
-print("ID\tContinent\tCountry\tLatitude\tLongitude\tChrom\tStat\tValue")
-for i in range(len(Chrom)):
-    header = ""
-    for l in load_data(options.IN+"_"+Chrom[i]+"diversity.csv"):
-        a = l.rstrip().split()
-        if header == "":
-            header = a
+        if k not in META:
             continue
-        DATA = {k: v for k, v in zip(*[header, a])}
-        for k, v in sorted(META.items()):
-            for Type in ["theta_pi_abs", "theta_watterson_abs", "tajimas_d", "snp_count"]:
-                if k+"."+Type not in DATA:
-                    continue
-
-                if "abs" in Type:
-                    if DATA[k+"."+Type] == "NA":
-                        Value = "NA"
-                    else:
-                        Value = str(float(DATA[k+"."+Type])/Lengths[i])
-                else:
-                    Value = DATA[k+"."+Type]
-                print(k, META[k]["continent"], META[k]
-                      ["country"], META[k]["lat"], META[k]["long"], Chrom[i], Type, Value, sep="\t")
-                if DATA[k+"."+Type] != "NA":
-                    FULL[k][Type]["counts"] += float(Value)*Lengths[i]
-                    FULL[k][Type]["lengths"] += Lengths[i]
-
-for k, v in sorted(FULL.items()):
-    for Type in ["theta_pi_abs", "theta_watterson_abs", "tajimas_d", "snp_count"]:
-        if v[Type]["lengths"] == 0:
-            print
-            WAv = "NA"
+        if k not in Cov:
+            continue
+        if chrom not in Cov[k]:
+            continue
+        # get denominator for windowwise averages
+        if options.chromosome:
+            REL = str(float(v)/Cov[k][chrom])
         else:
-            WAv = str(v[Type]["counts"]/v[Type]["lengths"])
-        print(k, META[k]["continent"], META[k]
-              ["country"], META[k]["lat"], META[k]["long"], "GenomeWide", Type, WAv, sep="\t")
+            if (int(start)+int(end))/2 not in Cov[k][chrom]:
+                REL = "NA"
+            elif Cov[k][chrom][(int(start)+int(end))/2] == 0:
+                REL = "NA"
+            else:
+                REL = str(float(v)/Cov[k][chrom][(int(start)+int(end))/2])
+        if "abs" in Type:
+            print(k,
+                  META[k]["continent"],
+                  META[k]["country"],
+                  META[k]["lat"],
+                  META[k]["long"],
+                  chrom,
+                  str((int(start)+int(end))/2),
+                  Type.replace("abs", "rel"),
+                  REL,
+                  sep="\t")
+        if "tajimas_d" in Type:
+            print(k,
+                  META[k]["continent"],
+                  META[k]["country"],
+                  META[k]["lat"],
+                  META[k]["long"],
+                  chrom,
+                  str((int(start)+int(end))/2),
+                  Type.replace("abs", "rel"),
+                  v,
+                  sep="\t")
