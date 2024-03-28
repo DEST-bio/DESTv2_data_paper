@@ -1,11 +1,13 @@
-## get SYNC data
-
 PWD=/media/inter/mkapun/projects/DESTv2_data_paper/misc/Grenedalf_PopGen
 
 mkdir ${PWD}/data
+cd ${PWD}/data
+
+## get VCF data
+curl -O http://berglandlab.uvadcos.io/vcf/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz
 
 ## Convert PoolSNP VCF 2 SYNC
-gunzip -c /media/inter/ssteindl/DEST/DEST2_NHM/collapsed/PoolSNP/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz |
+gunzip -c ${PWD}/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.vcf.gz |
     parallel \
         --jobs 200 \
         --pipe \
