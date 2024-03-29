@@ -11,3 +11,7 @@ Moreover, I had to replace the missing data fields `.:.:.:.:.:.` in the SYNC fil
 I obtained chromosome-wise estimates and the took the average weighted by the chromosome-length to calculate genome-wide estimates.
 
 ![Grenedalf.png](results/figures/Grenedalf_Stats.png)
+
+Here is a line plot with the stats in 10kbp windows
+
+![Windows](results/figures/Grenedalf_Stats.png)

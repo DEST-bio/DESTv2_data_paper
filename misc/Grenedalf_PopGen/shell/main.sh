@@ -337,6 +337,34 @@ P.pool <- ggplot(DATA.genom,
     theme_bw()
 P.pool
 
+## read windowed data
+DATA=read.table('results/Grenedalf_poolsnp_100000.summary.gz',header=T,sep="\t")
+
+## based on the final Metadata file from the MS (Supp. Table S1)
+Filter=read.table('data/filterIDs.txt',header=T,sep="\t")
+Keep <- Filter %>%
+    filter(Recommendation == 'Pass')
+
+DATA <-DATA %>%
+    filter(ID %in% Keep$sampleId & Chrom != "Y")
+
+DATA$Value[DATA$Stat %in% c("theta_pi_rel","theta_watterson_rel") & (DATA$Value < 0 | DATA$Value > 0.03)]<-NA
+
+P.100k <- ggplot(DATA,
+    aes(x=Pos/1000000,
+        y=as.numeric(Value)))+
+    geom_line(aes(group=ID),col=rgb(0,0,0,0.01))+
+    ggtitle('100kbp windows')+
+    facet_grid(Stat ~ Chrom,
+        scales='free',
+        space='free_x')+
+        #ylim(0,0.015)+
+    ylab('PopGen Statistic')+
+    xlab('Position (Mbp)')+
+    theme_bw()
+P.100k
+
+
 # DATA.gw.theta_pi.s$Caller <- rep("SNAPE",nrow(DATA.gw.theta_pi.s))
 # DATA.gw.theta_pi.p$Caller <- rep("PoolSNP",nrow(DATA.gw.theta_pi.p))
 # DATA.new<-spread(rbind(DATA.gw.theta_pi.s,DATA.gw.theta_pi.p),Caller,Value)
@@ -360,6 +388,16 @@ ggsave('results/figures/Grenedalf_Stats.png',
     P.pool,
     width=16,
     height=8)
+
+ggsave('results/figures/Grenedalf_100k.pdf',
+    P.100k,
+    width=8,
+    height=6)
+
+ggsave('results/figures/Grenedalf_100k.png',
+    P.100k,
+    width=8,
+    height=6)
 
 """ >${PWD}/results/Grenedalf.r
 
