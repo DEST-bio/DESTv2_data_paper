@@ -14,4 +14,4 @@ I obtained chromosome-wise estimates and the took the average weighted by the ch
 
 Here is a line plot with the stats in 10kbp windows
 
-![Windows](results/figures/Grenedalf_Stats.png)
+![Windows](results/figures/Grenedalf_100k.png)
