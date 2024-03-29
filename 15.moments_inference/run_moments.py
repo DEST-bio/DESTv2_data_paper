@@ -132,7 +132,8 @@ def run_moments(sfs_file: str,
                          verbose=0,
                          init_params=None)
 
-    coll_pop_ll = get_collapsed_ll(sfs, opt_params, model_func, region, pop_of_interest, model, ll)
+    coll_pop_ll = get_collapsed_ll(sfs, opt_params, model_func, region, 
+                                   pop_of_interest, model, ll)
         
     # Process output
     num_params = len(upper_bound)

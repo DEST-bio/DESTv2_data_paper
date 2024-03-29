@@ -106,11 +106,6 @@ def write_sfs(vcf_file: str,
                         projections=projections,
                         polarized=False)
     
-    print("/////////////")
-    print(fs)
-    print("-----")
-    print(fs.pop_ids)
-    print("-----")
     unused_pop_lists = [[2, 4], [1, 4], [2, 3], [1, 3]]
     for unused_pops in unused_pop_lists:
         print(fs.marginalize(unused_pops).pop_ids)
