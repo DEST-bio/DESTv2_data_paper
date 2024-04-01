@@ -48,19 +48,50 @@ samps[,african_parent:=sampleId]
 samps[,african_cluster:=cluster2.0_k8]
 samps[,african_country:=country]
 
+f3.admix.dat[which(f3.admix.dat$country == "United States")]$country = "USA"
+
 Tot_admx = dim(f3.admix.dat[admix_evidence == "admix"])[1]
+
+f3.admix.dat %>%
+  group_by(country) %>%
+  summarize(Tot=n()) -> Tot.Samps
+
+
+f3.admix.dat %>%
+  group_by(admix_evidence, country) %>%
+  summarize(N=n()) %>%
+  left_join(Tot.Samps) %>%
+  mutate(Overall=N/Tot*100)
+
+f3.admix.dat %>%
+  filter(country == "USA") %>%
+  group_by(city) %>%
+  summarize(N=n(), meanLat = mean(lat)) -> 
+  USA.LAT
+
+
+f3.admix.dat %>%
+  filter(country == "USA") %>%
+  filter(admix_evidence == "admix") %>%
+  group_by(city, admix_evidence) %>%
+  summarize(Admix=n()) %>%
+  left_join(USA.LAT, by = "city") %>%
+  mutate(TotAdmix = Admix/N) -> 
+  USA.LAT.Admix
+
+summary(lm(TotAdmix~meanLat, data = USA.LAT.Admix))
 
 f3.admix.dat %>%
 filter(admix_evidence == "admix") %>%
 left_join(samps[,c("african_parent","african_cluster","african_country")], by = "african_parent") %>%
 group_by(african_country) %>%
-summarize(N=n()/Tot_admx)
+summarize(N=n(),Nf=n()/Tot_admx)
 
 f3.admix.dat %>%
 filter(admix_evidence == "admix") %>%
 left_join(samps[,c("african_parent","african_cluster")], by = "african_parent") %>%
 group_by(country) %>%
-summarize(N=n()/Tot_admx)
+summarize(N=n(),Nf=n()/Tot_admx)
 
 f3.admix.dat %>%
 filter(admix_evidence == "admix") %>%
