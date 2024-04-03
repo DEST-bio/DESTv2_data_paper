@@ -167,3 +167,89 @@ admix.dat.sets.adms %>%
   facet_grid(~as.factor(filter)) ->
   adm8box
 ggsave(adm8box, file = "adm8box.pdf", w = 4, h  =2.0)
+
+#######
+####### pt 2. longitude analtsis
+regression.coeffs.long = 
+  foreach(filter.i = unique(linear.admix.dat.filters$filter),
+          .combine = "rbind")%do%{
+            
+            linear.admix.dat.filters %>%
+              filter(filter == filter.i) %>%
+              filter(admix.set == "Australia" & source_pop == "AFRICA") %>%
+              lm(mean.est ~ long , data = .) %>% summary() -> o1
+            
+            linear.admix.dat.filters %>%
+              filter(filter == filter.i) %>%
+              filter(admix.set == "S.America" & source_pop == "AFRICA") %>%
+              lm(mean.est ~ long , data = .) %>% summary()  -> o2
+            
+            linear.admix.dat.filters %>%
+              filter(filter == filter.i) %>%
+              filter(admix.set == "N.America" & source_pop == "AFRICA") %>%
+              lm(mean.est ~ long , data = .) %>% summary()  -> o3
+            
+            rbind(
+              data.frame(
+                mod = "Australia",
+                long = o1$coefficients[2,1],
+                p = o1$coefficients[2,4],
+                filter =  filter.i),
+              data.frame(
+                mod = "S.America",
+                long = o2$coefficients[2,1],
+                p = o2$coefficients[2,4],
+                filter =  filter.i),
+              data.frame(
+                mod = "N.America",
+                long = o3$coefficients[2,1],
+                p = o3$coefficients[2,4],
+                filter =  filter.i))
+            
+          }
+
+regression.coeffs.long %>%
+  reshape2::dcast(filter~mod, value.var = "p")
+
+#### Plot
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggExtra)
+library(foreach)
+world <- ne_countries(scale = "medium", returnclass = "sf")
+class(world)
+
+########
+linear.admix.dat.filters %>%
+  filter(filter == "noINV") %>%
+  filter(admix.set == "N.America" & source_pop == "AFRICA") %>%
+  group_by(lat,long) %>%
+  summarize(m.est = mean(mean.est)) -> NAMAncestry
+
+## world plot
+ggplot(data = world) +
+  geom_sf(fill= "grey70") +
+  coord_sf(xlim = c(-50, -135), ylim = c(15,50), expand = FALSE) + 
+  theme(panel.grid.major = element_line(color = gray(.5), linetype = "dashed", size = 0.2), 
+        panel.background = element_rect(fill = "white")) +
+  geom_jitter(data = NAMAncestry , 
+              aes(
+                x=long,
+                y=lat,
+                fill = m.est,
+              ), alpha = 0.9, size = 3.5, shape = 21, color = "white") + 
+  scale_fill_viridis_c()  ->
+  WordAFR.admix
+
+ggsave( WordAFR.admix, file = "WordAFR.admix.pdf", w = 9, h  =3)
+
+###
+NAMAncestry %>%
+  ggplot(aes(
+    x=long,
+    y=m.est,
+  )) + geom_smooth() + xlim(-50, -135) ->
+  AFRhist
+ggsave( AFRhist, file = "AFRhist.pdf", w = 9, h  =3)
+
+  
