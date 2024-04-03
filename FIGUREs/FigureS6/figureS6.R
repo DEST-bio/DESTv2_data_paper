@@ -112,10 +112,10 @@ plot_X <- plot_X + labs(y = "Recombination rate (c/bp)")+
                lineend = "butt", color = "firebrick4", size = 0.1)  +
   annotate("label", x = 18711312, y = 0.000000005, label = "InBe",fontface = 'italic',fill="white") 
 
-panel_A <- cowplot::plot_grid(plot_2L,plot_2R,plot_3L,plot_3R,plot_X,ncol=1)
+panel_A <- cowplot::plot_grid(NULL,plot_2L+ theme_bw(base_size=20),plot_2R+ theme_bw(base_size=20),plot_3L+ theme_bw(base_size=20),plot_3R+ theme_bw(base_size=20),plot_X+ theme_bw(base_size=20),ncol=1,rel_heights = c(0.2,1,1,1,1,1))
 
-panel_B <- cowplot::plot_grid(pca1,pca2,NULL,NULL,ncol=1)
+panel_B <- cowplot::plot_grid(pca1+ theme_bw(base_size=20),pca2+ theme_bw(base_size=20),ncol=2)
 
-cowplot::plot_grid(panel_A,panel_B,ncol=2,labels="AUTO",rel_widths = c(1,0.8))
+cowplot::plot_grid(panel_A,panel_B,ncol=1,labels="AUTO",rel_heights = c(5,1.5),label_size = 22)
 
-ggsave("FigureS6.pdf", height = 25, width = 15)
+ggsave("FigureS6_2.pdf", height = 24, width = 12)
