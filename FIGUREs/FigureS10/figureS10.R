@@ -1,6 +1,6 @@
 library(ggplot2)
 library(cowplot)
-load("figureS10.RData")
+load("FigureS10.RData")
 figureS1 <- ggplot(a1[a1$type!="Including\nheterochromatin",], aes(color = chrom, y = mean, x = stat)) +
   geom_errorbar(aes(ymin = mean - se,
                     ymax = mean + se,
