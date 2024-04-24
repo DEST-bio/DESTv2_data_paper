@@ -129,8 +129,8 @@ grenedalf diversity \
     --file-prefix poolsnp_chrom \
     --allow-file-overwriting \
     --threads ${threads} \
-    --filter-sample-min-coverage 2 \
-    --filter-sample-max-coverage 250 \
+    --filter-sample-min-coverage 1 \
+    --filter-sample-max-coverage 1000 \
     --filter-sample-min-count 2 
 
 """ >${PWD}/shell/poolsnp_chrom_grenedalf.qsub
@@ -171,8 +171,8 @@ for window in 10000 50000 100000; do
         --file-prefix poolsnp_${window} \
         --allow-file-overwriting \
         --threads ${threads} \
-        --filter-sample-min-coverage 2 \
-        --filter-sample-max-coverage 250 \
+        --filter-sample-min-coverage 1 \
+        --filter-sample-max-coverage 1000 \
         --filter-sample-min-count 2 
 
     """ >${PWD}/shell/poolsnp_${window}_grenedalf.qsub
