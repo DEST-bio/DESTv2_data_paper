@@ -11,6 +11,10 @@ library(sp)
 library(lubridate)
 library(stringr)
 library(car)
+library(FactoMineR)
+library(factoextra)
+library(segmented)
+library(gmodels)
 
 ### wheather
 #nasapower <- get(load("/netfiles/nunezlab/Drosophila_resources/NASA_power_weather/DEST2.0/nasaPower.allpops.Rdata"))
@@ -52,12 +56,98 @@ ti.ob.1y %<>%
 unique(ti.ob.1y$pop1)
 unique(ti.ob.1y$pop2)
 
-###
+### broken stick regression
 samps %>%
   group_by(pop1=city) %>%
   summarize(lat.m = mean(lat)) -> lats
 
 left_join(ti.ob.1y, lats) -> ti.ob.1y
+
+ti.ob.1y %>%
+group_by(pop1) %>%
+summarize(
+mT = mean(T.mean , na.rm = T),
+meanL = mean(lat.m),
+meanF = ci(FST)[1],
+lF = ci(FST)[2],
+hF = ci(FST)[3],
+tmax = mean(T.max)
+) -> summaries_lst_fst 
+
+summaries_lst_fst %>%
+ggplot(aes(
+x=meanL,
+y=(meanF),
+ymin=(lF),
+ymax=(hF),
+fill = mT
+)) + geom_errorbar(width = 0.1) +
+  theme_bw() +
+  scale_fill_gradient2(low= "steelblue", 
+                       high="firebrick4", 
+                       midpoint = 20) +
+geom_point(shape = 21, size = 3) -> summaries_plot
+ggsave(summaries_lat_FST, file = "summaries_lat_FST.pdf",
+h = 4, w= 5)
+
+
+my.lm <- lm(meanF ~ meanL, data = summaries_lst_fst)
+summary(my.lm)
+
+my.seg <- segmented(my.lm, 
+                    seg.Z = ~ meanL, 
+                    psi = 50.33469)
+
+summary(my.seg)
+my.seg$psi
+
+my.fitted <- fitted(my.seg)
+my.model <- data.frame(meanL = summaries_lst_fst$meanL, 
+						meanF = my.fitted)
+
+
+#### plot here!
+ggplot()+
+geom_vline(xintercept = 50.335, linetype = "dashed") +
+geom_line(data = my.model, 
+aes(x=meanL,y=meanF), 
+colour = "tomato", linewidth = 1.9) +
+geom_errorbar(width = 0.1, data = summaries_lst_fst,
+aes(
+x=meanL,
+ymin=(lF),
+ymax=(hF),
+)) +
+geom_point(shape = 21, 
+size = 4, 
+data = summaries_lst_fst,
+aes(
+x=meanL,
+y=(meanF),
+fill = mT
+)) + 
+  theme_bw() +
+  scale_fill_gradient2(low= "steelblue", 
+                       high="firebrick4", 
+                       midpoint = 15) ->
+datawbkstick
+ggsave(datawbkstick, file = "datawbkstick.pdf", h = 3, w= 4)
+
+#### Extreme analysis
+ti.ob.1y %>%
+ggplot(
+aes(
+x=lat.m,
+y=FST,
+group=pop1
+)) + geom_boxplot(width = 0.25, outlier.colour="red", outlier.shape=8) +
+geom_vline(xintercept = 50.335, linetype = "dashed") +
+theme_bw() ->
+FSTplo
+ggsave(FSTplo, file = "FSTplo.pdf", h = 4, w= 5)
+
+####
+
 ####
 cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$day_diff )
 cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$lat.m )
@@ -104,52 +194,30 @@ perms_overw =
 foreach(i=1:500, .combine = "rbind")%do%{
     data.frame(
       i = i,
-      cor=cor.test(logit(abs(ti.ob.1y$FST)), sample(ti.ob.1y$lat.m) )$estimate 
+      cor=cor.test(ti.ob.1y$FST, sample(ti.ob.1y$lat.m) )$estimate 
     )
 }
 
 rbind(
-data.frame(i = 0, cor = cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$lat.m )$estimate),
-perms_overw) %>% 
-  mutate(perm.stat = case_when(i == 0 ~ "real",
-                               TRUE ~ "perm") ) -> perm.test
+data.frame(perm.stat = "all", i = 0, cor= cor.test(~FST+lat.m, data = ti.ob.1y)$estimate),
+data.frame(perm.stat = "less50", i = 0, cor= cor.test(~FST+lat.m, data = filter(ti.ob.1y, lat.m < 50.3))$estimate),
+data.frame(perm.stat = "more50", i = 0, cor= cor.test(~FST+lat.m, data = filter(ti.ob.1y, lat.m > 50.3))$estimate),
+data.frame(perm.stat = "perm", perms_overw)) -> perm.test
 ## plot permutations
 ggplot() +
   geom_density(data = filter(perm.test, perm.stat == "perm"),
                aes(cor), fill = "grey"
                ) + 
-  geom_vline(data = filter(perm.test, perm.stat == "real"),
-             aes(xintercept=cor), color = "red") +
+  geom_vline(data = filter(perm.test, perm.stat == "all"),
+             aes(xintercept=cor), color = "purple") +
+    geom_vline(data = filter(perm.test, perm.stat == "less50"),
+             aes(xintercept=cor), color = "blue") +
+      geom_vline(data = filter(perm.test, perm.stat == "more50"),
+             aes(xintercept=cor), color = "red") +           
   theme_bw() ->
   perm.plots
 ggsave(perm.plots, file = "perm.plots.pdf", w = 4, h = 4)
 
-
-### Permute findings of temperature
-perms_overw.T = 
-  foreach(i=1:500, .combine = "rbind")%do%{
-    data.frame(
-      i = i,
-      cor=cor.test(logit(abs(ti.ob.1y$FST)), sample(ti.ob.1y$T.var) )$estimate 
-    )
-  }
-
-rbind(
-  data.frame(i = 0, cor = cor.test(logit(abs(ti.ob.1y$FST)), ti.ob.1y$T.var )$estimate),
-  perms_overw) %>% 
-  mutate(perm.stat = case_when(i == 0 ~ "real",
-                               TRUE ~ "perm") ) -> perm.test.Temp
-
-## plot permutations
-ggplot() +
-  geom_density(data = filter(perm.test.Temp, perm.stat == "perm"),
-               aes(cor), fill = "grey"
-  ) + 
-  geom_vline(data = filter(perm.test.Temp, perm.stat == "real"),
-             aes(xintercept=cor), color = "red") +
-  theme_bw() ->
-  perm.plots.Temp
-ggsave(perm.plots.Temp, file = "perm.plots.Temp.pdf", w = 4, h = 4)
 
 
 
@@ -174,38 +242,65 @@ ggsave(lat.fst.plot.temp,
 
 ####
 ti.ob.1y %>%
+dplyr::select(T.mean,T.var,T.min,T.max,Tn.below5,Tn.above32) %>%
+PCA(graph = FALSE) -> eco.PCA
+
+fviz_pca_var(eco.PCA, col.var="contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Avoid text overlapping
+             ) -> eco.PCA.vars
+  ggsave(eco.PCA.vars, 
+       file = "eco.PCA.vars.pdf", 
+       w = 6, h = 3)
+          
+
+eco.PCA$ind$coord %>%
+as.data.frame %>%
+mutate(ti.ob.1y) -> eco.fst.dat
+
+cor.test(~FST+Dim.1, data = eco.fst.dat)
+cor.test(~FST+Dim.2, data = eco.fst.dat)
+
+
+eco.fst.dat %>%
+filter(Tn.below5 > 1) -> tnb5
+
+cor.test(~FST+Tn.below5 , data = tnb5)
+cor.test(~FST+Tn.below5 , data = filter(tnb5, lat.m > 50))
+cor.test(~FST+Tn.below5 , data = filter(tnb5, lat.m < 50))
+
+tnb5 %>%
+ggplot(aes(
+x=Tn.below5,
+y=logit(abs(FST)),
+fill =T.min,
+)) + geom_point(size = 3, aes(shape=lat.m > 50.3)) +
+geom_smooth(method = "lm", color = 'black', linetype = "solid") +
+theme_bw() +
+  scale_fill_gradient2(low="darkblue", high="steelblue", midpoint = -10) +
+  scale_shape_manual(values = 21:22) ->
+eco.fst 
+ggsave(eco.fst, file = "eco.fst.pdf", w = 6, h = 3)
+
+
+####
+ti.ob.1y %>%
   filter(pop1 != "Yesiloz") %>%
   ggplot(aes(
-    x=lat.m,
-    y=T.var,
+    x=Tn.below5,
+    y=logit(abs(FST)),
     fill=as.numeric(T.mean)) 
   ) +
   geom_point(size = 3, shape = 21) +
   geom_smooth(method = "lm") +
   theme_bw() +
+  facet_grid(~lat.m > 50) +
   scale_fill_gradient2(low="steelblue", high="firebrick4", midpoint = 15) ->
   lat.fst.plot.tempvar
 ggsave(lat.fst.plot.tempvar, 
        file = "lat.fst.plot.tempvar.pdf", 
        w = 6, h = 3)
 
-
-
-### Comparing variance in temperature and in FST
-
-ti.ob.1y %>%
-  group_by(pop1) %>%
-  summarize(mean.lat = mean(lat.m), varT = var(T.mean, na.rm = T)) %>%
-  ggplot(aes(
-    y=varT,
-    x=mean.lat
-  )) +
-  geom_point() ->
-  var.plot
-
-ggsave(var.plot, 
-       file = "var.plot.pdf", 
-       w = 6, h = 4)
 
 
 

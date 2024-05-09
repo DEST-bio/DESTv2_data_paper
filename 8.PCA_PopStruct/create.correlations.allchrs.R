@@ -68,12 +68,14 @@ cors.pcs.chrs %>%
   dcast(ch+cont+var~est, value.var = "value") %>%
   separate(var, into = c("vat","pc"), 2) %>%
   ggplot(aes(
-    x=vat,
+    x=paste(vat,pc),
     color=pc,
     y=e,
     ymin=lci,
     ymax=uci,
   )) +
-  geom_errorbar() + geom_point() + facet_grid(~cont)
-  
+  geom_hline(yintercept =  0) +
+  geom_errorbar(width = 0.1,position=position_dodge(width=0.5) ) + 
+  geom_point(position=position_dodge(width=0.5)) + 
+  facet_grid(cont~ch) 
 
