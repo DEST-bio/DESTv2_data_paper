@@ -35,14 +35,14 @@
   win.bp <- 1e5
   step.bp <- 5e4
 
-  setkey(m, "chr")
+  setkey(m.perm, "chr")
 
   ## prepare windows
   wins <- foreach(chr.i=c("2L","2R", "3L", "3R"),
                   .combine="rbind",
                   .errorhandling="remove")%dopar%{
 
-                    tmp <- m[J(chr.i)]
+                    tmp <- m.perm[J(chr.i)]
 
                     data.table(chr=chr.i,
                                start=seq(from=min(tmp$pos), to=max(tmp$pos)-win.bp, by=step.bp),
