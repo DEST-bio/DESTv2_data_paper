@@ -4,7 +4,7 @@
 #SBATCH -c 20
 #SBATCH -N 1 # on one node
 #SBATCH -t 00:30:00 #<= this may depend on your resources
-#SBATCH --mem 15.0G #<= this may depend on your resources
+#SBATCH --mem 15G #<= this may depend on your resources
 #SBATCH -p standard
 #SBATCH -A berglandlab_standard
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.out # Standard output
