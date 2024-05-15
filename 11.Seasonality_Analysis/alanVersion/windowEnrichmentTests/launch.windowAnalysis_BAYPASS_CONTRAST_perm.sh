@@ -4,14 +4,14 @@
 #SBATCH -c 20
 #SBATCH -N 1 # on one node
 #SBATCH -t 00:30:00 #<= this may depend on your resources
-#SBATCH --mem 15G #<= this may depend on your resources
+#SBATCH --mem 150G #<= this may depend on your resources
 #SBATCH -p standard
 #SBATCH -A berglandlab_standard
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
 ### sbatch --array=1-101 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/windowEnrichmentTests/launch.windowAnalysis_BAYPASS_CONTRAST_perm.sh
-### sacct -j 58486535 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
+### sacct -j 5675058 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
 ### seff 50160643_1
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.58486488_10.err
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.53669286_1.err
