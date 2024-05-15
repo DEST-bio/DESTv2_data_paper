@@ -9,7 +9,7 @@
   registerDoMC(10)
   library(dplyr)
 
-### import
+### import all subpools
   fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/", "contrast_perm_subpool_", full.name=T)
 
   c2p <- foreach(fl.i=fl)%dopar%{
@@ -35,7 +35,8 @@
   library(ggplot2)
 
 ### data
-  load("/Users/alanbergland/dest2_glm_baypass_annotation.Rdata")
+  load("~/dest2_glm_baypass_annotation.Rdata")
+  prop.table(table(m$C2_std_median>3))
 
   hist(m$C2_neglogp_median)
   m[,cont.p2:=1-pchisq(C2_std_mean, 1)]
