@@ -28,8 +28,8 @@
   }
   c2p <- rbindlist(c2p)
   setkey(c2p, perm)
-  rm(c2p); gc()
   m.perm <- c2p[J(permId)]
+  rm(c2p); gc()
 
 ### make window definitions
   win.bp <- 1e5
