@@ -10,6 +10,11 @@ library(sp)
 library(lubridate)
 library(stringr)
 library(car)
+library(FactoMineR)
+library(factoextra)
+library(segmented)
+library(gmodels)
+
 #load geoanalysis packages
 library(rnaturalearth)
 library(rnaturalearthdata)
@@ -45,6 +50,7 @@ ti.ob.1y %>%
 ggsave(lat.fst.plot, 
        file = "lat.fst.plot.pdf", 
        w = 5, h = 3)
+
 #### Add Map
 world <- map_data("world")
 ggplot() +
