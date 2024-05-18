@@ -15,6 +15,8 @@ library(FactoMineR)
 library(factoextra)
 library(segmented)
 library(gmodels)
+library(tibble)
+library(tidybulk)
 
 ### wheather
 #nasapower <- get(load("/netfiles/nunezlab/Drosophila_resources/NASA_power_weather/DEST2.0/nasaPower.allpops.Rdata"))
@@ -74,23 +76,6 @@ hF = ci(FST)[3],
 tmax = mean(T.max)
 ) -> summaries_lst_fst 
 
-summaries_lst_fst %>%
-ggplot(aes(
-x=meanL,
-y=(meanF),
-ymin=(lF),
-ymax=(hF),
-fill = mT
-)) + geom_errorbar(width = 0.1) +
-  theme_bw() +
-  scale_fill_gradient2(low= "steelblue", 
-                       high="firebrick4", 
-                       midpoint = 20) +
-geom_point(shape = 21, size = 3) -> summaries_plot
-ggsave(summaries_lat_FST, file = "summaries_lat_FST.pdf",
-h = 4, w= 5)
-
-
 my.lm <- lm(meanF ~ meanL, data = summaries_lst_fst)
 summary(my.lm)
 
@@ -110,7 +95,7 @@ my.model <- data.frame(meanL = summaries_lst_fst$meanL,
 ggplot()+
 geom_vline(xintercept = 50.335, linetype = "dashed") +
 geom_line(data = my.model, 
-aes(x=meanL,y=meanF), 
+aes(x=meanL,y=(meanF)), 
 colour = "tomato", linewidth = 1.9) +
 geom_errorbar(width = 0.1, data = summaries_lst_fst,
 aes(
@@ -123,26 +108,28 @@ size = 4,
 data = summaries_lst_fst,
 aes(
 x=meanL,
-y=(meanF),
+y=((meanF)),
 fill = mT
 )) + 
-  theme_bw() +
+  theme_bw() + ylim((0.0), (0.1)) +
   scale_fill_gradient2(low= "steelblue", 
                        high="firebrick4", 
                        midpoint = 15) ->
 datawbkstick
 ggsave(datawbkstick, file = "datawbkstick.pdf", h = 3, w= 4)
 
+
+
 #### Extreme analysis
 ti.ob.1y %>%
 ggplot(
 aes(
 x=lat.m,
-y=FST,
+y=(FST),
 group=pop1
 )) + geom_boxplot(width = 0.25, outlier.colour="red", outlier.shape=8) +
 geom_vline(xintercept = 50.335, linetype = "dashed") +
-theme_bw() ->
+theme_bw()  ->
 FSTplo
 ggsave(FSTplo, file = "FSTplo.pdf", h = 4, w= 5)
 
@@ -227,10 +214,11 @@ ti.ob.1y %>%
   mutate(year_l = paste(year1,year2)) %>%
   ggplot(aes(
     x=T.mean,
-    y=logit(abs(.$FST)),
+    y=(abs(.$FST)),
     fill=as.numeric(T.mean)) 
   ) +
   geom_point(size = 3, shape = 21) +
+  ylim(0, 0.1) +
   geom_smooth(method = "lm") +
   theme_bw() +
   facet_wrap(~year_l=="2020 2021", scale = "free_x") +
@@ -238,7 +226,7 @@ ti.ob.1y %>%
   lat.fst.plot.temp
 ggsave(lat.fst.plot.temp, 
        file = "Yesiloz.lat.fst.plot.temp.pdf", 
-       w = 6, h = 3)
+       w = 5.5, h = 3.5)
 
 ####
 ti.ob.1y %>%
@@ -272,11 +260,11 @@ cor.test(~FST+Tn.below5 , data = filter(tnb5, lat.m < 50))
 tnb5 %>%
 ggplot(aes(
 x=Tn.below5,
-y=logit(abs(FST)),
+y=((FST)),
 fill =T.min,
 )) + geom_point(size = 3, aes(shape=lat.m > 50.3)) +
 geom_smooth(method = "lm", color = 'black', linetype = "solid") +
-theme_bw() +
+theme_bw() + ylim(0,0.1)+
   scale_fill_gradient2(low="darkblue", high="steelblue", midpoint = -10) +
   scale_shape_manual(values = 21:22) ->
 eco.fst 
@@ -302,8 +290,40 @@ ggsave(lat.fst.plot.tempvar,
        w = 6, h = 3)
 
 
+##### Map
+samps %>%
+  group_by(pop1=city) %>%
+  summarize(lat.m = mean(lat),
+            long.m = mean(long)) -> lats
+
+left_join(ti.ob.1y, lats) -> ti.ob.1y
+
+ti.ob.1y %>%
+  group_by(pop1, lat.m, long.m) %>%
+  summarise(FST_m = mean(FST)) -> FST_sum
+
+world <- map_data("world")
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color = "white", fill = "lightgray", linewidth = 0.1
+  ) + theme_classic() -> base_world
 
 
+base_world + 
+  geom_sf(fill= "lightgray") +
+  coord_sf(xlim =  c(-140, 41.00), ylim = c(20.00, 68.00), expand = FALSE) + 
+  geom_point(
+    data = FST_sum,
+    aes(x=long.m,
+        y=lat.m,
+        fill = FST_m), size = 3.5, shape = 21
+  ) + scale_fill_gradient2(mid = "white", high = "springgreen", midpoint = 0) ->
+  map.overfst
+ggsave(map.overfst, 
+       file = "map.overfst.pdf", 
+       w = 9, h = 3)
 
 #### Many winters
 #### Many winters
