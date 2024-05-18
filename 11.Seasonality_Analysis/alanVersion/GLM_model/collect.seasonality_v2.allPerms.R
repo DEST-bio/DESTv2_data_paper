@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c5 -p largemem --mem=250G
+# ijob -A berglandlab_standard -c20 -p standard --mem=250G
 ### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
 ### libraries
@@ -6,7 +6,7 @@
   library(data.table)
   library(foreach)
   library(doMC)
-  registerDoMC(5)
+  registerDoMC(20)
   library(dplyr)
 
 
@@ -69,3 +69,19 @@
     glmer.dest <- o[J(i)]
     save(glmer.dest, file=paste("/scratch/aob2x/DEST2_analysis/seasonality/perms/glmer_dest_perm", i, ".Rdata", sep=""))
   }
+
+
+  glm.perm.thr <- foreach(i=0:100, .combine="rbind")%dopar%{
+    # i<-1
+    message(i)
+    load(file=paste("/scratch/aob2x/DEST2_analysis/seasonality/perms/glmer_dest_perm", i, ".Rdata", sep=""))
+    thrs <- 1-c(.95, .99, .995, .999, .9995, .9999)
+    glmer.dest[,q_lrt:=p.adjust(p_lrt, "fdr")]
+    glmer.dest[,list(glm_thr=quantile(p_lrt, thrs, na.rm=T), thr=thrs), list(perm)]
+
+  }
+  glm.perm.thr[thr==5e-02]
+  glm.perm.thr.ag <- glm.perm.thr[,list(glm_thr=median(glm_thr[perm!=0]), glm_thr_real=glm_thr[perm==0]), list(thr)]
+  glm.perm.thr.ag[glm_thr_real<glm_thr]
+
+  save(glm.perm.thr.ag, file="~/glm.perm.thr.ag.Rdata")

@@ -106,4 +106,3 @@
   save(m, thrs.ag, file="~/dest2_glm_baypass_annotation_pod.Rdata")
 
 summary(lm(-log10(cont.p)~I(-log10(cont.pod.p)), data=m)
-  
