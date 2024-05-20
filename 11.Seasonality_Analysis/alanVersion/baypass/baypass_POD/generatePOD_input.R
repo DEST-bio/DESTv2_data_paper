@@ -1,6 +1,6 @@
 ### arguments
   args <- commandArgs(trailingOnly=T)
-  jobId <- as.numeric(args[1]); #jobId=51
+  jobId <- as.numeric(as.character(args[1])); #jobId=51
 
   subpool <- jobId%%50; subpool
   set <- jobId - subpool; set
