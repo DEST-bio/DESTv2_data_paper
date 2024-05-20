@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 100:00:00
+#SBATCH -t 20:00:00
 #SBATCH -A berglandlab
 #SBATCH -c 16
 #SBATCH -p standard
@@ -8,10 +8,10 @@
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.err # Standard error
 
-### sbatch --array=102 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh
-### sacct -j 5675548
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675548_102.err
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675548_102.out
+### sbatch --array=1-500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh
+### sacct -j 5675549
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.out
 
 # ijob -A berglandlab_standard -c16 -p standard --mem=9G
 

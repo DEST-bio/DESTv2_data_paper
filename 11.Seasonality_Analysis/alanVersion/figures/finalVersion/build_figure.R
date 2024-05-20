@@ -39,7 +39,8 @@
 
   ### F: this file contains the detailed SNP level metrics that allow us to build the hexbin plot. Also contains the thresholds for the POD analysis of C2 and XTX
     ### downloaded
-    load(file="dest2_glm_baypass_annotation_pod.Rdata") ###thrs.ag contains C2 thresholds
+    system("scp aob2x@rivanna.hpc.virginia.edu:~/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata ~/dest2_seasonality/.")
+    load(file="dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata") ###thrs.ag contains C2 thresholds
     load("glm.perm.thr.ag.Rdata")
 
 ### build panels
@@ -68,7 +69,7 @@
     facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw()
     C2.wza.plot /C2.wza.pod.plot
     ggplot(data=win.out, aes(x=C2.wZa.pod, y=C2.wZa)) + geom_point()
-s
+
   ### GLM WzA
     GLM.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-wZa.p), color="black") +
