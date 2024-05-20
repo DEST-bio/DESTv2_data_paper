@@ -1,6 +1,6 @@
 ### arguments
   args <- commandArgs(trailingOnly=T)
-  jobId <- as.character(args[1]); #jobId=51
+  jobId <- as.numeric(args[1]); #jobId=51
 
   subpool <- jobId%%50; subpool
   set <- jobId - subpool; set
@@ -36,3 +36,4 @@
 ### simulate
   setwd("/scratch/aob2x/dest2_baypass/pods_v2")
   tmp <- simulate.baypass(omega.mat = omega, nsnp = dim(data$NN)[1]*1, sample.size=data$NN, beta.pi=pbc, pi.maf=0, suffix=paste0("subpod_", jobId))
+  write.table(omega, row.names=F, col.names=F, quote=F, sep="\t", file=paste0("omega.subpod_", jobId))
