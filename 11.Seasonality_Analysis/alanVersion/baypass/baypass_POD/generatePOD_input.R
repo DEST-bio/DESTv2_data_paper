@@ -1,9 +1,13 @@
 ### arguments
-  args <- commandArgs(trailingOnly=T)
-  jobId <- as.numeric(as.character(args[1])); #jobId=51
+  args <- commandArgs(trailingOnly=T); # args="102"
+  jobId <- as.numeric(as.character(args[1]))
 
-  subpool <- jobId%%50; subpool
-  set <- jobId - subpool; set
+  subpool <- jobId%%50
+  set <- jobId - subpool
+
+  message(paste0("jobId: ", jobId))
+  message(paste0("subpool: ", subpool))
+  message(paste0("set: ", set))
 
 ### libraries
   .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
