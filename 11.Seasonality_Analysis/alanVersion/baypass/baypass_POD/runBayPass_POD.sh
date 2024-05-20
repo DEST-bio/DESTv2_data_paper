@@ -9,14 +9,15 @@
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.err # Standard error
 
 ### sbatch --array=102 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh
-### sacct -j 5675547
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675547_102.err
+### sacct -j 5675548
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675548_102.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675548_102.out
 
 # ijob -A berglandlab_standard -c16 -p standard --mem=9G
 
 baypass="/home/aob2x/baypass_afton/sources/g_baypass"
 module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
-# SLURM_ARRAY_TASK_ID=51
+# SLURM_ARRAY_TASK_ID=102
 
 ### generate simulated data
   Rscript --vanilla ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/generatePOD_input.R ${SLURM_ARRAY_TASK_ID}
@@ -30,6 +31,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
   -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_1 \
+  -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
   -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
@@ -39,6 +41,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
   -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_2 \
+  -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
   -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
@@ -48,6 +51,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
   -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_3 \
+  -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
   -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
@@ -57,6 +61,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
   -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_4 \
+  -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
   -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
@@ -66,6 +71,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
   -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_5 \
+  -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
   -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
