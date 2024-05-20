@@ -8,8 +8,9 @@
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.err # Standard error
 
-### sbatch --array=102 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_conrastPerm/contrast_permutation.sh
-### sacct -j 58525234
+### sbatch --array=102 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh
+### sacct -j 5675543
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675543_102.err
 
 # ijob -A berglandlab_standard -c16 -p standard --mem=9G
 
@@ -18,7 +19,7 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
 # SLURM_ARRAY_TASK_ID=51
 
 ### generate simulated data
-  Rscript /scratch/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh --args ${SLURM_ARRAY_TASK_ID}
+  Rscript ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/generatePOD_input.R --args ${SLURM_ARRAY_TASK_ID}
 
 ### translate jobId into slice
   subPool=$( echo $((${SLURM_ARRAY_TASK_ID} % 50)) )
