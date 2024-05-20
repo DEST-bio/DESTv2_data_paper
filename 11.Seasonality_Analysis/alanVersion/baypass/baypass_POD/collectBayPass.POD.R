@@ -13,13 +13,14 @@
   library(dplyr)
   library(SeqArray)
 
-
-### get files
-  fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subpods_analysis", "xtx", full.name=T)
-
 #########
 ### XtX
 ########
+
+
+  ### get files
+    fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subpods_analysis", "xtx", full.name=T)
+
   ### iterate
     xtx <- foreach(fl.i=fl)%dopar%{
       message(fl.i)
@@ -38,10 +39,10 @@
     xtx[,XtXst:=as.numeric(as.character(XtXst))]
 
   ## merge
-    setkey(snp.dt, MRK, subpool)
-    setkey(xtx, MRK, subpool)
-    xtx <- merge(xtx, snp.dt)
-    save(xtx, file="/scratch/aob2x/xtx_dest2.raw.Rdata")
+    #setkey(snp.dt, MRK, subpool)
+    #setkey(xtx, MRK, subpool)
+    #xtx <- merge(xtx, snp.dt)
+    #save(xtx, file="/scratch/aob2x/xtx_dest2.pod.raw.Rdata")
 
   ### average
     xtx[negLog10P==Inf, negLog10P:=max(xtx[negLog10P!=Inf]$negLog10P)]
@@ -87,14 +88,19 @@
 
 ### calcualte POD based thresholds
   xtx.ecdf <- ecdf(xtx.ag$XtXst_median)
-  m[,XtXst.pod.p := 1 - xtx.ecdf(XtXst_median)]
+  m[,XtXst.pod.p :=  1 - xtx.ecdf(XtXst_median)]
   m[XtXst.pod.p==0, XtXst.pod.p:=1/dim(m)[1]]
 
 
   cont.ecdf <- ecdf(cont.ag$C2_std_median)
-  m[,cont.pod.p := 1 - cont.ecdf(C2_std_median)]
+  m[,cont.pod.p :=  1 - cont.ecdf(C2_std_median)]
   m[cont.pod.p==0, cont.pod.p:=1/dim(m)[1]]
 
+  m[which.min(xtx.p)]
+  m[which.min(XtXst.pod.p)]
+
+  summary(m[min(XtXst.pod.p)==XtXst.pod.p])
+  summary(m[min(cont.pod.p)==cont.pod.p])
 
 ### thresholds
   thrs <- c(.95, .99, .995, .999, .9995, .9999)
@@ -103,6 +109,6 @@
   cont.ag[,list(C2_thr=quantile(C2_std_median,  thrs, na.rm=T))])
 
 ### save
-  save(m, thrs.ag, file="~/dest2_glm_baypass_annotation_pod.Rdata")
+  save(m, thrs.ag, xtx.ag, cont.ag, file="~/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata")
 
 summary(lm(-log10(cont.p)~I(-log10(cont.pod.p)), data=m)

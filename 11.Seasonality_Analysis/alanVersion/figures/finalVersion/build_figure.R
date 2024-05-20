@@ -8,7 +8,8 @@
 
   ### A, B, C: this file loads the output of the WZA on the un-permuted data. WZA for XtXst pvalue (Chisq based), Contrast pvalue, and GLM pvalue
     ### downloaded
-    load(file="XtX_C2_glm.windows.Rdata") ### `win.out`
+    system("scp aob2x@rivanna.hpc.virginia.edu:~/XtX_C2_glm.windows.pod.Rdata ~/dest2_seasonality/.")
+    load(file="XtX_C2_glm.windows.pod.Rdata") ### `win.out`
 
   ### B:
     load(file="destv2_seasonality_C2.perm.Rdata") ### `win.all.ag2`
@@ -49,11 +50,25 @@
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.p), color="black") +
     facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa p)") + xlab("Pos (Mb)") + theme_bw()
 
+    xtx.wza.pod.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.pod.p), color="black") +
+    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa p)") + xlab("Pos (Mb)") + theme_bw()
+
+    xtx.wza.plot /xtx.wza.pod.plot
+
+    ggplot(data=win.out, aes(x=xtx.wZa.pod, y=xtx.wZa)) + geom_point()
+
   ### C2 WZA
     C2.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-C2.wZa.p), color="black") +
     facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw()
 
+    C2.wza.pod.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_line(data=win.out,aes(x=pos_mean/1e6, y=-C2.wZa.pod.p), color="black") +
+    facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw()
+    C2.wza.plot /C2.wza.pod.plot
+    ggplot(data=win.out, aes(x=C2.wZa.pod, y=C2.wZa)) + geom_point()
+s
   ### GLM WzA
     GLM.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-wZa.p), color="black") +
@@ -74,8 +89,13 @@
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     facet_grid(~year)
 
+    line_fig <- ggplot(data=ss.ag) +
+    geom_segment(aes(x=0, xend=1, y=lat, yend=ypos), color="grey", linetype="dashed") +
+    theme_void() + xlim(0,1) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
     label_fig <- ggplot(data=ss.ag) +
-    geom_segment(aes(x=0, xend=.4, y=lat, yend=ypos), color="grey", linetype="dashed") +
     geom_text(data=ss.ag, aes(label=paste(city, ",\n", country, sep=""), x=.45, y=ypos), size=2.5, hjust = 0) +
     theme_void() + xlim(0,1) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -123,7 +143,36 @@
   AAAAAABBFFFFFFGGGGGG"
 
 
+  layout <- "
+  AAAAAABBCCCCCCCCCCCC
+  AAAAAABBCCCCCCCCCCCC
+  AAAAAABBDDDDDDDDDDDD
+  AAAAAABBDDDDDDDDDDDD
+  AAAAAABBEEEEEEEEEEEE
+  AAAAAABBEEEEEEEEEEEE
+  FFFFFFFFFFFGGGGGGGGG
+  FFFFFFFFFFFGGGGGGGGG
+  "
 
   mega <- collection_fig + label_fig + xtx.wza.plot + C2.wza.plot + GLM.wza.plot + glm.real_vs_perm.plot + glm_c2 + plot_layout(design=layout)
 
-  ggsave(mega, file="seasonal_mega.pdf", w=11, h=7)
+### version 2
+  layout <- "
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  CCCDDDHHH
+  CCCDDDHHH
+  CCCDDDHHH
+  EEEEEEEEE
+  EEEEEEEEE
+  FFFFFFFFF
+  FFFFFFFFF
+  GGGGGGGGG
+  GGGGGGGGG"
+  mega <- collection_fig + line_fig + glm.real_vs_perm.plot + glm_c2 + xtx.wza.plot + C2.wza.plot + GLM.wza.plot + label_fig + plot_layout(design=layout)
+
+
+  ggsave(mega, file="seasonal_mega.pdf", w=7, h=12)

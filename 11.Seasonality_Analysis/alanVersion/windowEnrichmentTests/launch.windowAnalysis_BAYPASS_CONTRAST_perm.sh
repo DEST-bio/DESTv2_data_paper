@@ -11,9 +11,9 @@
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
 ### sbatch --array=1-101 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/windowEnrichmentTests/launch.windowAnalysis_BAYPASS_CONTRAST_perm.sh
-### sacct -j 5675159 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
+### sacct -j 5675361 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
 ### seff 5675159_1
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.5675159_10.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.5675260_91.err
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.53669286_1.err
 
 module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
