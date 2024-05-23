@@ -10,7 +10,7 @@
   library(dplyr)
 
 ### load data
-  load("~/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata") ### made by `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/collectBayPass.R`
+  load("~/dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata") ### made by `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/collectBayPass.R`
 
 ### make window definitions
   win.bp <- 1e5
@@ -156,14 +156,14 @@
 
   }
 
-  save(win.out, file="~/XtX_C2_glm.windows.pod.Rdata")
+  save(win.out, file="~/XtX_C2_glm.windows.pod_v2.Rdata")
 
 
   table(win.out$wZa.p<1e-10, win.out$perm)
 
 
   win.out[which.min(xtx.wZa.p)]
-  win.out[which.min(xtx.wZa.pod.p)]
+  t(win.out[which.min(xtx.wZa.pod.p)])
 
   win.out[which.min(C2.wZa.p)]
   win.out[which.min(C2.wZa.pod.p)]

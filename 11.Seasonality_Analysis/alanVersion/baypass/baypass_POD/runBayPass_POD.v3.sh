@@ -27,52 +27,52 @@ module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1
   echo $subPool
 
 ### RUN POD
-  cd /scratch/aob2x/dest2_baypass/pods_v2
+  cd /scratch/aob2x/dest2_baypass/pods_v3
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
-  -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_1 \
+  -outprefix /scratch/aob2x/dest2_baypass/pods_v3/anapod_${SLURM_ARRAY_TASK_ID}_1 \
   -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
-  -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
+  -omegafile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_${subPool}_1_mat_omega.out \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
   -seed ${SLURM_ARRAY_TASK_ID}
 
-  cd /scratch/aob2x/dest2_baypass/pods_v2
+  cd /scratch/aob2x/dest2_baypass/pods_v3
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
-  -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_2 \
+  -outprefix /scratch/aob2x/dest2_baypass/pods_v3/anapod_${SLURM_ARRAY_TASK_ID}_2 \
   -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
-  -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
+  -omegafile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_${subPool}_2_mat_omega.out \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
   -seed ${SLURM_ARRAY_TASK_ID}
 
-  cd /scratch/aob2x/dest2_baypass/pods_v2
+  cd /scratch/aob2x/dest2_baypass/pods_v3
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
-  -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_3 \
+  -outprefix /scratch/aob2x/dest2_baypass/pods_v3/anapod_${SLURM_ARRAY_TASK_ID}_3 \
   -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
-  -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
+  -omegafile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_${subPool}_3_mat_omega.out \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
   -seed ${SLURM_ARRAY_TASK_ID}
 
-  cd /scratch/aob2x/dest2_baypass/pods_v2
+  cd /scratch/aob2x/dest2_baypass/pods_v3
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
-  -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_4 \
+  -outprefix /scratch/aob2x/dest2_baypass/pods_v3/anapod_${SLURM_ARRAY_TASK_ID}_4 \
   -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
-  -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
+  -omegafile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_${subPool}_4_mat_omega.out \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
   -seed ${SLURM_ARRAY_TASK_ID}
 
-  cd /scratch/aob2x/dest2_baypass/pods_v2
+  cd /scratch/aob2x/dest2_baypass/pods_v3
   $baypass \
   -gfile /scratch/aob2x/dest2_baypass/pods_v2/G.subpod_${SLURM_ARRAY_TASK_ID} \
-  -outprefix /scratch/aob2x/dest2_baypass/pods_v2/anapod_${SLURM_ARRAY_TASK_ID}_5 \
+  -outprefix /scratch/aob2x/dest2_baypass/pods_v3/anapod_${SLURM_ARRAY_TASK_ID}_5 \
   -poolsizefile   /standard/vol186/bergland-lab/alan/dest_baypass/dest_subpool/subpool_"${subPool}".poolsize \
   -nthreads 16 \
-  -omegafile /scratch/aob2x/dest2_baypass/pods_v2/omega.subpod_${SLURM_ARRAY_TASK_ID} \
+  -omegafile /standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass/destsubpool_${subPool}_5_mat_omega.out \
   -contrastfile /standard/vol186/bergland-lab/Gio/dest2_season_contrast.txt \
   -seed ${SLURM_ARRAY_TASK_ID}
