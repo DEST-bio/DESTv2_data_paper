@@ -11,7 +11,7 @@
   #jobId=450; pops="NoCore20_seas_europe"; nPerm=0
 
 ### does file already exist?
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/glm_test_SEPT_29_2023/"
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/glm_test_May24_2024/"
   output_dir = paste(output_dir, pops, "/", sep="")
   output_dir_final = paste(output_dir, "Loc_Ran_PCA", "/", sep="")
   file = paste(output_dir_final,
@@ -36,7 +36,7 @@
   library(foreach)
   library(SeqArray)
   library(doMC)
-  registerDoMC(5)
+  registerDoMC(20)
   #library(tidyverse)
   library(lme4)
   library(dplyr)
@@ -46,7 +46,7 @@
 ### load data
 
 # General metadata
-  samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
+  samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_3May2024.csv")
 
 
 #### population selector
@@ -115,7 +115,7 @@
 ### gds object
   message("open genofile")
   #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds")
-  genofile <- seqOpen("/scratch/aob2x/dest.all.PoolSNP.001.50.8Jun2023.norep.AT_EScorrect.ann.gds")
+  genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.3May2024.ann.gds")
   #genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.10March2023.ann.gds")
 
 
@@ -163,8 +163,8 @@
     ### calculate effective read-depth
       afis <- merge(af, samps[,c("sampleId", "nFlies"), with=F], by="sampleId")
 
-      afis[chr=="X", nEff:=round((dp*nFlies - 1)/(dp+nFlies))]
-      afis[chr!="X", nEff:=round((dp*2*nFlies - 1)/(dp+2*nFlies))]
+      afis[chr=="X", nEff:=round((dp*nFlies)/(dp+nFlies-1))]
+      afis[chr!="X", nEff:=round((dp*2*nFlies )/(dp+2*nFlies- 1))]
       afis[,af_nEff:=round(af*nEff)/nEff]
 
     ### return
@@ -204,10 +204,13 @@
   }
   # tmp.ids <- tmp.ids[1:3]
 
+### load permutations
+  load("/standard/vol186/bergland-lab/alan/dest_baypass/contrast_pop.perm.Rdata")
+
 ### iterate through
   message("iterate")
   o <- foreach(i=1:length(tmp.ids), .combine="rbind", .errorhandling="remove")%do%{
-    #i <- 1; tmp.ids <- 678513
+    #i <- 1; tmp.ids <- 786996
     message(paste(i, length(tmp.ids), sep=" / "))
 
     ### get allele frequency data
@@ -220,17 +223,15 @@
     ### iterate through permutations
       o <- foreach(j=0:nPerm, .combine="rbind", .errorhandling="remove")%dopar%{
         # j<-0
-        if(j==0) {
           tmp <- af
-        } else if(j>0) {
-          tmp <- af
-          set.seed(j)
-          tmp[,season:=sample(season)]
-        }
+          cont.perm[perm==j]
+          tmp <- merge(tmp, cont.perm[perm==j], by="sampleId")
+          setnames(tmp, "season.perm", "season")
+
         message(j)
         ### iterate through model types
 
-          foreach(model_features = c("yearPop_Binomial", "yearPop_Ran"),  .combine="rbind", .errorhandling="remove")%do%{
+          foreach(model_features = c("yearPop_Ran"),  .combine="rbind", .errorhandling="remove")%do%{
             p_lrt=-999
             seas.AIC = -999
             null.AIC = -999
@@ -242,8 +243,8 @@
               t3.sing <- t4.sing <- NA
             } else if(model_features == "yearPop_Ran" ){
               message("yearPop_Ran model")
-              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1 + (1 | year_pop),  data=tmp, family = binomial)
-              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop), data=tmp, family = binomial)
+              t3.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ 1      + (1 | year_pop),  data=tmp, family = binomial)
+              t4.real <- glmer(cbind(af_nEff*nEff, (1-af_nEff)*nEff) ~ season + (1 | year_pop),  data=tmp,  family = binomial)
               t3.sing <- isSingular(t3.real); t4.sing <- isSingular(t4.real)
 
             }
@@ -286,7 +287,7 @@
 
 #### SAVE O
   message("save")
-  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/glm_test_SEPT_29_2023/"
+  output_dir = "/scratch/aob2x/DEST2_analysis/seasonality/glm_test_May24_2024/"
   if(!dir.exists(output_dir)) {
     message("makding new dir:")
     message(output_dir)
