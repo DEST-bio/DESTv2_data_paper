@@ -8,8 +8,8 @@
 
   ### A, B, C: this file loads the output of the WZA on the un-permuted data. WZA for XtXst pvalue (Chisq based), Contrast pvalue, and GLM pvalue
     ### downloaded
-    system("scp aob2x@rivanna.hpc.virginia.edu:~/XtX_C2_glm.windows.pod.Rdata ~/dest2_seasonality/.")
-    load(file="XtX_C2_glm.windows.pod.Rdata") ### `win.out`
+    #system("scp aob2x@rivanna.hpc.virginia.edu:~/XtX_C2_glm.windows.pod_v2.Rdata ~/dest2_seasonality/XtX_C2_glm.windows.pod_v2.Rdata")
+    load(file="XtX_C2_glm.windows.pod_v2.Rdata") ### `win.out`
 
   ### B:
     load(file="destv2_seasonality_C2.perm.Rdata") ### `win.all.ag2`
@@ -39,8 +39,8 @@
 
   ### F: this file contains the detailed SNP level metrics that allow us to build the hexbin plot. Also contains the thresholds for the POD analysis of C2 and XTX
     ### downloaded
-    system("scp aob2x@rivanna.hpc.virginia.edu:~/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata ~/dest2_seasonality/.")
-    load(file="dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata") ###thrs.ag contains C2 thresholds
+    #system("scp aob2x@rivanna.hpc.virginia.edu:~/dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata ~/dest2_seasonality/.")
+    load(file="dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata") ###thrs.ag contains C2 thresholds
     load("glm.perm.thr.ag.Rdata")
 
 ### build panels
@@ -58,6 +58,7 @@
     xtx.wza.plot /xtx.wza.pod.plot
 
     ggplot(data=win.out, aes(x=xtx.wZa.pod, y=xtx.wZa)) + geom_point()
+    win.out[chr=="2L"][which.min(xtx.wZa.pod.p)]
 
   ### C2 WZA
     C2.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
@@ -66,7 +67,9 @@
 
     C2.wza.pod.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-C2.wZa.pod.p), color="black") +
-    facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw()
+    facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p pod)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]))
+
     C2.wza.plot /C2.wza.pod.plot
     ggplot(data=win.out, aes(x=C2.wZa.pod, y=C2.wZa)) + geom_point()
 
@@ -173,7 +176,75 @@
   FFFFFFFFF
   GGGGGGGGG
   GGGGGGGGG"
-  mega <- collection_fig + line_fig + glm.real_vs_perm.plot + glm_c2 + xtx.wza.plot + C2.wza.plot + GLM.wza.plot + label_fig + plot_layout(design=layout)
+  mega <- collection_fig + line_fig + glm.real_vs_perm.plot + glm_c2 + xtx.wza.pod.plot + C2.wza.pod.plot + GLM.wza.plot + label_fig + plot_layout(design=layout)
 
 
-  ggsave(mega, file="seasonal_mega.pdf", w=7, h=12)
+  ggsave(mega, file="seasonal_mega.pod.pdf", w=7, h=12)
+
+
+
+
+
+### supplemental
+  dim(m)
+  dim(xtx.ag)
+
+  ### XtX observed vs POD
+    m[,XtXst_rank:=NA]
+    xtx.ag[,XtXst_rank:=NA]
+
+    m[!is.na(XtXst_median),XtXst_rank:=rank(XtXst_median)]
+    xtx.ag[!is.na(XtXst_median),XtXst_rank:=rank(XtXst_median)]
+    xtx.ag[which.max(XtXst_rank)]
+
+    xtx.dist <- merge(m[,c("XtXst_rank", "XtXst_median", "xtx_neglogp_median"), with=F], xtx.ag[,c("XtXst_rank", "XtXst_median", "xtx_neglogp_median"), with=F], by="XtXst_rank")
+
+    qq_xtx <- ggplot(data=xtx.dist, aes(y=XtXst_median.x, x=XtXst_median.y)) + geom_point()
+    ggsave(qq_xtx, file="~/qq_xtx_v2.png")
+
+    ggplot(data=m, aes(XtXst_median), fill="red") + geom_density() +
+    geom_density(data=xtx.ag, aes(XtXst_median), alpha=.75, fill="black")
+
+    ggplot(data=m, aes(C2_std_median), color="red") + geom_density() +
+    geom_density(data=cont.ag, aes(C2_std_median), alpha=.75, fill="black")
+
+    fisher.test(rbind(table(m$C2_std_median>25), table(cont.ag$C2_std_median>25)))
+
+
+    ggplot(data=xtx.ag, aes(x=XtXst_median, y=xtx_neglogp_median)) + geom_hex()
+    ggplot(data=m, aes(x=XtXst_median, y=xtx_neglogp_median)) + geom_hex()
+    ggplot(data=m, aes(x=xtx_neglogp_median, y=-log10(XtXst.pod.p))) + geom_hex()
+    ggplot(data=m, aes(XtXst.pod.p)) + geom_histogram()
+
+
+    fisher.test(table(m$chr=="2L" & m$invName.x!="noInv", m$XtXst_median<75))
+
+
+    glm_c2 <- ggplot(m) +
+    geom_hex(aes(x=-log10(cont.pod.p), y=C2_std_median)) +
+    #geom_text(aes(x=6, y=20, label=lab)) +
+    theme_bw() + theme(legend.position="none")
+
+
+  t(table(m$XtXst.pod.p<.5e-5, m$col))
+  (559/34295)/(1673/316573)
+  m[col=="stop_gained"][XtXst.pod.p<5e-5]
+  m[col=="stop_gained"][XtXst.pod.p<5e-5]
+
+
+  t(table(m$cont.pod.p<.5e-5, m$col))
+  m[grepl("stop_gained", col)][cont.pod.p<5e-5]
+
+(145/34709)/(454/115704)
+
+
+fisher.test(table(m$cont.pod.p<.5e-5, m$XtXst.pod.p<.5e-5))
+fisher.test(table(m$cont.pod.p<.5e-5 & m$XtXst.pod.p<.5e-5, m$col=="missense_variant"))
+fisher.test(table(m$cont.pod.p<.5e-5, m$col=="missense_variant"))
+fisher.test(table(m$XtXst.pod.p<.5e-5, m$col=="missense_variant"))
+
+m[cont.pod.p<.5e-5 & XtXst.pod.p<.5e-5 & col=="missense_variant"]
+
+### C2
+ggplot(data=m, aes(C2_std_median)) + geom_density() +
+geom_density(data=cont.ag, aes(C2_std_median), fill="red")

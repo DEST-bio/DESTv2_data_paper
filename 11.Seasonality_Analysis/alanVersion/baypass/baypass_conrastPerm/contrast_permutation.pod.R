@@ -3,7 +3,7 @@
 
 ### capture slurm id
   args <- commandArgs(trailingOnly=TRUE)
-  subPool <- as.numeric(args[1]) #subPool=50
+  subPool <- as.numeric(args[1]) #subPool=15
 
 ### libraries
   .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
@@ -88,9 +88,9 @@
 
 ### load standardized allele freq estimates
 
-  fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subbaypass", "yij", full.name=T)
-  fl.use <- fl[grepl(paste("subpool_", subPool, "_", sep=""), fl)]
-
+  fl <- list.files("/scratch/aob2x/dest2_baypass/pods_v3/", "yij", full.name=T)
+  fl.use <- fl[grepl(paste("anapod_", subPool, "_", sep=""), fl)]
+  fl.use
   c2.dt <- foreach(fl.i=fl.use)%do%{
     # fl.i <- fl[1]
     ### info
@@ -103,7 +103,7 @@
       pijs=fread(fl.i, data.table = F)
 
     ### run function
-      c2.dt <- c2_fun(pij=pijs, cont=contrast)
+      c2.dt <- c2_fun(pij=pijs, cont=cont.perm)
 
       c2.dt[,subPool:=subPool]
       c2.dt[,rep:=rep]
@@ -119,5 +119,5 @@
   c2.dt.ag <- merge(c2.dt.ag, snp.dt)
 
 ### save()
-  save(c2.dt.ag, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/contrast_perm_subpool_", subPool, ".Rdata", sep=""))
-  save(c2.dt, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/RAW_contrast_perm_subpool_", subPool, ".Rdata", sep=""))
+save(c2.dt.ag, file=paste("/scratch/aob2x/dest2_baypass/contrast_perms_v3_pod/contrast_perm_subpool_", subPool, ".Rdata", sep=""))
+save(c2.dt,    file=paste("/scratch/aob2x/dest2_baypass/contrast_perms_v3_pod/RAW_contrast_perm_subpool_", subPool, ".Rdata", sep=""))

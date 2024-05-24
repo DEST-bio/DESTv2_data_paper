@@ -8,8 +8,8 @@
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.%A_%a.err # Standard error
 
-### sbatch --array=1-500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.sh
-### sacct -j 5675550
+### sbatch --array=1-500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.v3.sh
+### sacct -j 5676089
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.err
 ### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.out
 

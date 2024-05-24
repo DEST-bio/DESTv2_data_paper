@@ -54,7 +54,7 @@
   dim(wins)
 
 ### tack in observed data to get heterozygosity estimates
-  load("~/dest2_glm_baypass_annotation.Rdata") ### made by `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/collectBayPass.R`
+  load(file="~/dest2_glm_baypass_annotation_pod.podOutputToo_v3.Rdata")
 
   setkey(m, chr, pos)
   setkey(m.perm, chr, pos)
@@ -62,8 +62,14 @@
   m.perm <- merge(m.perm, m[,c("chr", "pos", "af"), with=F])
   m.perm[,cont.p:=10^(-neglog10P_median)]
 
+### load in ecdfs from PODs
+  load(file="~/baypass_pod_ecdf.Rdata")
+  m.perm[,C2.pod.p:=1-cont.ecdf(m.perm$C2_std_median)]
+
 ### run windows
   m.perm[,C2.Z:=qnorm(cont.p, 0, 1)]
+  m.perm[,C2.pod.Z:=qnorm(C2.pod.p, 0, 1)]
+
   m.perm[,het:=2*af*(1-af)]
 
 
@@ -82,6 +88,8 @@
                       win=win.i,
                       C2.wZa=sum(het*C2.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
                       C2.wZa.p=pnorm(sum(het*C2.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+                      C2.wZa.pod=sum(het*C2.pod.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
+                      C2.wZa.pod.p=pnorm(sum(het*C2.pod.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
                       nSNPs = .N,
                       perm=unique(perm)),]
         win.out[,invName:=case_when(
