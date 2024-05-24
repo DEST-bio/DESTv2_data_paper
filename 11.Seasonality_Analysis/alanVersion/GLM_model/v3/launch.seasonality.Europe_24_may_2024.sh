@@ -10,7 +10,7 @@
 #SBATCH -o /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.out # Standard output
 #SBATCH -e /scratch/aob2x/DEST2_analysis/seasonality/logs/glmOmn.%A_%a.err # Standard error
 
-### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/GLM_model/v3/launch.seasonality.Europe_24_may_2024.sh
+### sbatch --array=1-2173 /home/aob2x/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/GLM_model/v3/launch.seasonality.Europe_24_may_2024.sh
 ###
 ### sacct -j 53885553 --format="JobID%30,JobName,ExitCode,State" | grep "TIMEOUT" | sed -e 's/\s\+/,/g' | cut -f2 -d',' | cut -f2 -d'_' | tr '\n' ','
 ### seff 50160643_1
@@ -21,7 +21,7 @@
 
 module load gcc/7.1.0  openmpi/3.1.4 R/4.1.1
 
-cd DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/GLM_model/v3/
+cd ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/GLM_model/v3/
 
 
 Rscript \
