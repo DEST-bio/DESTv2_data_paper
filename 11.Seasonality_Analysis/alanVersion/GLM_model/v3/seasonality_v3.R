@@ -38,7 +38,7 @@
   library(foreach)
   library(SeqArray)
   library(doMC)
-  registerDoMC(20)
+  registerDoMC(10)
   #library(tidyverse)
   library(lme4)
   library(dplyr)
