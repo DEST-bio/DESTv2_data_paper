@@ -31,6 +31,8 @@
   }
 
 ### libraries
+  .libPaths(c("/project/berglandlab/Rlibs_4.3.1/")); .libPaths()
+
   library(data.table)
   library(lubridate)
   library(foreach)
