@@ -3,7 +3,7 @@
 
 ### capture slurm id
   args <- commandArgs(trailingOnly=TRUE)
-  subPool <- as.numeric(args[1]) #subPool=50
+  subPool <- as.numeric(args[1]) #subPool=38
 
 ### libraries
   .libPaths(c("/scratch/aob2x/Rlibs_4.3.1/")); .libPaths()
@@ -103,7 +103,7 @@
       pijs=fread(fl.i, data.table = F)
 
     ### run function
-      c2.dt <- c2_fun(pij=pijs, cont=contrast)
+      c2.dt <- c2_fun(pij=pijs, cont=cont.perm)
 
       c2.dt[,subPool:=subPool]
       c2.dt[,rep:=rep]
@@ -118,6 +118,11 @@
   setkey(snp.dt, subPool, MRK)
   c2.dt.ag <- merge(c2.dt.ag, snp.dt)
 
+  summary(c2.dt.ag[,list(pr=mean(C2_std_median[perm==0] > C2_std_median[perm!=0] )), list(chr, pos)])
+
+  c2.dt.ag[,list(thr=quantile(C2_std_median[perm!=0], .995))]
+  prop.table(table(c2.dt.ag[perm==0]$C2_std_median> 6.04))
+
 ### save()
-  save(c2.dt.ag, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/contrast_perm_subpool_", subPool, ".Rdata", sep=""))
-  save(c2.dt, file=paste("/standard/vol186/bergland-lab/alan/dest_baypass/RAW_contrast_perm_subpool_", subPool, ".Rdata", sep=""))
+  save(c2.dt.ag, file=paste("/scratch/aob2x/dest2_baypass/contrast_perms_v3/contrast_perm_subpool_", subPool, ".Rdata", sep=""))
+  save(c2.dt,    file=paste("/scratch/aob2x/dest2_baypass/contrast_perms_v3/RAW_contrast_perm_subpool_", subPool, ".Rdata", sep=""))
