@@ -348,7 +348,7 @@ Keep <- Filter %>%
 DATA <-DATA %>%
     filter(ID %in% Keep$sampleId & Chrom != "Y")
 
-DATA$Value[DATA$Stat %in% c("theta_pi_rel","theta_watterson_rel") & (DATA$Value < 0 | DATA$Value > 0.03)]<-NA
+#DATA$Value[DATA$Stat %in% c("theta_pi_rel","theta_watterson_rel") & (DATA$Value < 0 | DATA$Value > 0.03)]<-NA
 
 P.100k <- ggplot(DATA,
     aes(x=Pos/1000000,
@@ -358,7 +358,7 @@ P.100k <- ggplot(DATA,
     facet_grid(Stat ~ Chrom,
         scales='free',
         space='free_x')+
-        #ylim(0,0.015)+
+        ylim(-0.01,0.015)+
     ylab('PopGen Statistic')+
     xlab('Position (Mbp)')+
     theme_bw()
