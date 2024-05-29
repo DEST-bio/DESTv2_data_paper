@@ -1,6 +1,6 @@
 
 # ijob -A berglandlab -c5 -p largemem --mem=250G
-# ijob -A berglandlab_standard -c20 -p standard --mem=100G
+# ijob -A berglandlab_standard -c20 -p standard --mem=250G
 
 ### module load gcc/11.4; module load openmpi/4.1.4; module load R/4.3.1; R
 ### libraries
@@ -19,7 +19,7 @@
 
 
   ### get files
-    fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subpods_analysis", "xtx", full.name=T)
+    fl <- list.files("/scratch/aob2x/dest2_baypass/pods_v2/", "xtx", full.name=T)
 
   ### iterate
     xtx <- foreach(fl.i=fl)%dopar%{
@@ -47,14 +47,14 @@
   ### average
     xtx[negLog10P==Inf, negLog10P:=max(xtx[negLog10P!=Inf]$negLog10P)]
 
-    xtx.ag <- xtx[,list(XtXst_median=median(XtXst), XtXst_mean=mean(XtXst),
-                        xtx_neglogp_median=median(negLog10P), xtx_neglogp_mean=mean(negLog10P), af=mean(M_P)), list(MRK, subpool)]
+    xtx.ag <- xtx[,list(XtXst_median=median(XtXst, na.rm=T), XtXst_mean=mean(XtXst),
+                        xtx_neglogp_median=median(negLog10P, na.rm=T), xtx_neglogp_mean=mean(negLog10P), af=mean(M_P)), list(MRK, subpool)]
 
 ##########
 ### contrast
 ##########
   ### get files
-    fl <- list.files("/standard/vol186/bergland-lab/alan/dest_baypass/dest_subpods_analysis/", "contrast", full.name=T)
+    fl <- list.files("/scratch/aob2x/dest2_baypass/pods_v2/", "contrast", full.name=T)
 
     cont <- foreach(fl.i=fl)%dopar%{
       message(fl.i)
@@ -86,11 +86,16 @@
   summary(cont.ag$C2_std_median)
   summary(m$C2_std_median)
 
+
+  prop.table(table(xtx.ag$XtXst_median>500))
+  prop.table(table(m$XtXst_median>500))
+
 ### calcualte POD based thresholds
   xtx.ecdf <- ecdf(xtx.ag$XtXst_median)
   m[,XtXst.pod.p :=  1 - xtx.ecdf(XtXst_median)]
   m[XtXst.pod.p==0, XtXst.pod.p:=1/dim(m)[1]]
 
+  prop.table(table(m$XtXst.pod.p<.05))
 
   cont.ecdf <- ecdf(cont.ag$C2_std_median)
   m[,cont.pod.p :=  1 - cont.ecdf(C2_std_median)]
@@ -98,6 +103,7 @@
 
   m[which.min(xtx.p)]
   m[which.min(XtXst.pod.p)]
+  m[which.max(XtXst_median)]
 
   summary(m[min(XtXst.pod.p)==XtXst.pod.p])
   summary(m[min(cont.pod.p)==cont.pod.p])
@@ -109,6 +115,6 @@
   cont.ag[,list(C2_thr=quantile(C2_std_median,  thrs, na.rm=T))])
 
 ### save
-  save(m, thrs.ag, xtx.ag, cont.ag, file="~/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata")
+  save(m, thrs.ag, xtx.ag, cont.ag, file="~/dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata")
 
 summary(lm(-log10(cont.p)~I(-log10(cont.pod.p)), data=m)

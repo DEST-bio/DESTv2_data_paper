@@ -54,7 +54,7 @@ else:
     for l in load_data(options.COV):
         a = l.rstrip().split()
         Cov[a[0]][a[1]][(int(a[2])+int(a[3]))/2] = int(a[3]) - \
-            int(a[2])-1-int(a[4])
+            int(a[2])+1-int(a[4])
 
 header = ""
 META = d(lambda: d())
@@ -94,8 +94,10 @@ for l in load_data(options.IN):
         else:
             if (int(start)+int(end))/2 not in Cov[k][chrom]:
                 REL = "NA"
-            elif Cov[k][chrom][(int(start)+int(end))/2] == 0:
+            elif Cov[k][chrom][(int(start)+int(end))/2] <= 0:
                 REL = "NA"
+            elif v == 0:
+                REL == 0.0
             else:
                 REL = str(float(v)/Cov[k][chrom][(int(start)+int(end))/2])
         if "abs" in Type:

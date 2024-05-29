@@ -1,4 +1,4 @@
-# ijob -A berglandlab_standard -c10 -p largemem --mem=250G
+# ijob -A berglandlab_standard -c20 -p standard --mem=250G
 ### module load gcc/11.4.0 openmpi/4.1.4 R/4.3.1; R
 
 ### libraries
@@ -6,11 +6,11 @@
   library(data.table)
   library(foreach)
   library(doMC)
-  registerDoMC(5)
+  registerDoMC(20)
   library(dplyr)
 
 ### load data
-  load("~/dest2_glm_baypass_annotation.Rdata") ### made by `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/collectBayPass.R`
+  load("~/dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata") ### made by `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/collectBayPass.R`
 
 ### make window definitions
   win.bp <- 1e5
@@ -84,6 +84,9 @@
     win.tmp[,Z:=qnorm(p_lrt, 0, 1)]
     win.tmp[,C2.Z:=qnorm(cont.p, 0, 1)]
     win.tmp[,xtx.Z:=qnorm(xtx.p, 0, 1)]
+    win.tmp[,xtx.pod.Z:=qnorm(XtXst.pod.p, 0, 1)]
+    win.tmp[,C2.pod.Z:=qnorm(cont.pod.p, 0, 1)]
+
     #### Calculate Z rnp score
     win.tmp[,rnpZ:=qnorm(rnp, 0, 1)]
 
@@ -116,8 +119,14 @@
                     wZa.p=pnorm(sum(het*Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
                     C2.wZa=sum(het*C2.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
                     C2.wZa.p=pnorm(sum(het*C2.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+                    C2.wZa.pod=sum(het*C2.pod.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
+                    C2.wZa.pod.p=pnorm(sum(het*C2.pod.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+
                     xtx.wZa=sum(het*xtx.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
                     xtx.wZa.p=pnorm(sum(het*xtx.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+                    xtx.wZa.pod=sum(het*xtx.pod.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
+                    xtx.wZa.pod.p=pnorm(sum(het*xtx.pod.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+
                     rnp.wZa=sum(het*rnpZ)/(sqrt(sum(het^2))),
                     rnp.wZa.p=pnorm(sum(het*rnpZ)/(sqrt(sum(het^2))), lower.tail=T),
                     min.p.lrt=min(p_lrt),
@@ -147,13 +156,17 @@
 
   }
 
-  save(win.out, file="~/XtX_C2_glm.windows.Rdata")
+  save(win.out, file="~/XtX_C2_glm.windows.pod_v2.Rdata")
 
 
   table(win.out$wZa.p<1e-10, win.out$perm)
 
 
+  win.out[which.min(xtx.wZa.p)]
+  t(win.out[which.min(xtx.wZa.pod.p)])
 
+  win.out[which.min(C2.wZa.p)]
+  win.out[which.min(C2.wZa.pod.p)]
 
 
   cSNPS.ag <- cSNPs[,list(.N), list(col, gene)]

@@ -7,7 +7,8 @@ import math
 #########################################################   HELP   #########################################################################
 usage = "python %prog --input file --output file "
 parser = OptionParser(usage=usage)
-group = OptionGroup(parser, '< put description here >')
+group = OptionGroup(
+    parser, 'This script calculates the number of sites per window that do not pass the quality criteria using the BED output of the DEST pipeline script')
 
 #########################################################   CODE   #########################################################################
 
