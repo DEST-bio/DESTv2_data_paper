@@ -10,8 +10,8 @@
 
 ### sbatch --array=1-500 ~/DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/baypass/baypass_POD/runBayPass_POD.v3.sh
 ### sacct -j 5676089
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.err
-### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5675549_102.out
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5676089_409.err
+### cat /scratch/aob2x/DEST2_analysis/seasonality/logs/dest_pod.5676089_409.out
 
 # ijob -A berglandlab_standard -c16 -p standard --mem=9G
 

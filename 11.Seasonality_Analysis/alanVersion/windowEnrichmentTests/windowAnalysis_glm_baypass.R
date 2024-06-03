@@ -84,7 +84,9 @@
     win.tmp[,Z:=qnorm(p_lrt, 0, 1)]
     win.tmp[,C2.Z:=qnorm(cont.p, 0, 1)]
     win.tmp[,xtx.Z:=qnorm(xtx.p, 0, 1)]
-    win.tmp[,xtx.pod.Z:=qnorm(XtXst.pod.p, 0, 1)]
+    win.tmp[,xtx.pod.upperZ:=qnorm(XtXst.pod.p, 0, 1)]
+    win.tmp[,xtx.pod.lowerZ:=qnorm(1-XtXst.pod.p, 0, 1)]
+
     win.tmp[,C2.pod.Z:=qnorm(cont.pod.p, 0, 1)]
 
     #### Calculate Z rnp score
@@ -124,8 +126,11 @@
 
                     xtx.wZa=sum(het*xtx.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
                     xtx.wZa.p=pnorm(sum(het*xtx.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
-                    xtx.wZa.pod=sum(het*xtx.pod.Z, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
-                    xtx.wZa.pod.p=pnorm(sum(het*xtx.pod.Z)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+                    xtx.wZa.pod.upper=sum(het*xtx.pod.upperZ, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
+                    xtx.wZa.pod.upper.p=pnorm(sum(het*xtx.pod.upperZ)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
+
+                    xtx.wZa.pod.lower=sum(het*xtx.pod.lowerZ, na.rm=T)/(sqrt(sum(het^2, na.rm=T))),
+                    xtx.wZa.pod.lower.p=pnorm(sum(het*xtx.pod.lowerZ)/(sqrt(sum(het^2))), lower.tail=T, log.p=T),
 
                     rnp.wZa=sum(het*rnpZ)/(sqrt(sum(het^2))),
                     rnp.wZa.p=pnorm(sum(het*rnpZ)/(sqrt(sum(het^2))), lower.tail=T),

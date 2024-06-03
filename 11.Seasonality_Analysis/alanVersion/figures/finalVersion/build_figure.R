@@ -6,21 +6,23 @@
 ### load data
   setwd("~/dest2_seasonality")
 
+  ### B: this file contails the C2 permutations to draw sig threshold for panel B
+    load("C2_windowPerms_pod.Rdata")
+    thrs <- 1-c(.95, .99, .995, .999)
+    C2.permuation.wZA.thresholds <- win.out[perm!=0,list(value=quantile(C2.wZa.pod.orig.p, thrs), thr=thrs), ]
+    C2.permuation.wZA.thresholds
+
   ### A, B, C: this file loads the output of the WZA on the un-permuted data. WZA for XtXst pvalue (Chisq based), Contrast pvalue, and GLM pvalue
     ### downloaded
     #system("scp aob2x@rivanna.hpc.virginia.edu:~/XtX_C2_glm.windows.pod_v2.Rdata ~/dest2_seasonality/XtX_C2_glm.windows.pod_v2.Rdata")
-    load(file="XtX_C2_glm.windows.pod_v2.Rdata") ### `win.out`
-
-  ### B:
-    load(file="destv2_seasonality_C2.perm.Rdata") ### `win.all.ag2`
+    load(file="XtX_C2_glm.windows.pod_v2.upper_lower.Rdata") ### `win.out`
 
   ### C: this file contains the GLM permutations used to draw significance threshold for panel C.
     ### downloaded
     load(file="destv2_seasonality_perm.Rdata") ### `win.all.ag2`
     thrs <- 1-c(.95, .99, .995, .999)
-    glm.permuation.wZA.thresholds <- win.all[perm!=0,list(value=quantile(wZa.p, thrs), thr=thrs), list(perm)]
-    glm.perm.ag <- glm.permuation.wZA.thresholds[,list(value=min(value)), list(thr)]
-    #win.all.ag2[,pos_mean:=pos_min/2 + pos_max/2]
+    glm.permuation.wZA.thresholds <- win.all[perm!=0,list(value=quantile(wZa.p, thrs), thr=thrs), ]
+    glm.permuation.wZA.thresholds
 
   ### D: this file contains the seasonal pairs. reference this file: `DESTv2_data_paper/11.Seasonality_Analysis/alanVersion/figures/mapFigure.R`
     samps = fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
@@ -37,47 +39,67 @@
   ### E: this file should contain what we want
     load(file="enrichment.NoCore20_seas_europe_yearPop_Ran.Rdata")
 
-  ### F: this file contains the detailed SNP level metrics that allow us to build the hexbin plot. Also contains the thresholds for the POD analysis of C2 and XTX
+  ### F: this file contains the detailed SNP level metrics that allow us to build the hexbin plot.
     ### downloaded
     #system("scp aob2x@rivanna.hpc.virginia.edu:~/dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata ~/dest2_seasonality/.")
     load(file="dest2_glm_baypass_annotation_pod.podOutputToo_v2.Rdata") ###thrs.ag contains C2 thresholds
     load("glm.perm.thr.ag.Rdata")
 
 ### build panels
-  nSNP_thr <- 150
+  nSNP_thr <- 1
+
+    ### ID overlapping outliers
+      peaks <- win.out[,list(glm_rank=rank(wZa.p), C2_rank=rank(C2.wZa.pod.p), pos_mean, win), list(chr)]
 
   ### XTX wza
     xtx.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.p), color="black") +
-    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa p)") + xlab("Pos (Mb)") + theme_bw()
+    facet_grid(~chr, scales="free_x") + ylab("-log10(wZa xtx p)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")
 
-    xtx.wza.pod.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
-    geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.pod.p), color="black") +
-    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa p)") + xlab("Pos (Mb)") + theme_bw()
+    xtx.wza.pod.upper.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_vline(data=peaks[glm_rank<=5], aes(xintercept=pos_mean/1e6), color="blue") +
+    geom_vline(data=peaks[C2_rank<=5], aes(xintercept=pos_mean/1e6), color="green") +
+    geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.pod.upper.p), color="black") +
+    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa \npod p upper)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")
 
-    xtx.wza.plot /xtx.wza.pod.plot
+    xtx.wza.pod.lower.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_line(data=win.out,aes(x=pos_mean/1e6, y=-xtx.wZa.pod.lower.p), color="black") +
+    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa \npod p lower)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")
 
-    ggplot(data=win.out, aes(x=xtx.wZa.pod, y=xtx.wZa)) + geom_point()
-    win.out[chr=="2L"][which.min(xtx.wZa.pod.p)]
+
+    xtx.wza.plot / xtx.wza.pod.upper.plot / xtx.wza.pod.lower.plot + plot_annotation(tag_levels="A")
 
   ### C2 WZA
     C2.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-C2.wZa.p), color="black") +
-    facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw()
+    facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red") +
+    geom_hline(yintercept=-C2.permuation.wZA.thresholds[1]$value, color="red", linetype="dashed")
+
 
     C2.wza.pod.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_vline(data=peaks[glm_rank<=5], aes(xintercept=pos_mean/1e6), color="blue") +
+    geom_vline(data=peaks[C2_rank<=5], aes(xintercept=pos_mean/1e6), color="green") +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-C2.wZa.pod.p), color="black") +
     facet_grid(~chr, scales="free_x") + ylab("-log10(C2 wZa p pod)") + xlab("Pos (Mb)") + theme_bw() +
-    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]))
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")+
+    geom_hline(yintercept=-C2.permuation.wZA.thresholds[1]$value, color="red", linetype="dashed")
 
     C2.wza.plot /C2.wza.pod.plot
-    ggplot(data=win.out, aes(x=C2.wZa.pod, y=C2.wZa)) + geom_point()
 
   ### GLM WzA
     GLM.wza.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_vline(data=peaks[glm_rank<=5], aes(xintercept=pos_mean/1e6), color="blue") +
+    geom_vline(data=peaks[C2_rank<=5], aes(xintercept=pos_mean/1e6), color="green") +
     geom_line(data=win.out,aes(x=pos_mean/1e6, y=-wZa.p), color="black") +
-    geom_hline(data=glm.perm.ag[4], aes(yintercept=-value, color=as.factor(thr))) +
+    geom_hline(data=glm.permuation.wZA.thresholds[1], aes(yintercept=-value, color=as.factor(thr)), color="red", linetype="dashed") +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")+
+
     facet_grid(~chr, scales="free_x") + ylab("-log10(GLMER wZa p)") + xlab("Pos (Mb)") + theme_bw() + theme(legend.position="none")
+
 
   ### Collection Plot
     ss.ag <- seasonal.sets[,list(lat=mean(lat)), list(locality, city, country)]
@@ -100,7 +122,7 @@
 
 
     label_fig <- ggplot(data=ss.ag) +
-    geom_text(data=ss.ag, aes(label=paste(city, ",\n", country, sep=""), x=.45, y=ypos), size=2.5, hjust = 0) +
+    geom_text(data=ss.ag, aes(label=paste(city, ", ", country, sep=""), x=0, y=ypos), size=2.5, hjust = 0) +
     theme_void() + xlim(0,1) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -130,14 +152,47 @@
 
     glm_c2 <- ggplot(m) +
     geom_hex(aes(x=-log10(p_lrt), y=C2_std_median)) +
-    geom_vline(xintercept=thrs.ag[thr==.999]$C2_thr, color="red") +
-    geom_hline(yintercept=-log10(glm.perm.thr.ag[thr==1-.999]$glm_thr), color="red") +
+    geom_vline(xintercept=thrs.ag[thr==.95]$C2_thr, color="red") +
+    geom_hline(yintercept=-log10(glm.perm.thr.ag[thr==1-.95]$glm_thr), color="red") +
     #geom_text(aes(x=6, y=20, label=lab)) +
     theme_bw() + theme(legend.position="none")
 
 
 
 ### combined plot
+
+### version 2
+  layout <- "
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  AAAAABHHH
+  CCCDDDHHH
+  CCCDDDHHH
+  CCCDDDHHH
+  EEEEEEEEE
+  EEEEEEEEE
+  FFFFFFFFF
+  FFFFFFFFF
+  GGGGGGGGG
+  GGGGGGGGG"
+  mega <- collection_fig + line_fig + glm.real_vs_perm.plot + glm_c2 + xtx.wza.pod.upper.plot + C2.wza.pod.plot + GLM.wza.plot + label_fig + plot_layout(design=layout)
+
+
+  ggsave(mega, file="seasonal_mega.pod_v2.pdf", w=7, h=12)
+
+
+
+
+
+
+
+
+
+
+
+### old
 
   layout <- "
   AAAAAABBCCCCCCCCCCCC
@@ -159,29 +214,6 @@
   "
 
   mega <- collection_fig + label_fig + xtx.wza.plot + C2.wza.plot + GLM.wza.plot + glm.real_vs_perm.plot + glm_c2 + plot_layout(design=layout)
-
-### version 2
-  layout <- "
-  AAAAABHHH
-  AAAAABHHH
-  AAAAABHHH
-  AAAAABHHH
-  AAAAABHHH
-  CCCDDDHHH
-  CCCDDDHHH
-  CCCDDDHHH
-  EEEEEEEEE
-  EEEEEEEEE
-  FFFFFFFFF
-  FFFFFFFFF
-  GGGGGGGGG
-  GGGGGGGGG"
-  mega <- collection_fig + line_fig + glm.real_vs_perm.plot + glm_c2 + xtx.wza.pod.plot + C2.wza.pod.plot + GLM.wza.plot + label_fig + plot_layout(design=layout)
-
-
-  ggsave(mega, file="seasonal_mega.pod.pdf", w=7, h=12)
-
-
 
 
 
@@ -248,3 +280,15 @@ m[cont.pod.p<.5e-5 & XtXst.pod.p<.5e-5 & col=="missense_variant"]
 ### C2
 ggplot(data=m, aes(C2_std_median)) + geom_density() +
 geom_density(data=cont.ag, aes(C2_std_median), fill="red")
+
+
+
+
+
+
+    xtx.wza.pod.upper.plot <- ggplot(data=win.out[nSNPs>nSNP_thr]) +
+    geom_vline(data=peaks[glm_rank<=5], aes(xintercept=pos_mean/1e6), color="blue") +
+    geom_vline(data=peaks[C2_rank<=5], aes(xintercept=pos_mean/1e6), color="green") +
+    geom_line(data=win.out,aes(x=pos_mean/1e6, y=(-xtx.wZa.pod.lower.p)), color="black") +
+    facet_grid(~chr, scales="free_x") + ylab("-log10(xtx wZa \npod p upper)") + xlab("Pos (Mb)") + theme_bw() +
+    geom_hline(yintercept=-log10(.0001/dim(win.out)[1]), color="red")
