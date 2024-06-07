@@ -1,5 +1,2 @@
-data/
-DESTv2_Inversions/
-DESTv2/
-results/Inversions/
-output/
+data/DEST.vcf.gz
+data/DEST.sync.gz

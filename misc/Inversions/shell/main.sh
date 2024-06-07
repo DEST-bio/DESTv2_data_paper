@@ -12,19 +12,19 @@ wget -O DEST.vcf.gz http://berglandlab.uvadcos.io/vcf/dest.all.PoolSNP.001.50.3M
 wget -O meta.csv https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_3May2024.csv
 
 ### Convert VCF to SYNC
-gunzip -c ${WD}/16.Inversions/data/DEST.vcf.gz |
+gunzip -c /media/inter/mkapun/projects/InvChapter/data/DEST.vcf.gz |
     parallel \
         --jobs 80 \
         --pipe \
         -k \
         --cat python3 ${WD}/16.Inversions/scripts/VCF2sync.py \
         --input {} |
-    gzip >${WD}/16.Inversions/data/DEST.sync.gz
+    gzip >/media/inter/mkapun/projects/InvChapter/data/DEST.sync.gz
 
 mkdir -p ${WD}/16.Inversions/results/frequencies
 
 ### Get count at inversion specific marker SNP
-gunzip -c ${WD}/16.Inversions/data/DEST.sync.gz |
+gunzip -c /media/inter/mkapun/projects/InvChapter/data/DEST.sync.gz |
     parallel \
         --pipe \
         --jobs 200 \
@@ -35,7 +35,7 @@ gunzip -c ${WD}/16.Inversions/data/DEST.sync.gz |
         >${WD}/16.Inversions/results/frequencies/inversions.sync
 
 ### Get names of samples in correct order
-NAMES=$(gunzip -c ${WD}/16.Inversions/data/DEST.vcf.gz | head -500 | awk '/^#C/' | cut -f10- | tr '\t' ',')
+NAMES=$(gunzip -c /media/inter/mkapun/projects/InvChapter/data/DEST.vcf.gz | head -500 | awk '/^#C/' | cut -f10- | tr '\t' ',')
 
 # Calculate average frequencies for marker SNPs
 python3 ${WD}/16.Inversions/scripts/inversion-freqs.py \
@@ -83,6 +83,7 @@ sink()
 
 Rscript ${WD}/16.Inversions/scripts/InversionStats.R
 
+
 ### now combine with previous estimates
 cd ${WD}/16.Inversions/data
 ## download 'https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2Fmec.14871&file=mec14871-sup-0001-TableS1.xlsx' as KapunFlatt.xlsx
@@ -93,7 +94,7 @@ library(tidyverse)
 library(knitr)
 library(readxl)
 
-setwd('${WD}')
+setwd(${WD})
 
 meta <- read.csv('16.Inversions/data/meta.csv',
     header = T
@@ -106,13 +107,13 @@ nhm_inversion <- read.table('16.Inversions/results/frequencies/DEST2_inversions.
 )
 
 data <- merge(meta, nhm_inversion, by = 'sampleId') %>%
-    select(lat,long,\`In.2L.t\`,\`In.2R.Ns\`,\`In.3L.P\`,\`In.3R.Payne\`)
+    select(lat,long,`In.2L.t`,`In.2R.Ns`,`In.3L.P`,`In.3R.Payne`)
 colnames(data)<-c('Latitude','Longitude','In(2L)t','In(2R)Ns','In(3L)P','In(3R)Payne')
 data\$DEST<-rep(22,nrow(data))
 
 KapFlatt <- read_excel('16.Inversions/data/KapunFlatt.xlsx', skip = 5) %>%
     filter(!(grepl('Kapun',Reference) | grepl('DrosEU',Reference))) %>%
-    select(\`Lat(N)\`,\`Long(E)\`,\`IN(2L)t\`,\`IN(2R)NS\`,\`IN(3L)P\`,\`IN(3R)P\`)
+    select(`Lat(N)`,`Long(E)`,`IN(2L)t`,`IN(2R)NS`,`IN(3L)P`,`IN(3R)P`)
 colnames(KapFlatt)<-c('Latitude','Longitude','In(2L)t','In(2R)Ns','In(3L)P','In(3R)Payne')
 KapFlatt\$DEST<-rep(21,nrow(KapFlatt))
 NewDat<-rbind(data,KapFlatt)
@@ -121,7 +122,7 @@ write.table(file='FIGUREs/FIGURE2_Invs/FullInvDestv2.txt',
     NewDat,
     quote=FALSE,
     row.names=FALSE)
-""" >${WD}/16.Inversions/scripts/InverionMerge.R
+""" > ${WD}/16.Inversions/scripts/InverionMerge.R
 
 Rscript ${WD}/16.Inversions/scripts/InversionMerge.R
 
