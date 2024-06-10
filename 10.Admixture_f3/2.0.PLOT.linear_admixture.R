@@ -87,7 +87,13 @@ filter =  filter.i))
         }
 
 regression.coeffs %>%
+  arrange(mod) %>%
+  mutate(signif = case_when(p < 0.05 ~ "SIG", 
+                            TRUE ~ "NS"))
+
+regression.coeffs %>%
   reshape2::dcast(filter~mod, value.var = "p")
+
 
 linear.admix.dat.filters %>%
   filter(admix.set == "N.America" & source_pop == "AFRICA") %>%
