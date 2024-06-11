@@ -49,8 +49,10 @@ ti.ob.1y =
     return(tmp)
   }
 save(ti.ob.1y, file = "ti.ob.1y.Rdata")
-
+####
 #load("fst.winter.1y.Rdata")
+####
+
 setDT(ti.ob.1y)
 ti.ob.1y %<>%
   filter(pop1 != "Providence")
@@ -228,7 +230,7 @@ ggsave(lat.fst.plot.temp,
        file = "Yesiloz.lat.fst.plot.temp.pdf", 
        w = 5.5, h = 3.5)
 
-####
+#### Eco PCA variables
 ti.ob.1y %>%
 dplyr::select(T.mean,T.var,T.min,T.max,Tn.below5,Tn.above32) %>%
 PCA(graph = FALSE) -> eco.PCA
