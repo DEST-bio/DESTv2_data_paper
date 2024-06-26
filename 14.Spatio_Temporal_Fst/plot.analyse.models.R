@@ -248,13 +248,62 @@ eco.PCA$ind$coord %>%
 as.data.frame %>%
 mutate(ti.ob.1y) -> eco.fst.dat
 
-cor.test(~FST+Dim.1, data = eco.fst.dat)
-cor.test(~FST+Dim.2, data = eco.fst.dat)
+eco.fst.dat %>% 
+  dplyr::select(Dim.1, T.min, FST, Tn.below5) %>%
+  reshape2::melt(id = c("Dim.1","FST") ) %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=value,
+    fill =FST
+  )) + geom_point(alpha = 0.1, shape = 21, size = 3) +
+  scale_fill_gradient2(mid = "white", high = "springgreen", midpoint = 0) +
+  facet_wrap(~variable) ->
+  dim1.cold
+ggsave(dim1.cold, file ="dim1.cold.pdf")
+
+eco.fst.dat %>% 
+  dplyr::select(Dim.1, T.min, FST, Tn.below5) %>%
+  reshape2::melt(id = c("Dim.1","FST") ) %>%
+  ggplot(aes(
+    x=FST ,
+    y=value,
+    fill =Dim.1
+  )) + geom_point(alpha = 0.1, shape = 21, size = 3) +
+  scale_fill_gradient2(mid = "white", high = "springgreen", midpoint = 0) +
+  facet_wrap(~variable) ->
+  dim1.cold.fst
+ggsave(dim1.cold.fst, file ="dim1.cold.fst.pdf")
 
 
+#eco.fst.dat %>% 
+
+  filter(eco.fst.dat, pop1 != "Yesiloz") %>%
+    filter(Tn.below5 > 1) %>%
+  dplyr::select(Dim.2, T.max, Tn.below5, FST) %>%
+  reshape2::melt(id = c("Dim.2","FST","Tn.below5") ) %>%
+  ggplot(aes(
+    x=Tn.below5 ,
+    y=value,
+    fill =FST
+  )) + geom_point(alpha = 0.1, shape = 21, size = 3) +
+    geom_smooth(method = "lm") +
+  scale_fill_gradient2(mid = "white", high = "springgreen", midpoint = 0) +
+  facet_wrap(~variable) ->
+  dim2.hot.fst
+ggsave(dim2.hot.fst, file ="dim2.hot.fst.pdf")
+
+
+### Examine variable associations
+#cor.test(~FST+T.min, data = eco.fst.dat)
+cor.test(~FST+T.min, data = filter(eco.fst.dat, pop1 != "Yesiloz"))
+## T.max!
+cor.test(~FST+T.max, data = filter(eco.fst.dat, pop1 != "Yesiloz"))
+
+#### --> Tn.below5
+cor.test(~FST+Tn.below5 , data = filter(eco.fst.dat, pop1 != "Yesiloz"))
 eco.fst.dat %>%
-filter(Tn.below5 > 1) -> tnb5
-
+  filter(Tn.below5 > 1) %>%
+  filter(pop1 != "Yesiloz") -> tnb5
 cor.test(~FST+Tn.below5 , data = tnb5)
 cor.test(~FST+Tn.below5 , data = filter(tnb5, lat.m > 50))
 cor.test(~FST+Tn.below5 , data = filter(tnb5, lat.m < 50))
