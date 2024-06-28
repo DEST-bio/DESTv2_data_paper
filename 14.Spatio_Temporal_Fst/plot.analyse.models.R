@@ -5,12 +5,14 @@ library(magrittr)
 library(foreach)
 library(data.table)
 library(gdata)
+
 library(foreach)
 library(nasapower)
 library(sp)
 library(lubridate)
 library(stringr)
 library(car)
+
 library(FactoMineR)
 library(factoextra)
 library(segmented)
@@ -49,6 +51,7 @@ ti.ob.1y =
     return(tmp)
   }
 save(ti.ob.1y, file = "ti.ob.1y.Rdata")
+load("ti.ob.1y.Rdata")
 ####
 #load("fst.winter.1y.Rdata")
 ####
@@ -119,6 +122,10 @@ fill = mT
                        midpoint = 15) ->
 datawbkstick
 ggsave(datawbkstick, file = "datawbkstick.pdf", h = 3, w= 4)
+
+
+##### with all data -- broken stick
+
 
 
 
@@ -192,6 +199,41 @@ data.frame(perm.stat = "all", i = 0, cor= cor.test(~FST+lat.m, data = ti.ob.1y)$
 data.frame(perm.stat = "less50", i = 0, cor= cor.test(~FST+lat.m, data = filter(ti.ob.1y, lat.m < 50.3))$estimate),
 data.frame(perm.stat = "more50", i = 0, cor= cor.test(~FST+lat.m, data = filter(ti.ob.1y, lat.m > 50.3))$estimate),
 data.frame(perm.stat = "perm", perms_overw)) -> perm.test
+
+#### Plot a zoom in of correlations
+ggplot() +
+  geom_point(
+    data = ti.ob.1y,
+    aes(
+      x=lat.m,
+      y=FST,
+      fill = T.mean
+    ), shape = 21, size = 3
+    ) + 
+  geom_smooth(
+    data = filter(ti.ob.1y, pop1 != "Yesiloz"),
+    aes(
+      x=lat.m,
+      y=FST,
+      shape = lat.m < 50.3
+    ), method = "lm"
+  ) + 
+  geom_smooth(
+    data = filter(ti.ob.1y),
+    aes(
+      x=lat.m,
+      y=FST,
+      shape = lat.m < 50.3
+    ), method = "lm"
+  ) + geom_vline(xintercept = 50.3, linetype = "dashed") + 
+  scale_fill_gradient2(low= "steelblue", 
+                         high="firebrick4", 
+                         midpoint = 12) + theme_bw()  ->
+  lat.fst.regs
+ggsave(lat.fst.regs, file ="lat.fst.regs.pdf", h = 4, w = 4.5 )
+
+
+
 ## plot permutations
 ggplot() +
   geom_density(data = filter(perm.test, perm.stat == "perm"),
@@ -229,6 +271,126 @@ ti.ob.1y %>%
 ggsave(lat.fst.plot.temp, 
        file = "Yesiloz.lat.fst.plot.temp.pdf", 
        w = 5.5, h = 3.5)
+
+#### Ecological correlations 
+#### Ecological correlations 
+#### Ecological correlations 
+#### Ecological correlations 
+#### Ecological correlations 
+#"T.mean"     "T.var"      "T.min"      "T.max"     
+#[21] "Tn.below5"  "Tn.above32" "lat.m"  
+
+#### Rbind here
+calc_eco_cors = function(dat_in, filtINF){
+rbind(
+  
+  data.frame(
+    var= "T.mean",
+    filt = filtINF,
+    est= cor.test(~FST+T.mean, data = dat_in )$estimate, 
+    P= cor.test(~FST+T.mean, data = dat_in )$p.value, 
+    uci = cor.test(~FST+T.mean, data = dat_in )$conf.int[1], 
+    lci = cor.test(~FST+T.mean, data = dat_in )$conf.int[2]) ,
+  
+  data.frame(
+    var= "T.var",
+    filt = filtINF,
+    est= cor.test(~FST+T.var, data = dat_in )$estimate, 
+    P= cor.test(~FST+T.var, data = dat_in )$p.value, 
+    uci = cor.test(~FST+T.var, data = dat_in )$conf.int[1], 
+    lci = cor.test(~FST+T.var, data = dat_in )$conf.int[2]) ,
+  
+  data.frame(
+    var= "T.min",
+    filt = filtINF,
+    est= cor.test(~FST+T.min, data = dat_in )$estimate, 
+    P= cor.test(~FST+T.min, data = dat_in )$p.value, 
+    uci = cor.test(~FST+T.min, data = dat_in )$conf.int[1], 
+    lci = cor.test(~FST+T.min, data = dat_in )$conf.int[2]) ,
+  
+  data.frame(
+    var= "T.max",
+    filt = filtINF,
+    est= cor.test(~FST+T.max, data = dat_in )$estimate, 
+    P= cor.test(~FST+T.max, data = dat_in )$p.value, 
+    uci = cor.test(~FST+T.max, data = dat_in )$conf.int[1], 
+    lci = cor.test(~FST+T.max, data = dat_in )$conf.int[2]) ,
+  
+  data.frame(
+    var= "Tn.below5",
+    filt = filtINF,
+    est= cor.test(~FST+Tn.below5, data = filter(dat_in, Tn.below5 > 1))$estimate, 
+    P= cor.test(~FST+Tn.below5, data = dat_in )$p.value, 
+    uci = cor.test(~FST+Tn.below5, data = filter(dat_in, Tn.below5 > 1) )$conf.int[1], 
+    lci = cor.test(~FST+Tn.below5, data = filter(dat_in, Tn.below5 > 1) )$conf.int[2]) 
+  
+)} ## close func
+
+calc_eco_cors(filter(ti.ob.1y, pop1 != "Yesiloz"), "all") -> real.dat
+real.dat
+
+### permds
+dat_in=filter(ti.ob.1y, pop1 != "Yesiloz")
+filtINF = "all"
+tmean.perm = 
+  foreach(i=1:1000, .combine = "rbind")%do%{
+    est =  cor.test(~FST+sample(T.mean), data = dat_in )$estimate
+    data.frame(var = "T.mean", i=i, filt = filtINF, est)
+  }
+
+tmvar.perm = 
+      foreach(i=1:1000, .combine = "rbind")%do%{
+        est =  cor.test(~FST+sample(T.var), data = dat_in )$estimate
+        data.frame(var = "T.var", i=i, filt = filtINF, est)
+      }
+
+tmin.perm = 
+      foreach(i=1:1000, .combine = "rbind")%do%{
+        est =  cor.test(~FST+sample(T.min), data = dat_in )$estimate
+        data.frame(var = "T.min", i=i, filt = filtINF, est)
+      }
+ 
+tmax.perm = 
+      foreach(i=1:1000, .combine = "rbind")%do%{
+        est =  cor.test(~FST+sample(T.max), data = dat_in )$estimate
+        data.frame(var = "T.max", i=i, filt = filtINF, est)
+      }
+
+Tn.below5.perm = 
+      foreach(i=1:1000, .combine = "rbind")%do%{
+        est =  cor.test(~FST+sample(Tn.below5), data = filter(dat_in, Tn.below5 > 1) )$estimate
+        data.frame(var = "Tn.below5", i=i, filt = filtINF, est)
+      }
+  
+rbind(tmean.perm, tmvar.perm, tmin.perm, tmax.perm, Tn.below5.perm) -> perms.dat
+
+bind_rows(real.dat, perms.dat) -> joint.cor.dats
+
+ggplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  geom_violin(
+    data = filter(joint.cor.dats, !is.na(i)),
+    aes(x = var, y = est)
+  ) +
+  geom_errorbar(
+    data = filter(joint.cor.dats, is.na(i)),
+    aes(x = var, 
+        ymax =  uci,
+        ymin= lci), width = 0.1, color = "red"
+  ) +   geom_point(
+    data = filter(joint.cor.dats, is.na(i)),
+    aes(x = var, 
+        y =  est), size = 2.0, color = "red"
+  ) + theme_bw() ->
+  sims.var.cors
+ggsave(sims.var.cors, file = "sims.var.cors.pdf", w = 3, h = 4)
+
+ti.ob.1y %>%
+  ggplot(aes(
+    x=T.min, y = FST
+  )) + geom_point() + geom_smooth(method = "lm") ->
+  TMIN
+ggsave(TMIN, file = "TMIN.pdf", w = 3, h = 4)
 
 #### Eco PCA variables
 ti.ob.1y %>%
@@ -291,6 +453,7 @@ ggsave(dim1.cold.fst, file ="dim1.cold.fst.pdf")
   facet_wrap(~variable) ->
   dim2.hot.fst
 ggsave(dim2.hot.fst, file ="dim2.hot.fst.pdf")
+
 
 
 ### Examine variable associations
