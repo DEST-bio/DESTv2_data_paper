@@ -19,9 +19,7 @@ def main():
 
     print(df.shape[0])
 
-    ll_filt = df.ll >= df.ll.max() * 1.0000001
-#    print(df.ll.nlargest(2).iloc[1])
-#    ll_filt = df.ll == df.ll.nlargest(2).iloc[1]
+    ll_filt = df.ll >= df.ll.max() * 1.00001
     df = df[ll_filt]
 
     print(df.shape[0])

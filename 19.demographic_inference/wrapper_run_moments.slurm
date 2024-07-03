@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH --mem 4G
-#SBATCH --time 01:00:00
+#SBATCH --mem 2G
+#SBATCH --time 00:30:00
 #SBATCH --partition standard
 #SBATCH --account berglandlab_standard
 #SBATCH -c 1

@@ -110,7 +110,7 @@ def run_moments(sfs_file: str,
     elif init_params_gen_mode == "uniform":
         lower_bound = {param: 1e-3 for param in model_to_param_names[model]}
         upper_bound = {param: val for param, val in zip(model_to_param_names[model],
-                                                        [15, 10, 10, 15, 10, 4, 4, 1])}
+                                                        [4, 4, 4, 15, 1, 5, 5, 1])}
         # `init_params` is intentionally not initialized here. This will be handled
         # in `run_optimization()`.
     else:

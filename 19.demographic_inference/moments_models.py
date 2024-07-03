@@ -51,8 +51,8 @@ def split(params, ns, pop_ids=None):
 
 # Ancestral pop. splits into two pops., with asymmetric migration post-split
 def split_asymmig(params, ns, pop_ids=None):
-    nu1, nu2, T, m_fwd, m_rev = params
-    mig_mat = np.array([[0, m_fwd], [m_rev, 0]])
+    nu1, nu2, T, m_2_to_1, m_1_to_2 = params
+    mig_mat = np.array([[0, m_2_to_1], [m_1_to_2, 0]])
 
     sts = moments.LinearSystem_1D.steady_state_1D(ns[0] + ns[1])
     fs = moments.Spectrum(sts)
