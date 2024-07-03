@@ -17,6 +17,7 @@ def main():
 
     df = pd.read_csv(df_file, sep='\s+', header=None, names=names)
 
+    print(df.pop_of_interest.unique())
 
     #pop_of_interest = int(sys.argv[1])
     for pop_of_interest in range(4):
