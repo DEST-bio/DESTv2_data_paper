@@ -1,0 +1,8 @@
+__pycache__/*
+slurm/*
+options/*
+output/*
+data/*
+
+!output/clean_output.py
+!options/*.py
