@@ -20,6 +20,7 @@ def main():
     print(df.shape[0])
 
     ll_filt = df.ll >= df.ll.max() * 1.00001
+    print(df.ll.max())
     df = df[ll_filt]
 
     print(df.shape[0])

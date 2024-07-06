@@ -27,7 +27,7 @@ def main():
 
         print(df_pop.shape[0], end="\t")
 
-        ll_filt = df_pop.ll >= df_pop.ll.max() * 1.00001
+        ll_filt = df_pop.ll >= df_pop.ll.max() * 1.000001
         df_pop = df_pop[ll_filt]
 
         print(df_pop.shape[0], end="\t")

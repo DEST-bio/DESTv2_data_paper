@@ -10,7 +10,7 @@ replicates of the k4_Transatlantic region.
 
 def main():
     # Setup
-    data_dir = "/scratch/djb3ve/DEST2_contrib/data/"
+    data_dir = "/scratch/djb3ve/DESTv2_data_paper/15.demographic_inference/data/"
     popinfo_dir = data_dir + "popinfos/"
     options_file = f"options_construct_jackknife_sfs.txt"
 
@@ -22,7 +22,7 @@ def main():
             continue
 
         # Prevent repetition of previous array jobs from this options file
-        if jk_popinfo_dir not in ["k4_Transatlantic_expandedAfr_jackknife"]:
+        if jk_popinfo_dir not in ["k4_Australia_jackknife"]:
             continue
 
         for popinfo_name in os.listdir(popinfo_dir + jk_popinfo_dir):

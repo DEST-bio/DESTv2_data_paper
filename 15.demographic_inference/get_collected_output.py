@@ -1,16 +1,15 @@
-import numpy as np
 import pandas as pd
-import run_moments as rm
 
 region_to_max_num_params = {'Europe': 8, 
-                            'Transatlantic': 8, 
+                            'Transatlantic_expandedAfr': 8, 
+                            'Australia': 8,
                             'mainland': 4, 
                             'Americas': 4}
 
 def main():
     output_dir = "output/"
 
-    for region in rm.regions:
+    for region in region_to_max_num_params.keys():
         print(region)
         data_file = f"{output_dir}moments_output_{region}.tsv"
         max_num_params = region_to_max_num_params[region]
@@ -39,14 +38,11 @@ def write_data(data_file: str, max_num_params: int, region: str) -> None:
     :rtype: None
     """
     names = ['model', 'pop_of_interest'] + \
-                           ['init' + str(i) for i in range(max_num_params)] + \
-                           ['est' + str(i) for i in range(max_num_params)] + \
-                           ['upper_bound' + str(i) for i in range(max_num_params)] + \
-                           ['ll', 'coll_pop_ll', 'func_calls', 'grad_calls',
-                            'maxiter', 'hour_limit']
-    if region == 'Transatlantic':
-        names += ['dummy']
-        names += ['region']
+            ['init' + str(i) for i in range(max_num_params)] + \
+            ['est' + str(i) for i in range(max_num_params)] + \
+            ['upper_bound' + str(i) for i in range(max_num_params)] + \
+            ['ll', 'coll_pop_ll', 'func_calls', 'grad_calls',
+            'maxiter', 'hour_limit', 'jackknife_id', 'region']
 
     df = pd.read_csv(data_file, sep='\s+', header=None,
                      names=names)

@@ -1,7 +1,7 @@
 import sys
 
 def main():
-	file = "moments_output_Australia.tsv"
+	file = "moments_output_Transatlantic_expandedAfr.tsv"
 	num_cols = int(sys.argv[1]) #32 + 2#- 3 * 4 # Desired number of columns per line
 	
 	with open(file, 'r') as f:
@@ -17,7 +17,7 @@ def main():
 
 			# Check output errors by confirming that the first column is a valid
 			# model name
-			if fields[0] not in ["admixture", "split", "two_epoch", "twosplits"]:
+			if fields[0] not in ["admixture", "split", "split_asymmig", "two_epoch", "twosplits"]:
 				continue
 			
 			f.write(line)

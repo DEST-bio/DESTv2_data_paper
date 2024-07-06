@@ -16,7 +16,7 @@ def main():
     region = popinfo_name_no_ext.rsplit("_", 1)[0] # Remove '_j{rep}' from end of name
 
     # Setup
-    data_dir = "/scratch/djb3ve/DEST2_contrib/data/"
+    data_dir = "/scratch/djb3ve/DESTv2_data_paper/15.demographic_inference/data/"
     popinfo_dir = f"{data_dir}popinfos/{region}_jackknife/"
     sfs_dir = f"{data_dir}sfss/{region}_jackknife/"
     vcf_file = f"{data_dir}vcfs/dest2_clustered_mainChroms.vcf.gz"
