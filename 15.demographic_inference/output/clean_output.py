@@ -1,7 +1,7 @@
 import sys
 
 def main():
-	file = "moments_output_Transatlantic_expandedAfr.tsv"
+	file = "moments_output_jackknife.tsv"
 	num_cols = int(sys.argv[1]) #32 + 2#- 3 * 4 # Desired number of columns per line
 	
 	with open(file, 'r') as f:
