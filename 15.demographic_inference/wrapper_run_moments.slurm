@@ -8,7 +8,7 @@
 #SBATCH -e slurm/%a.err
 #SBATCH --output slurm/%a.out
 
-options_file=options/options_run_moments_Australia.tsv
+options_file=options/options_run_moments_jackknife.tsv
 script_file=run_moments.py
 
 OPTS=$(sed -n "${SLURM_ARRAY_TASK_ID}"p ${options_file})

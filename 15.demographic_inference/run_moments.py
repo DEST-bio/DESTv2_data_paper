@@ -23,8 +23,13 @@ encode the Americas being the result of admixture of Eastern Europe (EUE) and Gu
 Western Europe (EUW) and Guinea, EUE and Zambia (ZM), and EUW and ZM.
 """
 
-# Global final variables
-regions = ("Europe", "mainland", "Americas", "Transatlantic", "Australia")
+# Global final variables.
+# List of regions. By structure of `get_region()`, region names that are substrings
+# of others should be listed latter.
+# TODO: Remove what is currently "Transatlantic" and rename "Transatlantic_expandedAfr"
+# to "Transatlantic".
+regions = ("Europe", "mainland", "Americas", 
+           "Transatlantic_expandedAfr", "Transatlantic", "Australia")
 model_to_model_func = {"two_epoch": mm.two_epoch,
                        "split": mm.split,
                        "split_asymmig": mm.split_asymmig,
@@ -44,6 +49,8 @@ max_num_params = max([len(params) for params in model_to_param_names.values()])
 # admixture event in the `admixture` model and the population that is directly
 # descended from the ancestral population in the `twosplits` model.
 model_to_special_pop = {"admixture": 2, "twosplits": 0}
+
+collected_output_file = "output/collected_output.tsv"
 
 def main():
     # Handle command line arguments
@@ -103,10 +110,10 @@ def run_moments(sfs_file: str,
 
     if init_params_gen_mode == "from_collected_output":
         lower_bound, init_params, upper_bound = \
-            get_moments_bounds_from_collected_output("output/collected_output.tsv", 
-                                                    model, 
-                                                    region, 
-                                                    pop_of_interest)
+            get_moments_bounds_from_collected_output(collected_output_file, 
+                                                     model, 
+                                                     region, 
+                                                     pop_of_interest)
     elif init_params_gen_mode == "uniform":
         lower_bound = {param: 1e-3 for param in model_to_param_names[model]}
         upper_bound = {param: val for param, val in zip(model_to_param_names[model],
@@ -178,7 +185,7 @@ def get_moments_bounds_from_collected_output(collected_op_file: str,
                    param, val in zip(model_to_param_names[model], opt_params)}
     # Double optimal parameters to get upper bounds
     upper_bound = {param: 2 * val for param, val in init_params.items()}
-    # Make sure that admixture proportion is bounded above by 100%
+    # Make sure that admixture proportion is bounded above by 2x its value
     if "admix_prop" in upper_bound:
         upper_bound["admix_prop"] = 1
 
@@ -232,7 +239,7 @@ def load_sfs(sfs_file: str,
     #     print("Swapping according to rules for Transatlantic")
     #     sfs = sfs.swap_axes(2, 3) # Swap mainland with Guinea so that mainland is last
     #     sfs = sfs.marginalize([pop_of_interest]) # excluded_pop in {0, 1, 2}
-    if region in ["Transatlantic", "Australia"]:
+    if region in ["Transatlantic", "Transatlantic_expandedAfr", "Australia"]:
         # 0 = 00 = (EUE, Guinea)
         # 1 = 01 = (EUW, Guinea)
         # 2 = 10 = (EUE, Zambia)
