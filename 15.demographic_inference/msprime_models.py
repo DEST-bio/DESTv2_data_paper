@@ -22,8 +22,9 @@ def get_split_asymmig_dem(n_anc, params):
     dem = msprime.Demography()
     dem.add_population(name="A", initial_size=n_anc*nu1)  # pop1 at present time
     dem.add_population(name="B", initial_size=n_anc*nu2)  # pop2 at present time
-    dem.add_population(name="C", initial_size=n_anc)  # ancestral pop
-    dem.add_population_split(time=2*n_anc*T, derived=["A", "B"], ancestral="C")
+    dem.add_population(name="ancestral", initial_size=n_anc)  # ancestral pop
+    dem.add_population_split(time=2*n_anc*T, derived=["A", "B"], ancestral="ancestral")
+
     # These migration rates are backwards-in-time, so they should be swapped when
     # interpreted in natural units!
     dem.set_migration_rate(source="A", dest="B", rate=m_A_to_B/(2*n_anc))

@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 import msprime_models as msm
 
 def main():
-    dems = {"one-population": msm.get_one_population_dem(1e4, [3, 2]),
-            "split": msm.get_split_dem(1e4, [3, 2, 1, 1]),
-            "split-asymmig": msm.get_split_asymmig_dem(1e4, [3, 2, 1, 1, 0.5]),
-            "admixture": msm.get_admixture_dem(1e4, [3, 2, 1, 2, 1, 0, 0, 0.1]),
-            "two-splits": msm.get_two_splits_dem(1e4, [3, 2, 1, 2, 1, 0.5, 1, 0])}
+    dems = {"one-population": msm.get_one_population_dem(1e4, [2, 1]),
+            "split": msm.get_split_dem(1e4, [1, 1, 1, 1]),
+            "admixture": msm.get_admixture_dem(1e4, [1, 1, 1, 2, 1, 0, 0, 0.5]),
+            "two-splits": msm.get_two_splits_dem(1e4, [1, 1, 1, 1, 2, 1, 1, 1])}
     output_dir = "draft_figures/"
 
     viz_dem_models_with_demesdraw(dems, output_dir)
