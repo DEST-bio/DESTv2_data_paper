@@ -20,6 +20,9 @@ library(gmodels)
 library(tibble)
 library(tidybulk)
 
+library(rnaturalearth)
+
+
 ### wheather
 #nasapower <- get(load("/netfiles/nunezlab/Drosophila_resources/NASA_power_weather/DEST2.0/nasaPower.allpops.Rdata"))
 
