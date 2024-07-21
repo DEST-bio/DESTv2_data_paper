@@ -17,19 +17,20 @@ def get_split_dem(n_anc, params):
     dem.set_symmetric_migration_rate(["A", "B"], m/(2*n_anc))
     return dem
 
-def get_split_asymmig_dem(n_anc, params):
-    nu1, nu2, T, m_A_to_B, m_B_to_A = params
-    dem = msprime.Demography()
-    dem.add_population(name="A", initial_size=n_anc*nu1)  # pop1 at present time
-    dem.add_population(name="B", initial_size=n_anc*nu2)  # pop2 at present time
-    dem.add_population(name="ancestral", initial_size=n_anc)  # ancestral pop
-    dem.add_population_split(time=2*n_anc*T, derived=["A", "B"], ancestral="ancestral")
+# TODO: Delete this if we're not including any models with asymmetric migration.
+# def get_split_asymmig_dem(n_anc, params):
+#     nu1, nu2, T, m_A_to_B, m_B_to_A = params
+#     dem = msprime.Demography()
+#     dem.add_population(name="A", initial_size=n_anc*nu1)  # pop1 at present time
+#     dem.add_population(name="B", initial_size=n_anc*nu2)  # pop2 at present time
+#     dem.add_population(name="ancestral", initial_size=n_anc)  # ancestral pop
+#     dem.add_population_split(time=2*n_anc*T, derived=["A", "B"], ancestral="ancestral")
 
-    # These migration rates are backwards-in-time, so they should be swapped when
-    # interpreted in natural units!
-    dem.set_migration_rate(source="A", dest="B", rate=m_A_to_B/(2*n_anc))
-    dem.set_migration_rate(source="B", dest="A", rate=m_B_to_A/(2*n_anc))
-    return dem
+#     # These migration rates are backwards-in-time, so they should be swapped when
+#     # interpreted in natural units!
+#     dem.set_migration_rate(source="A", dest="B", rate=m_A_to_B/(2*n_anc))
+#     dem.set_migration_rate(source="B", dest="A", rate=m_B_to_A/(2*n_anc))
+#     return dem
 
 def get_admixture_dem(n_anc, params):
     # It is necessary that T_split > T_admix because the split from the ancestral 
