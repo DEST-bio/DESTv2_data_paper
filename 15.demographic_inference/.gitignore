@@ -3,6 +3,7 @@ slurm/*
 options/*
 output/*
 data/*
+draft_figures/*
 
 !output/clean_output.py
 !options/*.py
