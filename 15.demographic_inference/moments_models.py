@@ -20,7 +20,7 @@ def get_mig_mat(n_pops: int, m: float) -> np.ndarray:
 # An ancestral population instantaneously changes in size at a specified time in
 # the past. In the paper, we also refer to this model as "one-population." This 
 # function is a replicate of https://moments.readthedocs.io/en/main/api/api_moments.html#moments.Demographics1D.two_epoch.
-def two_epoch(params: list, ns: list, pop_ids: list=None) -> moments.Spectrum:
+def one_pop(params: list, ns: list, pop_ids: list=None) -> moments.Spectrum:
     """
     :param params list: List of float parameters for the model
     :param ns list: List of int haploid sample sizes for each population
@@ -39,20 +39,6 @@ def two_epoch(params: list, ns: list, pop_ids: list=None) -> moments.Spectrum:
 def split(params, ns, pop_ids=None):
     nu1, nu2, T, m = params
     mig_mat = get_mig_mat(2, m)
-
-    sts = moments.LinearSystem_1D.steady_state_1D(ns[0] + ns[1])
-    fs = moments.Spectrum(sts)
-
-    fs = fs.split(0, ns[0], ns[1])
-    fs.integrate([nu1, nu2], T, m=mig_mat)
-
-    fs.pop_ids = pop_ids
-    return fs
-
-# Ancestral pop. splits into two pops., with asymmetric migration post-split
-def split_asymmig(params, ns, pop_ids=None):
-    nu1, nu2, T, m_2_to_1, m_1_to_2 = params
-    mig_mat = np.array([[0, m_2_to_1], [m_1_to_2, 0]])
 
     sts = moments.LinearSystem_1D.steady_state_1D(ns[0] + ns[1])
     fs = moments.Spectrum(sts)
