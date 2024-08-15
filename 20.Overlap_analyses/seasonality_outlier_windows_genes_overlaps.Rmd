@@ -1,0 +1,209 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(ggplot2)
+library(UpSetR)
+library(ComplexUpset)
+library(tidyverse)
+library(reshape2)
+```
+
+Modified fromList: [https://github.com/hms-dbmi/UpSetR/issues/85#issuecomment-327900647](https://github.com/hms-dbmi/UpSetR/issues/85#issuecomment-327900647)
+```{r}
+fromList <- function (input) {
+  # Same as original fromList()...
+  elements <- unique(unlist(input))
+  data <- unlist(lapply(input, function(x) {
+      x <- as.vector(match(elements, x))
+      }))
+  data[is.na(data)] <- as.integer(0)
+  data[data != 0] <- as.integer(1)
+  data <- data.frame(matrix(data, ncol = length(input), byrow = F))
+  data <- data[which(rowSums(data) != 0), ]
+  names(data) <- names(input)
+  # ... Except now it conserves your original value names!
+  row.names(data) <- elements
+  return(data)
+  }
+```
+
+# 1. Data processing
+## 1.1 Gene sets from DEST v. 2
+```{r}
+xtx_genes<-scan(here::here("rdata/dest2_seasonality","xtx_outlier_gowinda_genes.txt"),
+                what="character")
+xtx_genes<-gsub("fbgn","FBgn",xtx_genes)
+c2_genes<-scan(here::here("rdata/dest2_seasonality","c2_outlier_gowinda_genes.txt"),
+                what="character")
+c2_genes<-gsub("fbgn","FBgn",c2_genes)
+# All genes in windows with Fgt > 0.2 in any pairwise comparison
+fgt_genes<-scan(here::here("rdata/dest2_seasonality","fgt_outlier_gowinda_genes.txt"),
+                what="character")
+fgt_genes<-unique(fgt_genes)
+fgt_genes<-gsub("fbgn","FBgn",fgt_genes)
+```
+
+## 1.2 Gene sets from other studies
+Compare set of genes in outlier regions to genes identified in other publications:
+
+1. Bogaerts Márqez et al. 2020 Mol. Ecol. 30: 938-954
+  Genes associated with environmental variables
+
+2. Machado et al. 2015 Mol. Ecol. 25: 723-740
+  Genes clinal in D. mel and D. sim
+
+3. Rudman et al. 2022 Science. 375: eabj7484.
+  Genes near outlier SNPs showing rapid temporal alelle frequency variation
+
+4. Rajpurohit et al. 2018. Mol. Ecol. 27: 3525-3540.
+  Genes with SNPs associated with dessication resistance in 175 DGRP lines.
+  
+5. Erickson et al. 2020
+  Genes near top 0.1% of SNPs associated with two measures of diapause.
+  [N.B. many (!) malformatted gene IDs that cannot be converted to FBgn IDs]
+  
+6. Machado et al. 2021
+  Genes overlapping with top 1% of seasonal SNPs
+  
+7. Nunez et al. 2023
+  Genes overlapping with SNPs with rank normalised p-values < 0.05. 
+
+```{r}
+# 1
+bogaerts_marquez_et_al_2020<-read.table(
+  here::here("rdata/dest2_seasonality/Bogaerts_Márquez_et_al_2021/","tableS10.csv"),
+  header=TRUE,sep=",")
+# 2
+machado_2015<-read.table(here::here("rdata/dest2_seasonality/Machado_et_al_2015",
+                                    "sharedgenes_FlyBase_Fields_download.txt"),
+                         header=FALSE)
+length(unique(machado_2015$V1))
+length(unique(machado_2015$V2))
+machado_2015<-unique(machado_2015$V2)
+
+# 3
+rudman_2022<-scan(here::here("rdata/dest2_seasonality/Rudman_et_al_2022","outlier_genes.txt"),
+                  what="character")
+# 4
+rajpurohit_2018<-scan(here::here("rdata/dest2_seasonality/Rajpurohit_et_al_2018","topsnps_genes.txt"),
+                      what="character")
+rajpurohit_2018<-unique(rajpurohit_2018)
+
+# 5
+erickson_2020_0.1<-read.table(
+  here::here("rdata/dest2_seasonality/Erickson_et_al_2020",
+             "uniq_0.1perc_genes_FlyBase_Fields_download.txt"),
+  fill = TRUE,quote = "",header=TRUE,sep="\t")
+
+# 6
+machado_2021<-scan(here::here("rdata/dest2_seasonality/Machado_et_al_2021",
+                              "machado_2021_seasonalsnps_genes.txt"),
+                   what="character")
+machado_2021<-unique(machado_2021)
+
+# 7
+final.windows.pos = 
+  data.frame(win.name = c("win_3.1", "win_4.7", "win_5.1", "win_6.1", "win_6.8", "win_9.6"),
+             mid = c(3.0, 4.67, 5.12, 6.2, 6.8 , 9.6),
+             chr = "2L") %>%
+  mutate(start = (mid-0.2)*1e6 ,
+         end  = (mid+0.2)*1e6  )
+
+write.table(final.windows.pos[,c("chr","start","end")],
+            here::here("rdata/dest2_seasonality/Nunez_et_al_2024","outlier_windows.bed"),
+            quote=FALSE,col.names=FALSE,row.names=FALSE,sep="\t")
+
+nunez_2024<-scan(here::here("rdata/dest2_seasonality/Nunez_et_al_2024",
+                            "nunes_2024_outlier_windows_genes.txt"),
+                   what="character")
+nunez_2024<-unique(nunez_2024)
+```
+
+
+```{r}
+l<-list("Dest_v2_xtx"=xtx_genes,
+     "Dest_v2_c2"=c2_genes,
+#     "Dest_v2_fgt"=fgt_genes,
+     "Rudman_et_al_2022"=rudman_2022,
+     "Machado_et_al_2015"=machado_2015,
+     "Rajpurohit_et_al_2018"=rajpurohit_2018,
+     "Erickson_et_al_2020"=unique(erickson_2020_0.1$FBID_KEY),
+     "Bogaerts_Márquez_et_al_2021"=bogaerts_marquez_et_al_2020$FlyBase.code,     
+     "Machado_et_al_2021"=machado_2021,
+     "Nunez_et_al_2024"=nunez_2024)
+lapply(l,FUN = length)
+d<-fromList(l)
+
+d$id<-as.character(1:nrow(d))
+```
+
+Save as Rdata object
+```{r}
+save(d,l,file=here::here("rdata/dest2_seasonality/","overlaps.RData"))
+```
+
+# 2. Overlaps analyis
+Load data
+```{r}
+load(file=here::here("rdata/dest2_seasonality/","overlaps.RData"))
+```
+
+
+```{r}
+# Only those in at least 2 sets
+## This will remove those that are unique to other sets
+# d[rowSums(d[names(l)]) > 1,]
+
+# Only those in Dest_v2_c2 OR Dest_v2_xtx OR Dest_v2_fgt AND at least 1 other set
+#d[which(rowSums(d[names(l)[1:3]]) >= 1 & rowSums(d[names(l)[3:length(l)]]) >= 1),]
+
+# Only those that are in either Dest_v2_c2 OR Dest_v2_xtx OR Dest_v2_fgt
+## This will add those that are unique to Dest_v2_c2 OR Dest_v2_xtx OR Dest_v2_fgt
+## this will still collect some that also occur in other sets so we need to remove duplicates after
+# d[rowSums(d[names(l)[1:3]]) == 1,]
+
+d_reduced<-rbind(d[which(rowSums(d[names(l)[1:2]]) >= 1 & rowSums(d[names(l)[3:length(l)]]) >= 1),],
+                 d[rowSums(d[names(l)[1:2]]) >= 1,])
+
+# need to remove duplicates
+d_reduced<-d_reduced[which(!duplicated(d_reduced$id)),names(l)]
+
+# Save this table
+write.table(d_reduced,here::here("rdata/dest2_seasonality","overlaps_genes_table.tab"),
+            col.names=TRUE,row.names=TRUE,quote=FALSE,sep="\t")
+
+
+sum(d_reduced$Dest_v2_xtx)
+sum(d_reduced$Dest_v2_c2)
+```
+
+Main plot
+```{r}
+upset(d_reduced,intersect = names(l),sort_sets=FALSE,
+      base_annotations=list(
+        'Intersection size'=intersection_size(
+            text=list(
+                vjust=0.5,
+                hjust=-0.1,
+                angle=90)
+            )),width_ratio = 0.1,set_sizes = FALSE,keep_empty_groups=TRUE)
+
+```
+
+Same plot but wih a min intersection size of 10
+```{r}
+upset(d_reduced,intersect = names(l),sort_sets=FALSE,min_size=10,
+      base_annotations=list(
+        'Intersection size'=intersection_size(
+            text=list(
+                vjust=0.5,
+                hjust=-0.1,
+                angle=90)
+            )),width_ratio = 0.1,set_sizes = FALSE)
+```
+
