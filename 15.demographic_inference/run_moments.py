@@ -30,14 +30,12 @@ Western Europe (EUW) and Guinea, EUE and Zambia (ZM), and EUW and ZM.
 # to "Transatlantic".
 regions = ("Europe", "mainland", "Americas", 
            "Transatlantic_expandedAfr", "Transatlantic", "Australia")
-model_to_model_func = {"two_epoch": mm.two_epoch,
+model_to_model_func = {"one_pop": mm.one_pop,
                        "split": mm.split,
-                       "split_asymmig": mm.split_asymmig,
                        "admixture": mm.admixture,
                        "twosplits": mm.twosplits}
-model_to_param_names = {"two_epoch": ["nu", "T"],
+model_to_param_names = {"one_pop": ["nu", "T"],
                         "split": ["nu1", "nu2", "T", "m"],
-                        "split_asymmig": ["nu1", "nu2", "T", "m_fwd", "m_rev"],
                         "admixture": ["nu1", "nu2", "nu_admix", "T_split", 
                                       "T_admix", "m2", "m3", "admix_prop"],
                         "twosplits": ["nu1", "nu_intermediate", "nu2", "nu3", 
@@ -61,6 +59,10 @@ def main():
     maxiter = int(sys.argv[5]) if len(sys.argv) > 5 else 400
     opt_func_name = sys.argv[6] if len(sys.argv) > 6 else "BFGS"
     init_params_gen_mode = sys.argv[7] if len(sys.argv) > 7 else "uniform"
+    if init_params_gen_mode == "uniform":
+        num_params = len(model_to_param_names[model])
+        lower_bound_vals = sys.argv[8:8+num_params] # [1e-3] * len(model_to_param_names[model])
+        upper_bound_vals = sys.argv[8+num_params:8 + 2 * num_params] # [4, 4, 4, 15, 1, 5, 5, 1]
     
     # Setup
     region = get_region(sfs_file.split("/")[-1])
@@ -68,21 +70,26 @@ def main():
     # If the SFS is jackknifed, get its ID, which is between "_j" and ".npy"
     is_jackknife_sfs = bool(re.search("_j\d+.npy", sfs_file))
     jackknife_id = sfs_file.split("_j")[-1][:-4] if is_jackknife_sfs else "NA"
+    # Load SFS from file
+    sfs = load_sfs(sfs_file, region, model, pop_of_interest)
 
-    run_moments(sfs_file, model, pop_of_interest, output_file, region, jackknife_id,
-                maxiter, opt_func_name, init_params_gen_mode)
+    output_list = run_moments(sfs, model, pop_of_interest, region, 
+                              jackknife_id, maxiter, opt_func_name, 
+                              init_params_gen_mode, lower_bound_vals, upper_bound_vals)
+    write_output(output_list, output_file)
 
-def run_moments(sfs_file: str,
+def run_moments(sfs: moments.Spectrum,
                 model: str,
                 pop_of_interest,
-                output_file: str,
                 region: str,
                 jackknife_id: str,
                 maxiter: int, 
                 opt_func_name: str, 
-                init_params_gen_mode: str) -> None:
+                init_params_gen_mode: str,
+                lower_bound_vals: list=None,
+                upper_bound_vals: list=None) -> list:
     """
-    :param model str: Name of .npy file encoding SFS, with path
+    :param sfs moments.Spectrum: SFS object encoding genomic variation
     :param model str: Name of demographic model to fit to SFS
     :param pop_of_interest: Integer index of population-of-interest in the SFS, 
         or "NA" if not applicable to model. The only models for which a population-
@@ -102,8 +109,8 @@ def run_moments(sfs_file: str,
         parameters (in coalescent units) from between 1e-3 and set upper bound value.
         TODO: Fix the hard-coding of these upper bound values in the second if-else
         block of `run_moments()`.
-    :return: None, writes line of moments output to file
-    :rtype: None
+    :return: List of  moments outputs to be written to file
+    :rtype: list
     """
 
     model_func = model_to_model_func[model]
@@ -115,9 +122,11 @@ def run_moments(sfs_file: str,
                                                      region, 
                                                      pop_of_interest)
     elif init_params_gen_mode == "uniform":
-        lower_bound = {param: 1e-3 for param in model_to_param_names[model]}
-        upper_bound = {param: val for param, val in zip(model_to_param_names[model],
-                                                        [4, 4, 4, 15, 1, 5, 5, 1])}
+        param_names = model_to_param_names[model]
+        lower_bound = {param: val for param, val in zip(param_names,
+                                                        lower_bound_vals)}
+        upper_bound = {param: val for param, val in zip(param_names,
+                                                        upper_bound_vals)}
         # `init_params` is intentionally not initialized here. This will be handled
         # in `run_optimization()`.
     else:
@@ -134,9 +143,6 @@ def run_moments(sfs_file: str,
         opt_func = moments.Inference.optimize_log_fmin
     else:
         raise ValueError(f"Optimization function {opt_func_name} not recognized.")
-    
-    # Load SFS
-    sfs = load_sfs(sfs_file, region, model, pop_of_interest)
 
     # Run moments
     init_params, opt_params, ll, func_calls, grad_calls = \
@@ -161,8 +167,7 @@ def run_moments(sfs_file: str,
                                    maxiter, time_limit,
                                    jackknife_id, region]))
 
-    # Write output
-    write_output(output_list, output_file)
+    return output_list
 
 def get_moments_bounds_from_collected_output(collected_op_file: str, 
                                              model: str, 
@@ -328,7 +333,7 @@ def minor_perturb(params_dict: dict, factor: float=0.2) -> np.ndarray:
 
 # Get log-likelihood of collapsed SFS, i.e. the SFS with the suture zone pop.
 # summed over, yielding 2D-SFSs whose likelihood is directly comparable to those
-# achieved by 2-pop. models, namely split and split_asymmig.
+# achieved by 2-pop. models, namely split.
 def get_collapsed_ll(sfs, opt_params, model_func, region, pop_of_interest, model, ll):
     # Get collapsed-population log-likelihood for 3-pop models.
     # No such calculated is needed for Transatlantic models and one-population models.
@@ -338,7 +343,7 @@ def get_collapsed_ll(sfs, opt_params, model_func, region, pop_of_interest, model
             coll_pop_axis = model_to_special_pop[model]
         else:
             coll_pop_axis = 1
-    elif region in ["mainland", "Americas"] and model in ["split", "split_asymmig"]:
+    elif region in ["mainland", "Americas"] and model == "split":
         coll_pop_axis = 1
     else:
         return ll
@@ -346,9 +351,10 @@ def get_collapsed_ll(sfs, opt_params, model_func, region, pop_of_interest, model
     model_sfs = model_func(opt_params, sfs.sample_sizes)
     coll_sfs, coll_model_sfs = [arr.marginalize([coll_pop_axis]) 
                                 for arr in [sfs, model_sfs]]
-    
-    return moments.Inference.ll_multinom(coll_model_sfs, 
+    collasped_pop_ll = moments.Inference.ll_multinom(coll_model_sfs, 
                                          coll_sfs / coll_sfs.S())
+
+    return collasped_pop_ll
 
 def run_optimization(sfs, lower_bound, upper_bound, model, model_func, opt_func,
                      verbose=0, maxiter=1000, init_params=None):
