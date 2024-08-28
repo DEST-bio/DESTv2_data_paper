@@ -1,0 +1,7 @@
+let’s say you have two sets of SNPs, A and B.
+In each set, there is a subset that are “hits”/“significant”: a & b.
+After finding the intersection of A and B, you now have a list C and the subset of significant hits are a' and b'
+The fraction of hits is:
+a'/C = p
+b'/C = q
+The expected overlap of the two is p*q*C 

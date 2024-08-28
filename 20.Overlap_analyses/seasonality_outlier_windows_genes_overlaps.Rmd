@@ -124,7 +124,7 @@ nunez_2024<-scan(here::here("rdata/dest2_seasonality/Nunez_et_al_2024",
 nunez_2024<-unique(nunez_2024)
 ```
 
-
+#### Process and unify the results
 ```{r}
 l<-list("Dest_v2_xtx"=xtx_genes,
      "Dest_v2_c2"=c2_genes,
@@ -147,10 +147,52 @@ Save as Rdata object
 save(d,l,file=here::here("rdata/dest2_seasonality/","overlaps.RData"))
 ```
 
-# 2. Overlaps analyis
+# 2. Overlaps analyis -- including Bergland 2016
+#### NEW
+#### 8. Extracting data from Bergland et al.
+```{r}
+load("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2016.Bergland/6d_data.Rdata")
+
+cbind(p, info) -> 
+
+p_info %>%
+filter(sfsfsfX.q<.3) ->
+  seasonal_hits
+
+c(
+seasonal_hits$INTRON_SPLICE, 
+seasonal_hits$STOP,
+seasonal_hits$UTR_3_PRIME, 
+seasonal_hits$UTR_5_PRIME, 
+seasonal_hits$START,  
+seasonal_hits$NS,
+seasonal_hits$S
+) %>% .[complete.cases(.)] -> gene_id_hits
+
+unique(gene_id_hits) -> genes_of_interest_bergland_2016
+
+write.table(genes_of_interest_bergland_2016, 
+            file = "genes_of_interest_bergland_2016.txt", 
+            append = FALSE, quote = FALSE, sep = "\t",
+            eol = "\n", na = "NA", dec = ".", row.names = FALSE,
+            col.names = FALSE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+B2016_genes = read.delim2("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2016.Bergland/Bergland2016_outliers_FBGNs.txt")
+
+B2016_genes$FBID_KEY[-which(B2016_genes$FBID_KEY == "")] -> B2016_genes_fbgns
+```
+#### NEW ^^
+
 Load data
 ```{r}
-load(file=here::here("rdata/dest2_seasonality/","overlaps.RData"))
+load("overlaps.RData")
+l$Bergland_et_al_2016 <- B2016_genes_fbgns
+
+d<-fromList(l)
+
+d$id<-as.character(1:nrow(d))
+
 ```
 
 
@@ -174,36 +216,50 @@ d_reduced<-rbind(d[which(rowSums(d[names(l)[1:2]]) >= 1 & rowSums(d[names(l)[3:l
 d_reduced<-d_reduced[which(!duplicated(d_reduced$id)),names(l)]
 
 # Save this table
-write.table(d_reduced,here::here("rdata/dest2_seasonality","overlaps_genes_table.tab"),
+write.table("overlaps_genes_table.tab",
             col.names=TRUE,row.names=TRUE,quote=FALSE,sep="\t")
 
 
 sum(d_reduced$Dest_v2_xtx)
 sum(d_reduced$Dest_v2_c2)
+
+names(d_reduced)[which(names(d_reduced) %in% c("Dest_v2_xtx","Dest_v2_c2") )] =
+  c("z.Dest_v2_xtx", "z.Dest_v2_c2")
+
+names(l)[which(names(l) %in% c("Dest_v2_xtx","Dest_v2_c2") )] =
+  c("z.Dest_v2_xtx", "z.Dest_v2_c2")
 ```
 
 Main plot
 ```{r}
-upset(d_reduced,intersect = names(l),sort_sets=FALSE,
+ComplexUpset::upset(d_reduced,intersect = names(l),sort_sets=FALSE,
       base_annotations=list(
         'Intersection size'=intersection_size(
             text=list(
                 vjust=0.5,
                 hjust=-0.1,
                 angle=90)
-            )),width_ratio = 0.1,set_sizes = FALSE,keep_empty_groups=TRUE)
+            )),width_ratio = 0.1,set_sizes = FALSE,keep_empty_groups=TRUE) ->
+  upset_all
+ggsave(upset_all, file ="upset_all.pdf")
 
 ```
 
 Same plot but wih a min intersection size of 10
 ```{r}
-upset(d_reduced,intersect = names(l),sort_sets=FALSE,min_size=10,
+ComplexUpset::upset(d_reduced,intersect = sort(names(l), decreasing = TRUE),
+                    min_size=10,
+                    stripes=c('cornsilk1', 'deepskyblue1', 'grey90'),
+                    sort_sets=FALSE,
       base_annotations=list(
         'Intersection size'=intersection_size(
             text=list(
                 vjust=0.5,
                 hjust=-0.1,
                 angle=90)
-            )),width_ratio = 0.1,set_sizes = FALSE)
+            )),width_ratio = 0.1,set_sizes = FALSE)->
+  upset_10
+ggsave(upset_10, file ="upset_all.pdf", h = 4, w = 6)
+
 ```
 
