@@ -10,9 +10,12 @@ load objects
 library(tidyverse)
 library(reshape2)
 
-XtX_dat = get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/Seasonality_Analyses/dest2_glm_baypass_annotation.Rdata"))
+load("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2023.DEST.2.0._release/dest2_seasonality/dest2_glm_baypass_annotation_pod.podOutpuToo.Rdata")
+## load m
+load("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2023.DEST.2.0._release/dest2_seasonality/glm.perm.thr.ag.Rdata")
 
-summary_win = get(load("/netfiles/nunezlab/Drosophila_resources/Datasets/2023.DEST.2.0._release/Seasonality_Analyses/XtX_C2_glm.windows.Rdata"))
+summary_win = get(load("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2023.DEST.2.0._release/dest2_seasonality/XtX_C2_glm.windows.pod_v2.upper_lower.Rdata"))
+
 ```
 create compound object for the wZA stats.
 ```r
@@ -45,6 +48,13 @@ ggsave(xtx.wZa.p.plot, file = "xtx.wZa.p.plot.pdf",
 h = 3, w = 12)
 
 summary_win %>% group_by(chr) %>% slice_min(xtx.wZa.p, n=1) %>% as.data.frame %>% select(chr,pos_mean, xtx.genes, xtx.wZa.p) -> tops.xtx
+
+summary_win %>% filter(chr=="2R") %>% filter(xtx.wZa.p < -200) %>% as.data.frame %>% select(chr,pos_mean, xtx.genes, xtx.wZa.p)  %>% 
+mutate(peak = case_when(
+(pos_mean > 12e6 & pos_mean < 13e6) ~ 12,
+(pos_mean > 14e6 & pos_mean < 15e6) ~ 14
+)) %>% group_by(peak) %>% slice_min(xtx.wZa.p, n = 1) %>% as.data.frame
+
 ```
 
 ```r
