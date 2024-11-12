@@ -10,7 +10,7 @@ library(gmodels)
 
 samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_8Jun2023.csv")
 
-setwd("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE5_GIMS/dat_reprod")
+setwd("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE7_GIMS/dat_reprod")
 
 all.preds.Dest1 = get(load("all.preds.Dest1.Rdata"))
 hav.dist.obj.top.pred = get(load("hav.dist.obj.top.pred.Rdata"))
@@ -73,21 +73,26 @@ rbind(
   mutate(
     dplyr::select(gims.out.v2, continent=cont,hav_d )[,-1], model = "DEST 2.0")) %>%
   group_by(continent, model) %>%
-  summarize(mean.d = ci(hav_d)[1],
-            lci= ci(hav_d)[2],
-            uci= ci(hav_d)[3],
+  summarize(#mean.d = ci(hav_d)[1],
+            #lci= ci(hav_d)[2],
+            #uci= ci(hav_d)[3],
+            mean.d = quantile(hav_d, 0.5),
+            lci= quantile(hav_d, 0.1),
+            uci= quantile(hav_d, 0.9),
             m.sd = sd(hav_d)
   ) -> mod.summaries
 
 d1.med = median(filter(mod.summaries, model == "DEST 1.0")$mean.d)
 d2.med = median(filter(mod.summaries, model == "DEST 2.0")$mean.d)
 
+mod.summaries$lci[mod.summaries$lci < 0]=1
+
 mod.summaries %>%
   ggplot(aes(
     x=continent,
     y=mean.d,
-    ymin = mean.d - m.sd,
-    ymax = mean.d + m.sd,
+    ymin = lci,
+    ymax = uci,
     color = model
   )) +
   geom_hline(yintercept = d1.med, 
@@ -99,10 +104,10 @@ mod.summaries %>%
   ylab(expression(italic(d)["hav"])) + 
   theme_bw() +
   scale_color_manual(values = c("firebrick","steelblue")) +
-  coord_flip() ->  DAPC.v1.v2
+  coord_flip() + scale_y_continuous(trans = "log10") ->  DAPC.v1.v2
 #scale_y_continuous(trans='log10') 
 
-ggsave(DAPC.v1.v2, file = "DAPC.v1.v2.model.performance.pdf", w= 5, h = 4)
+ggsave(DAPC.v1.v2, file = "DAPC.v1.v2.model.performance.pdf", w= 3.5, h = 4)
 
 # Assessment of distance and predictive power
 
