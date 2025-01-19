@@ -1,0 +1,271 @@
+---
+title: "Comparison of pop-gen stats across tools"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library("here")
+library("ggplot2")
+library("cowplot")
+library("reshape")
+library("plyr")
+library("ggthemes")
+library("ggpol")
+```
+
+# 1. Read in data.
+```{r}
+# Read in full samples data
+pops_data<-read.csv(here::here("rdata","dest_v2.samps_8Jun2023.csv"),header=TRUE)
+pops<-pops_data$sampleId
+# Keep only non-SIM populations
+pops<-pops[grep("SIM",pops,invert = TRUE)]
+
+# Read in the genome summary data.
+genome_data<-read.csv(here::here("rdata","chroms_file.csv"),header=FALSE)
+colnames(genome_data)<-c("chrom","len")
+
+win<-"win10000" # Change this depending on which window size to read in (win10000, win50000, or win100000).
+
+# Read in EggLib results
+load(here::here("rdata/egglib",paste("egglib_",win,".RData",sep="")))
+egglib_pop_genome_stats<-pop_genome_stats
+egglib_pop_genome_stats$pi_sites<-egglib_pop_genome_stats$pi/egglib_pop_genome_stats$n_goodsites
+head(egglib_pop_genome_stats,n=50)
+
+# Read in npstat results
+load(here::here("rdata/npstat",paste("npstat_",win,".RData",sep="")))
+npstat_pop_genome_stats<-pop_genome_stats
+npstat_pop_genome_stats$pi_sites<-npstat_pop_genome_stats$pi/npstat_pop_genome_stats$chrom_good_len
+head(npstat_pop_genome_stats,n=50)
+```
+
+# 2. Compare estimates of pi across estimators (EggLib vs. npstat)
+## 2.1 Summarise pi across the genome.
+Exclude X chromosome.
+```{r}
+# EggLib
+egglib_pop_genome_stats_summary<-ddply(egglib_pop_genome_stats[which(egglib_pop_genome_stats$chrom!="X"),],
+                                .variables = c("pop"),summarise,
+                                "pi_wt_mean"=weighted.mean(pi_sites,chrom_len/sum(chrom_len)),
+                                "tajd_wt_mean"=weighted.mean(med_tajD,chrom_len/sum(chrom_len)),
+                                "n_good_sites"=sum(n_goodsites))
+# Add continent info
+egglib_pop_genome_stats_summary$continent<-pops_data$continent[
+  match(egglib_pop_genome_stats_summary$pop,pops_data$sampleId)]
+head(egglib_pop_genome_stats_summary)
+
+# npstat
+npstat_pop_genome_stats_summary<-ddply(npstat_pop_genome_stats[which(npstat_pop_genome_stats$chrom!="X"),],
+                                .variables = c("pop"),summarise,
+                                "pi_wt_mean"=weighted.mean(pi_sites,chrom_len/sum(chrom_len)),
+                                "tajd_wt_mean"=weighted.mean(med_tajD,chrom_len/sum(chrom_len)),
+                                "n_good_sites"=sum(chrom_good_len))
+# Add continent info
+npstat_pop_genome_stats_summary$continent<-pops_data$continent[
+  match(npstat_pop_genome_stats_summary$pop,pops_data$sampleId)]
+head(npstat_pop_genome_stats_summary)
+```
+
+## 2.1 Combine data
+```{r}
+pop_genome_stats_pi<-data.frame("ID"=pops_data$sampleId[which(pops_data$sampleId!="SIM_SIM_w501_1_NA-MM-DD")],
+                                "Continent"=pops_data$continent[which(pops_data$sampleId!="SIM_SIM_w501_1_NA-MM-DD")])
+
+pop_genome_stats_pi$pi_egglib<-egglib_pop_genome_stats_summary$pi_wt_mean[
+  match(pop_genome_stats_pi$ID,egglib_pop_genome_stats_summary$pop)]
+pop_genome_stats_pi$tajD_egglib<-egglib_pop_genome_stats_summary$tajd_wt_mean[
+  match(pop_genome_stats_pi$ID,egglib_pop_genome_stats_summary$pop)]
+pop_genome_stats_pi$n_goodsites_egglib<-egglib_pop_genome_stats_summary$n_good_sites[
+  match(pop_genome_stats_pi$ID,egglib_pop_genome_stats_summary$pop)]
+
+pop_genome_stats_pi$pi_npstat<-npstat_pop_genome_stats_summary$pi_wt_mean[
+  match(pop_genome_stats_pi$ID,npstat_pop_genome_stats_summary$pop)]
+pop_genome_stats_pi$tajD_npstat<-npstat_pop_genome_stats_summary$tajd_wt_mean[
+  match(pop_genome_stats_pi$ID,npstat_pop_genome_stats_summary$pop)]
+pop_genome_stats_pi$n_goodsites_npstat<-npstat_pop_genome_stats_summary$n_good_sites[
+  match(pop_genome_stats_pi$ID,npstat_pop_genome_stats_summary$pop)]
+
+head(pop_genome_stats_pi)
+```
+
+## 2.2 Comparison
+Remove samples for which not all tools give estimates
+```{r}
+pop_genome_stats_pi<-pop_genome_stats_pi[
+  which(!(pop_genome_stats_pi$pi_egglib==0 | pop_genome_stats_pi$pi_npstat==0)),]
+pop_genome_stats_pi<-pop_genome_stats_pi[complete.cases(pop_genome_stats_pi),]
+```
+
+Add some statistics from metadata file
+```{r}
+pop_genome_stats_pi$Cov<-pops_data$Cov[match(pop_genome_stats_pi$ID,pops_data$sampleId)]
+```
+
+How many samples have estimates in all tools
+```{r}
+head(pop_genome_stats_pi)
+nrow(pop_genome_stats_pi)
+```
+
+Figure 1:
+Compare PI across estimators
+```{r}
+pop_genome_stats_pi[pop_genome_stats_pi$Continent=="North_America",]$Continent <- "North America"
+pop_genome_stats_pi[pop_genome_stats_pi$Continent=="South_America",]$Continent <- "South America"
+
+npstat_v_egglib <- ggplot() +
+    geom_point(data = pop_genome_stats_pi, aes(x = pi_npstat, y = pi_egglib, colour = Continent), size = 3) +
+    xlab(expression(paste(pi, " npstat", sep = ""))) +
+    ylab(expression(paste(pi, " EggLib", sep = ""))) +
+    theme(text = element_text(size = 16)) + 
+    scale_color_gdocs() + 
+    theme_bw() + 
+    geom_smooth(data = pop_genome_stats_pi, aes(x = pi_npstat, y = pi_egglib, group = 0), method = "lm", color = "black", se = F) +
+    annotate("text", x = 0.003, y = Inf, label = "Spearman's ρ = 0.87, P < 0.001\nPearson's cor. = 0.82, P < 0.001", hjust = 0, vjust = 1) 
+npstat_v_egglib
+```
+
+```{r}
+cor.test(x=pop_genome_stats_pi$pi_npstat,
+         y=pop_genome_stats_pi$pi_egglib,method="spearman")
+
+cor.test(x=pop_genome_stats_pi$pi_npstat,
+         y=pop_genome_stats_pi$pi_egglib,method="pearson")
+```
+
+Figure 2:
+Plot pi by continent for all estimators
+```{r}
+pop_genome_stats_pi_m<-melt(pop_genome_stats_pi,measure.vars = c("pi_egglib","pi_npstat"))
+pop_genome_stats_pi_m$variable<-factor(pop_genome_stats_pi_m$variable,levels=c("pi_egglib","pi_npstat"),labels=c("EggLib 3","npStat"))
+head(pop_genome_stats_pi_m)
+
+partb<-ggplot(data=pop_genome_stats_pi_m,aes(x=Continent,y=value,color=Continent))+
+    #geom_boxplot(data=pop_genome_stats_pi_m,aes(x=Continent,y=value,fill=Continent), show.legend = F)+
+    geom_boxjitter(outlier.colour = NA, outlier.fill = NA, alpha = 0.5, show.legend = F)+
+    ylab(expression(paste(pi)))+
+    facet_grid(.~variable,scales="free_y")+
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=45,hjust=1,vjust=1),
+          text=element_text(size=16,color="black"),axis.text = element_text(color="black")) + labs(x="")  + 
+    scale_fill_gdocs() + scale_color_gdocs()
+partb
+cowplot::plot_grid(npstat_v_egglib,partb,ncol = 1, align = "l",labels="AUTO")
+ggsave("FigureS5.pdf",plotS5,height = 8, width = 6)
+```
+
+
+
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+Below are some additional comparisons. 
+Not included in the figures in the manuscript.
+
+# 3. Compare n_good_sites across tools
+```{r}
+npstat_v_egglib<-ggplot()+
+  geom_point(data=pop_genome_stats_pi[which(pop_genome_stats_pi$Cov > 20 & pop_genome_stats_pi$Cov < 100),],
+             aes(x=n_goodsites_npstat/1000000,y=n_goodsites_egglib/1000000,colour=Continent),size=3)+
+  xlab("N good sites npstat")+
+  ylab("N good sites EggLib")+
+  theme(text=element_text(size=16))+
+  facet_wrap(Continent~.,scales="free")
+npstat_v_egglib
+```
+
+```{r}
+cor.test(x=pop_genome_stats_pi$n_goodsites_npstat,
+         y=pop_genome_stats_pi$n_goodsites_egglib,method="spearman")
+cor.test(x=pop_genome_stats_pi$n_goodsites_npstat,
+         y=pop_genome_stats_pi$n_goodsites_egglib,method="pearson")
+```
+
+Low agreement overall, why is this?
+```{r}
+pop_genome_stats_pi[
+  which(pop_genome_stats_pi$Continent=="North_America" & 
+          pop_genome_stats_pi$n_goodsites_npstat < 90000000 & 
+          pop_genome_stats_pi$Cov > 20 & 
+          pop_genome_stats_pi$Cov < 100),]
+```
+
+Is the difference in n good sites related to coverage?
+```{r}
+# If negative, egglib has more good sites
+pop_genome_stats_pi$n_sites_diff<-pop_genome_stats_pi$n_goodsites_npstat-pop_genome_stats_pi$n_goodsites_egglib
+ggplot()+
+  geom_point(data=pop_genome_stats_pi,
+             aes(x=Cov,y=n_sites_diff,colour=Continent),size=3)+
+  xlab("Cov")+
+  ylab("Difference in N good sites (npstat-EggLib)")+
+  theme(text=element_text(size=16))+
+  facet_wrap(Continent~.)
+```
+
+
+Is this also explaining the off-diagonal cloud of points in the pi comparison?
+```{r}
+# If negative, egglib has higher pi
+pop_genome_stats_pi$pi_diff<-pop_genome_stats_pi$pi_npstat-pop_genome_stats_pi$pi_egglib
+ggplot()+
+  geom_point(data=pop_genome_stats_pi,
+             aes(x=Cov,y=pi_diff,colour=Continent),size=3)+
+  xlab("Cov")+
+  ylab(expression(paste("Difference in",pi," (npstat-EggLib)")))+
+  theme(text=element_text(size=16))+
+  facet_wrap(Continent~.)
+
+npstat_v_egglib<-ggplot()+
+  geom_point(data=pop_genome_stats_pi,aes(x=pi_npstat,y=pi_egglib,colour=Continent),size=3)+
+  geom_point(data=pop_genome_stats_pi[which(pop_genome_stats_pi$Cov < 20 | pop_genome_stats_pi$Cov > 100),],
+             aes(x=pi_npstat,y=pi_egglib),size=3,shape=21,colour="red",stroke=2)+
+  xlab(expression(paste(pi," npstat",sep="")))+
+  ylab(expression(paste(pi," EggLib",sep="")))+
+  theme(text=element_text(size=16))
+npstat_v_egglib
+```
+
+# 4. Tajima's D Comparison
+
+Plot Tajima's D by continent for all estimators
+```{r}
+pop_genome_stats_tajD_m<-melt(pop_genome_stats_pi,measure.vars = c("tajD_egglib","tajD_npstat"))
+pop_genome_stats_tajD_m$variable<-factor(pop_genome_stats_tajD_m$variable,
+                                         levels=c("tajD_egglib","tajD_npstat"),labels=c("EggLib","npstat"))
+head(pop_genome_stats_tajD_m)
+ggplot()+
+  geom_boxplot(data=pop_genome_stats_tajD_m,aes(x=Continent,y=value,fill=Continent))+
+  geom_point(data=pop_genome_stats_tajD_m,aes(x=Continent,y=value),position=position_jitter(0.1))+
+  ylab(expression(paste(pi)))+
+  facet_wrap(.~variable,scales="free_y")+
+  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5,size=16),
+        text=element_text(size=16))
+```
+
+How many samples have estimates in all tools
+```{r}
+head(pop_genome_stats_pi)
+nrow(pop_genome_stats_pi)
+```
+
+Compare Tajima's D across estimators
+```{r}
+npstat_v_egglib<-ggplot()+
+  geom_point(data=pop_genome_stats_pi,aes(x=tajD_npstat,y=tajD_egglib,colour=Continent),size=3)+
+  xlab("Tajima's D npstat")+
+  ylab("Tajima's D EggLib")+
+  theme(text=element_text(size=16))
+npstat_v_egglib
+```
+
+```{r}
+cor.test(x=pop_genome_stats_pi$tajD_npstat,
+         y=pop_genome_stats_pi$tajD_egglib,method="spearman")
+cor.test(x=pop_genome_stats_pi$tajD_npstat,
+         y=pop_genome_stats_pi$tajD_egglib,method="pearson")
+```
+

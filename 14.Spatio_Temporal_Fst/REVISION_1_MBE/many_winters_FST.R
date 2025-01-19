@@ -5,9 +5,9 @@ library(tidyverse)
 library(magrittr)
 library(foreach)
 library(data.table)
-library(gdata)
-
 library(foreach)
+library(rnaturalearth)
+
 library(nasapower)
 library(sp)
 library(lubridate)
@@ -21,14 +21,12 @@ library(gmodels)
 library(tibble)
 library(tidybulk)
 
-library(rnaturalearth)
-
 
 
 #### Many winters
 #### Many winters
-
-load("../fst.winter.newTimePops.Rdata")
+file <- "/gpfs2/scratch/jcnunez/DEST2.0_analysis/spa_temp_fst/fst.winter.newTimePops.Rdata"
+load(file)
 setDT(fst.winter.between) 
 
 fst.winter.between %<>%
@@ -99,7 +97,7 @@ fst.winter.between %>%
              scales = "free_x"
   ) +
   theme_bw() +
-  geom_smooth(method = "lm", se =T, color = "black")->
+  geom_smooth(method = "lm", se =T)->
   Twinbet.ti.plot
 ggsave(Twinbet.ti.plot, 
        file = "Twinbet.ti.plot.pdf", 
@@ -141,4 +139,41 @@ fst.winter.between %>%
   Twinbet.ti.plot.pop
 ggsave(Twinbet.ti.plot.pop, 
        file = "Twinbet.ti.plot.pop.pdf", 
+       w = 4, h = 3)
+
+####
+fst.winter.between %>%
+  group_by(ydelta==0, pop1, ydelta) %>%
+  filter(ydelta <= 5) %>%
+  summarise(mFST = mean(FST)) %>%
+  dcast(pop1+ydelta~`ydelta == 0`, value.var = "mFST") ->
+  delta_df
+
+pops <- unique(delta_df$pop1)
+
+deltas_fst = 
+foreach(i = pops, .combine = "rbind")%do%{
+  
+  tmp <- delta_df %>%
+    filter(pop1 == i)
+  
+  within <- tmp$`TRUE`[complete.cases(tmp$`TRUE`)]
+  between <- tmp$`FALSE`[complete.cases(tmp$`FALSE`)]
+  deltas <- tmp$ydelta[-1]
+    
+  data.frame(pop=i,
+             deltas=deltas,
+             delta=between-within)
+}
+
+deltas_fst %>%
+  ggplot(aes(
+    y=delta,
+    x=deltas,
+    color=pop,
+    linetype = pop=="Yesiloz"
+  )) + geom_line() + theme_bw()->
+  delta.line
+ggsave(delta.line, 
+       file = "delta.line.pdf", 
        w = 4, h = 3)
