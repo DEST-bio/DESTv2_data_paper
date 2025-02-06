@@ -148,11 +148,40 @@ foreach(i=1:100, .combine = "rbind")%do%{
     p=p
   )
 }
+ran_samp_test %<>%
+  mutate(test = "randomization_50")
 
-ran_samp_test %>%
-  ggplot(aes(
-    x=
-  ))
+ggplot() +
+  geom_violin(
+    data = filter(ran_samp_test, i != 1),
+    aes(
+    x=test,
+    y=b
+  )) + geom_point(
+    data = filter(ran_samp_test, i == 1),
+    aes(
+      x=test,
+      y=b
+    ), size = 5) ->
+  plot_ran_50
+
+ggsave(plot_ran_50, file = "plot_ran_50.pdf",
+       w=3, h =3)
+
+
+ggplot(data = ran_samp_test,
+       aes(
+         y=-log10(p),
+         x=b,
+         color = i==1
+       )) +
+  geom_point() + 
+  geom_hline(yintercept = -log10(0.01)) ->
+  plot_ran_50_p
+
+ggsave(plot_ran_50_p, file = "plot_ran_50_p.pdf",
+       w=4, h =3)
+
 
 ####
 linear.admix.dat.filters %>%
