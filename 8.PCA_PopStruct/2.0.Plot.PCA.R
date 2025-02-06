@@ -12,9 +12,12 @@ library(rnaturalearthdata)
 library(ggExtra)
 library(foreach)
 
-###
+samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/refs/heads/main/populationInfo/dest_v2.samps_24Aug2024.csv")
 
-all.dat.pca <- get(load("/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Documents/GitHub/DESTv2_data_paper/FIGUREs/FIGURE2_PCA/data_for_reproduction/PCA.results.df.Rdata"))
+###
+### GET DATA
+#data from "https://github.com/DEST-bio/DESTv2_data_paper/raw/refs/heads/main/8.PCA_PopStruct/data/PCA.results.df.Rdata"
+all.dat.pca <- get(load("/Users/jcnunez/Downloads/PCA.results.df.Rdata"))
 setDT(all.dat.pca)
 
 ### Plot ->
@@ -157,3 +160,85 @@ ggplot(data = world) +
   scale_fill_gradient2(low = "red", high = "blue", midpoint = 250 )-> PCA.map
 ggsave(PCA.map, file = "PCA.map.pdf", h = 4, w = 9)
 
+
+##### MBE REVISION -- PCA and Metadata
+#####
+##### MBE REVISION -- PCA and Metadata
+#####
+##### MBE REVISION -- PCA and Metadata
+#####
+##### MBE REVISION -- PCA and Metadata
+#####
+##### MBE REVISION -- PCA and Metadata
+#####
+
+samps %>%
+  #filter(city %in% c("Yesiloz","Odesa","Charlottesville")) %>%
+  mutate(sampling_curated=
+  case_when(
+    sampling_strategy %in% c("Sweep netting", "Nets", "Sweep Netting") ~ "Netting",
+    sampling_strategy %in% c("Aspirating", "Aspirator") ~ "Aspirator",
+    sampling_strategy %in% c("Fly trap") ~ "Fly_trap",
+    TRUE ~ "multiple"
+  )) %>%
+  filter(fruit_type_curated %in% c("Grape","Apple","Watermelon","Peach","Pear","Cherry","Beer", "Banana")) ->
+  samps.cur
+
+all.dat.pca %>%
+  filter(case == "all") %>%
+  left_join(samps.cur) %>%
+  #filter(city %in% c("Yesiloz","Odesa","Charlottesville")) %>%
+  mutate(Neff = (Cov*nFlies)/(Cov+nFlies-1) ) %>%
+  filter(!is.na(Neff)) ->
+  pca.all
+
+
+
+
+ANOVAS =
+foreach(i=2:4, .combine = "rbind")%do%{
+  
+  lm(Dim.1 ~ Neff + lat*long + as.factor(year) + jday*fruit_type_curated*sampling_curated, 
+     data = filter(pca.all, cluster2.0_k4 == i)) %>% anova -> an1
+  lm(Dim.2 ~ Neff + lat*long + as.factor(year) + jday*fruit_type_curated*sampling_curated,
+     data = filter(pca.all, cluster2.0_k4 == i)) %>% anova -> an2
+  lm(Dim.3 ~ Neff + lat*long + as.factor(year) + jday*fruit_type_curated*sampling_curated, 
+     data = filter(pca.all, cluster2.0_k4 == i)) %>% anova -> an3
+  
+rbind(
+data.frame(cluster = i, PC = 1, an1), 
+data.frame(cluster = i, PC = 2, an2), 
+data.frame(cluster = i, PC = 3, an3) 
+)
+}
+
+write.table(ANOVAS, file = "ANOVAS.txt", 
+            append = FALSE, quote = FALSE, sep = "\t",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+
+pca.all %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.2,
+    fill=(fruit_type_curated),
+    shape = (sampling_curated)
+  )) + geom_point(size = 3)  + theme_bw() +
+  scale_shape_manual(values = 21:24) +
+  facet_wrap(~cluster2.0_k4, scales = "free", nrow = 1) -> fruits
+ggsave(fruits, file = "fruits.pdf", w = 9, h = 3)
+
+pca.all %>%
+  ggplot(aes(
+    x=Dim.1,
+    y=Dim.2,
+    fill=jday,
+    shape = as.factor(sampling_curated)
+  )) + geom_point(size = 3, ) + theme_bw() +
+  scale_shape_manual(values = 21:24) +
+  scale_fill_gradient2(midpoint = 250, high = "blue", low = "red") +
+  facet_wrap(~cluster2.0_k4, scales = "free", nrow = 1) -> traps_time
+
+ggsave(traps_time, file = "traps_time.pdf", w = 9, h = 3)

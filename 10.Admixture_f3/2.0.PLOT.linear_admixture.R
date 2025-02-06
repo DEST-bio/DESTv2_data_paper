@@ -121,6 +121,39 @@ ggplot(aes(
 
 ggsave(plot.admix.flt, file = "plot.admix.flt.pdf", w = 10, h  =3)
 
+#### REVISION Feb 2025
+linear.admix.dat.filters %>%
+  filter(admix.set == "N.America" & 
+           source_pop == "AFRICA") %>%
+  filter(filter == "noINV")->
+  NAM.DAT
+
+L = dim(NAM.DAT)[1]
+
+ran_samp_test =
+foreach(i=1:100, .combine = "rbind")%do%{
+  
+  if(i==1){
+    b=summary(lm(mean.est~lat, data = NAM.DAT))$coeff[2,1]
+    p=summary(lm(mean.est~lat, data = NAM.DAT))$coeff[2,4]
+  }
+  if(i!=1){
+    ran = sample(L, 50)
+    b=summary(lm(mean.est~lat, data = NAM.DAT[ran,]))$coeff[2,1]
+    p=summary(lm(mean.est~lat, data = NAM.DAT[ran,]))$coeff[2,4]
+  }
+  data.frame(
+    i=i,
+    b=b,
+    p=p
+  )
+}
+
+ran_samp_test %>%
+  ggplot(aes(
+    x=
+  ))
+
 ####
 linear.admix.dat.filters %>%
   filter(source_pop == "AFRICA") %>%

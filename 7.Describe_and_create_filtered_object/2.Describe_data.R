@@ -24,7 +24,7 @@ library(foreach)
 
 #####
 #system("wget https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_25Feb2023.csv")
-samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/main/populationInfo/dest_v2.samps_26April2023.csv")
+samps <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/refs/heads/main/populationInfo/dest_v2.samps_24Aug2024.csv")
 
 
 ##### DESCRIBE ORIGINAL METADATA
@@ -123,65 +123,45 @@ ggsave(date.test.plot, file = "date.test.plot.pdf", w = 9, h = 5)
 ####
 ####
 ### Load the genotype locality
-genofile <- seqOpen("/project/berglandlab/DEST/gds/dest.all.PoolSNP.001.50.26April2023.norep.ann.gds", allow.duplicate=T)
+genofile <- seqOpen("/netfiles/nunezlab/D_melanogaster_resources/Datasets/2023.DEST.2.0._release/dest.all.PoolSNP.001.50.24Aug2024.ann.gds", allow.duplicate=T)
 seqResetFilter(genofile)
 
 #### Load the filtering SNP object -- which JCBN created
-filtering.dt <- get(load("/project/berglandlab/DEST/SNP_Filtering_files/DESTv2.SNPmeta.filter.Rdata"))
-filtering.dt %<>%
-  filter(is.na(libs)) %>%
-  mutate(SNP_id = paste(chr, pos, sep = "_")) 
-
-### annot
-annot <- get(load("/project/berglandlab/DEST_Charlottesville_TYS/Annotation_Dmel6_SNAPE.Rdata"))
-#grep( "SIM" , samps$sampleId) -> sim.pos
-#grep( "CN_Bei_Bei_1_1992-09-16" , samps$sampleId) -> Beijing.pos
+#filtering.dt <- get(load("/project/berglandlab/DEST/SNP_Filtering_files/DESTv2.SNPmeta.filter.Rdata"))
+#filtering.dt %<>%
+#  filter(is.na(libs)) %>%
+#  mutate(SNP_id = paste(chr, pos, sep = "_")) 
+#
+#### annot
+#annot <- get(load("/project/berglandlab/DEST_Charlottesville_TYS/Annotation_Dmel6_SNAPE.Rdata"))
+##grep( "SIM" , samps$sampleId) -> sim.pos
+##grep( "CN_Bei_Bei_1_1992-09-16" , samps$sampleId) -> Beijing.pos
 #samps[-c(sim.pos, Beijing.pos),] -> samps
 
 ###
-seqResetFilter(genofile)
+#seqResetFilter(genofile)
 seqSetFilter(genofile, sample.id=filter(samps, Recommendation %in% c("Pass"))$sampleId)
 snps.dt <- data.table(chr=seqGetData(genofile, "chromosome"),
                       pos=seqGetData(genofile, "position"),
                       variant.id=seqGetData(genofile, "variant.id"),
                       nAlleles=seqNumAllele(genofile),
-                      missing=seqMissing(genofile, .progress=T))
+                      missing=seqMissing(genofile))
 
 snps.dt %>% group_by(chr) %>% summarize(N = n())
 snps.dt %>% group_by(chr) %>% summarize(mean_miss =mean(missing))
 
 snps.dt %>% filter(nAlleles == 2) %>% group_by(chr) %>% summarize(N = n())
 
-snps.dt %>% left_join(filtering.dt) %>% left_join(annot) -> snps.dt.info
-
-snps.dt.info %>% group_by(invName, chr) %>% summarize(N = n())
-snps.dt.info %>% filter(cm_mb > 0) %>% group_by( chr) %>% summarize(N = n())
-snps.dt.info %>% filter(nAlleles == 2) %>% 
-  filter(gene_type == "protein_coding") %>%
-  group_by(chr, gene_type) %>% summarize(N = n())
-
-snps.dt.info %>% filter(nAlleles == 2) %>% 
-  filter(Effect == "MODIFIER") %>%
-  group_by(chr, Effect) %>% summarize(N = n())
-
-snps.dt.info %>% filter(nAlleles == 2) %>% 
-  filter(Consequence %in% c("missense_variant") ) %>%
-  group_by(chr) %>% summarize(N = n())
-
-snps.dt.info %>% filter(nAlleles == 2) %>% 
-  filter(Consequence %in% c("synonymous_variant") ) %>%
-  group_by(chr) %>% summarize(N = n())
-
-
-
-###
+#
 snps.dt <- snps.dt[nAlleles==2][missing<.10]
 snps.dt %<>% mutate(SNP_id = paste(chr, pos, sep = "_")) 
-snps.dt %<>% filter(SNP_id %in% filtering.dt$SNP_id)
+#snps.dt %<>% filter(SNP_id %in% filtering.dt$SNP_id)
 snps.dt %>% dim
 
 ####
-seqSetFilter(genofile, sample.id=samps$sampleId, variant.id=snps.dt$variant.id)
+seqSetFilter(genofile, 
+             sample.id=filter(samps, Recommendation %in% c("Pass"))$sampleId, 
+             variant.id=snps.dt$variant.id)
 
 ########
 ad <- seqGetData(genofile, "annotation/format/AD")
