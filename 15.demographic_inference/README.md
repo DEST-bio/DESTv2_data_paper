@@ -11,12 +11,12 @@
   - For jackknifing:
     - `construct_jackknife_popinfos.py`: Jackknife popinfo file, i.e. create repeats in which one locality is removed from each population with >1 sample
     - `construct_jackknife_sfs.py`: Parse VCF and jackknifed popinfo to construct jackknifed SFSs
+- `jupyter_nbs/jackknife_inference.ipynb`: Perform analysis and visualization of `moments` demographic inference runs on jackknife-replicate SFSs.
+- `get_Fsts.py`: Model selections with $F_st$, the classical population genetic statistic for measuring population differentiation.
 
+### Demographic inference on DEST2 data.
 
-
-### Demographic inference on DEST2 data. (EUW, SZ, EUE) is (Europe West, suture zone, Europe East).
-
-![plot](draft_figures/DEST2_EU_demes_models.png)
+![plot](figures/DEST2_fig_S16.png)
 
 For split model, (est0, est1, est2, est3) is (N_EUW, N_EUE, T, m).
 
@@ -31,3 +31,48 @@ After rejecting the null hypothesis that a 2-population model is sufficient to d
 Further analysis must investigate the potential of runaway behavior in certain parameter estimates, as it is implied to exist by migration rates of 0 and 10 (an upper bound provided to moments' optimization routine) in the EUW admixed and SZ admixed models, respectively.
 
 We exclude two_splits models from this analysis because no convergence was observed in any of the three variants, indicating that, it is likely impossible to achieve a good fit to the data, and if a fit does exist, then it is likely rendered not biologically meaningful by extreme estimate values.
+
+### Descriptions of each code file
+`convert_GDS_to_VCF.R` is an R script that converts the GDS file encoding all variants discovered in the DEST v2.0 dataset into a gzip'ed VCF file.
+
+`get_average_n_eff_per_samp.py` is a Python script
+
+`get_average_n_eff_per_popinfo.py`
+
+`construct_popinfos.py`
+
+`construct_sfs.py`
+
+`wrapper_construct_sfs.slurm`
+
+`construct_jackknife_popinfos.py`
+
+`construct_jackknife_sfs.py`
+
+`wrapper_construct_jackknife_sfs.slurm`
+
+`moments_models.py` is a Python file containing functions that define the models used by `moments` for demographic inference. It is imported by `get_scaled_model_lls.py` and `run_moments.py`.
+
+`run_moments.py`
+
+`wrapper_run_moments.slurm`
+
+`wrapper_run_moments_on_simulated_sfss.py`
+
+`get_collected_output.py`
+
+`jupyter_nbs/jackknife_inference_analysis.ipynb` is a Jupyter notebook containing final analysis and visualization of the output from `run_moments.py` on jackknife-replicate SFSs produced by `construct_jackknife_sfs.py`.
+
+`get_optimal_estimate_confidence_ints` *this might be trash I need to double-check*
+
+`get_Fsts.py`
+
+`msprime_models.py` is a Python file containing functions that define the files used by `msprime` for demographic simulation. These models mirror the models in the `moments_models.py`, and they are used to perform simulation-based validation of collapsed-likelihood-based model selection procedure with `simulate_sfs.py` and `run_moments_on_simulated_sfss.py`. This simulation is reported in Text S3.
+
+`simulate_sfs.py` is a Python script that uses `msprime`, together with demographic functions defined in `msprime_models.py`, to simulate replicates of American populations sampled in DEST v2.0 so that our collapsed-likelihood-based model selection procedure can be theoretically validated with `run_moments_on_simulated_sfss.py`. This simulation is reported in Text S3.
+
+`wrapper_simulate_sfs.sh`
+
+`run_moments_on_simulated_sfss.py` replicates the demographic inference performed on American populations in DEST v2.0, but on replicate data simulated with `msprime` in `simulate_sfs.py`. Its output is visualized and analyzed in `jupyter_nbs/CLL_validation.ipynb`.
+
+`jupyter_nbs/CLL_validation.ipynb` visualizes and analyzes output from `run_moments_on_simulated_sfss.py` for Text S3.
