@@ -32,46 +32,46 @@ Further analysis must investigate the potential of runaway behavior in certain p
 
 We exclude two_splits models from this analysis because no convergence was observed in any of the three variants, indicating that, it is likely impossible to achieve a good fit to the data, and if a fit does exist, then it is likely rendered not biologically meaningful by extreme estimate values.
 
-### Descriptions of each code file (roughly in order of use)
+### Descriptions of each code file (in order of use)
 `convert_GDS_to_VCF.R` is an R script that converts the GDS file encoding all variants discovered in the DEST v2.0 dataset into a gzip'ed VCF file.
 
-`get_average_n_eff_per_samp.py` is a Python script 
+`get_average_n_eff_per_samp.py` is a Python script that extracts from the VCF file the effective population size $n_eff$ from each pool-seq sample (as defined in [Feder et al. 2014](https://doi.org/10.1534/genetics.113.158220)). These values are collected in `get_average_n_eff_per_popinfo.py`, then used for the rounding of pool-seq allele frequency into allele counts during SFS construction in `construct_sfs.py`.
 
 `get_average_n_eff_per_popinfo.py` is a Python script that takes in the output of `get_average_n_eff_per_samp.py`, stored in `metadata/mean_n_eff_per_sample_on_mainChroms.csv`, and the name (with extension) of a [popinfo](https://github.com/MomentsLD/moments/blob/main/moments/Misc.py#L576) file stored in `popinfos/` as a command-line argument, and outputs into `metadata/mean_n_eff_per_popinfo.csv`. The output values must then be copied into the dictionary `popinfo_metadata` at the top of `construct_sfs.py`. These values are average effective population sizes (across all samples to which a model is fit, as listed in a popinfo file that guides SFS construction) that are used in the rounding of pool-seq allele frequencies to integer counts.
 
-`construct_popinfos.py`
+`construct_popinfos.py` is a Python script TODO
 
-`construct_sfs.py`
+`construct_sfs.py` is a Python script that uses the VCF file, the popinfo files created with `construct_popinfos.py`, and $n_eff$ values calculated by `get_average_n_eff_per_popinfo.py` to construct the data site frequency spectra (SFSs) that will be input to moments. Running this script is not necessary, since it is partially redundant with generating jackknifed SFS replicates; in order to find initial parameter estimates for `moments` runs on jackknifed SFSs, we chose to first determine optimal parameter estimates on the "full" SFSs output by this script, in which no samples are jackknifed out.
 
-`wrapper_construct_sfs.slurm`
+`options/` is a directory containing Python scripts that generate the TSV "options" files used to guide wrapper scripts in this pipeline.
 
-`construct_jackknife_popinfos.py`
+`wrapper_construct_sfs.slurm` is a Bash wrapper for running `construct_sfs.py` via Slurm on UVA HPC's Rivanna computer cluster. Using such a wrapper is recommended because of the enormous memory required for parsing the VCF file.
 
-`construct_jackknife_sfs.py`
+`construct_jackknife_popinfos.py` is a Python script that constructs jackknifed replicates of popinfo files output to the `popinfos/` directory by `construct_popinfos.py`. 
 
-`wrapper_construct_jackknife_sfs.slurm`
+`construct_jackknife_sfs.py` is a Python script analogous to `construct_sfs.py`, but using jackknifed popinfo file replicates output by `construct_jackknife_popinfos.py`.
+
+`wrapper_construct_jackknife_sfs.slurm` is a Bash wrapper for running `construct_jackknife_sfs.py` via Slurm on UVA HPC's Rivanna computer cluster. Using such a wrapper is recommended in order to generate many jackknifed replicates in parallel and to handle the enormous memory requirements of parsing the VCF file.
 
 `moments_models.py` is a Python file containing functions that define the models used by `moments` for demographic inference. It is imported by `get_scaled_model_lls.py` and `run_moments.py`.
 
-`run_moments.py`
+`run_moments.py` is a Python script  TODO
 
-`wrapper_run_moments.slurm`
+`wrapper_run_moments.slurm` is a Bash wrapper for running an array job of parallel demographic inference runs with `run_moments.py`, scheduled via Slurm on UVA HPC's Rivanna computer cluster.
 
-`wrapper_run_moments_on_simulated_sfss.py`
-
-`get_collected_output.py`
+`get_collected_output.py` TODO
 
 `jupyter_nbs/jackknife_inference_analysis.ipynb` is a Jupyter notebook containing final analysis and visualization of the output from `run_moments.py` on jackknife-replicate SFSs produced by `construct_jackknife_sfs.py`.
 
-`get_optimal_estimate_confidence_ints` *this might be trash I need to double-check*
+`get_optimal_estimate_confidence_ints.py` is a Python script that takes in output from `run_moments.py` in `output/moments_output_jackknife.tsv` TODO
 
-`get_Fsts.py`
+`get_Fsts.py` is a python script that reads SFSs and uses `moments` to calculate their $F_st$ values, printing them to `stdout`, providing a classical validation of model selection decisions made via this pipeline.
 
 `msprime_models.py` is a Python file containing functions that define the files used by `msprime` for demographic simulation. These models mirror the models in the `moments_models.py`, and they are used to perform simulation-based validation of collapsed-likelihood-based model selection procedure with `simulate_sfs.py` and `run_moments_on_simulated_sfss.py`. This simulation is reported in Text S3.
 
 `simulate_sfs.py` is a Python script that uses `msprime`, together with demographic functions defined in `msprime_models.py`, to simulate replicates of American populations sampled in DEST v2.0 so that our collapsed-likelihood-based model selection procedure can be theoretically validated with `run_moments_on_simulated_sfss.py`. This simulation is reported in Text S3.
 
-`wrapper_simulate_sfs.sh`
+`wrapper_simulate_sfs.sh` is a Bash wrapper for running replicates of `msprime` population simulations via `simulate_sfs.py` whose initial parameters are to be reinferred for the simulation study in `run_moments_on_simulated_sfss.py`. It takes as a command-line argument the (number) index of the replicate. We ran this script in a command-line Bash `for` loop, iterating over indices to be input as the wrapper's command-line argument.
 
 `run_moments_on_simulated_sfss.py` replicates the demographic inference performed on American populations in DEST v2.0, but on replicate data simulated with `msprime` in `simulate_sfs.py`. Its output is visualized and analyzed in `jupyter_nbs/CLL_validation.ipynb`.
 
