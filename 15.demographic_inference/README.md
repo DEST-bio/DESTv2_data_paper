@@ -32,12 +32,12 @@ Further analysis must investigate the potential of runaway behavior in certain p
 
 We exclude two_splits models from this analysis because no convergence was observed in any of the three variants, indicating that, it is likely impossible to achieve a good fit to the data, and if a fit does exist, then it is likely rendered not biologically meaningful by extreme estimate values.
 
-### Descriptions of each code file
+### Descriptions of each code file (roughly in order of use)
 `convert_GDS_to_VCF.R` is an R script that converts the GDS file encoding all variants discovered in the DEST v2.0 dataset into a gzip'ed VCF file.
 
-`get_average_n_eff_per_samp.py` is a Python script
+`get_average_n_eff_per_samp.py` is a Python script 
 
-`get_average_n_eff_per_popinfo.py`
+`get_average_n_eff_per_popinfo.py` is a Python script that takes in the output of `get_average_n_eff_per_samp.py`, stored in `metadata/mean_n_eff_per_sample_on_mainChroms.csv`, and the name (with extension) of a [popinfo](https://github.com/MomentsLD/moments/blob/main/moments/Misc.py#L576) file stored in `popinfos/` as a command-line argument, and outputs into `metadata/mean_n_eff_per_popinfo.csv`. The output values must then be copied into the dictionary `popinfo_metadata` at the top of `construct_sfs.py`. These values are average effective population sizes (across all samples to which a model is fit, as listed in a popinfo file that guides SFS construction) that are used in the rounding of pool-seq allele frequencies to integer counts.
 
 `construct_popinfos.py`
 
