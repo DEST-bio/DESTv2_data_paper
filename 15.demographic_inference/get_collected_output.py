@@ -52,18 +52,7 @@ def write_data(data_file: str, max_num_params: int, region: str) -> None:
     # for ease of filtering
     df['model_and_pop'] = df.apply(create_model_and_pop, axis=1)
     # Get row with greatest log likelihood for each model and population combination
-    asdf = df.groupby('model_and_pop')['ll'].idxmax()
-    print(2.11)
-
-    print("--")
-    print(df.head)
-    print(df.shape)
-    print(asdf.shape)
-    print("--")
-
-    print(asdf)
-
-    df = df.loc[asdf]
+    df = df.loc[df.groupby('model_and_pop')['ll'].idxmax()]
     print(2.2)
     # Keep only columns of interest
     df = df[['model_and_pop', 'll', 'coll_pop_ll'] + \
@@ -73,8 +62,6 @@ def write_data(data_file: str, max_num_params: int, region: str) -> None:
 
     # Write to file
     df.to_csv("output/collected_output.tsv", mode='a', header=None, index=False)
-
-    print(4)
 
 if __name__ == "__main__":
     main()

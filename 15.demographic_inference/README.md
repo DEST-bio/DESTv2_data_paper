@@ -39,7 +39,7 @@ We exclude two_splits models from this analysis because no convergence was obser
 
 `get_average_n_eff_per_popinfo.py` is a Python script that takes in the output of `get_average_n_eff_per_samp.py`, stored in `metadata/mean_n_eff_per_sample_on_mainChroms.csv`, and the name (with extension) of a [popinfo](https://github.com/MomentsLD/moments/blob/main/moments/Misc.py#L576) file stored in `popinfos/` as a command-line argument, and outputs into `metadata/mean_n_eff_per_popinfo.csv`. The output values must then be copied into the dictionary `popinfo_metadata` at the top of `construct_sfs.py`. These values are average effective population sizes (across all samples to which a model is fit, as listed in a popinfo file that guides SFS construction) that are used in the rounding of pool-seq allele frequencies to integer counts.
 
-`construct_popinfos.py` is a Python script TODO
+`construct_popinfos.R` is an R script for writing lists of sample names from the metadata file `dest_v2.samps_8Jun2023.csv` into popinfo files that will instruct `moments` on where to put which samples during SFS construction in `construct_sfs.py`.
 
 `construct_sfs.py` is a Python script that uses the VCF file, the popinfo files created with `construct_popinfos.py`, and $n_eff$ values calculated by `get_average_n_eff_per_popinfo.py` to construct the data site frequency spectra (SFSs) that will be input to moments. Running this script is not necessary, since it is partially redundant with generating jackknifed SFS replicates; in order to find initial parameter estimates for `moments` runs on jackknifed SFSs, we chose to first determine optimal parameter estimates on the "full" SFSs output by this script, in which no samples are jackknifed out.
 
@@ -55,15 +55,15 @@ We exclude two_splits models from this analysis because no convergence was obser
 
 `moments_models.py` is a Python file containing functions that define the models used by `moments` for demographic inference. It is imported by `get_scaled_model_lls.py` and `run_moments.py`.
 
-`run_moments.py` is a Python script  TODO
+`run_moments.py` is a Python script that performs a single optimization run to fit a given `moments` model to a given SFS. Its many command-line arguments are handled by its wrapper script, `wrapper_run_moments.slurm`, and listed at the top of the `main()` function.
 
 `wrapper_run_moments.slurm` is a Bash wrapper for running an array job of parallel demographic inference runs with `run_moments.py`, scheduled via Slurm on UVA HPC's Rivanna computer cluster.
 
-`get_collected_output.py` TODO
+`get_collected_output.py` is a Python script that merges `moments` output from demographic inference runs in different settings, stored in the directory `output/`. Its output is an unecessary intermediate TSV that we used to calculate initial parameter estimates to be input into `moments` runs on jackknifed SFSs.
 
 `jupyter_nbs/jackknife_inference_analysis.ipynb` is a Jupyter notebook containing final analysis and visualization of the output from `run_moments.py` on jackknife-replicate SFSs produced by `construct_jackknife_sfs.py`.
 
-`get_optimal_estimate_confidence_ints.py` is a Python script that takes in output from `run_moments.py` in `output/moments_output_jackknife.tsv` TODO
+`get_optimal_estimate_confidence_ints.py` is a Python script that uses output from `run_moments.py` found in `output/moments_output_jackknife.tsv` in order to calculate 95\% (median 38 of $n=40$ replicates performed in our experiment) confidence intervals for estimates of the parameters of the selected `moments` models.
 
 `get_Fsts.py` is a python script that reads SFSs and uses `moments` to calculate their $F_st$ values, printing them to `stdout`, providing a classical validation of model selection decisions made via this pipeline.
 
