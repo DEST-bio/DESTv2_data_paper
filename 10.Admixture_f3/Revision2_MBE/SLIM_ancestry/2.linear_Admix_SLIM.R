@@ -1,27 +1,35 @@
 library(foreach)
 library(data.table)
 library(gmodels)
+library(foreach)
+library(tidyverse)
+library(magrittr)
 
-files <- system(paste("ls /Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/AFRmarkerspop*"),
+
+args = commandArgs(trailingOnly=TRUE)
+job=as.numeric(args[1])
+
+files <- system(paste("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/results/AFR.",job,".*", sep = ""),
                 intern = T)
 
 afr_mks =
-  foreach(i = c(files),
+  foreach(i = files,
           .combine = "rbind")%do%{
             
-            pop=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][2]
+            replicate=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][2]
+            pop=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][4]
             set=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][1]
             
             tmp <- fread(i) %>% t()
             data.frame(AF=tmp) %>%
               mutate(pop=pop) %>%
-              mutate(set=set)
-            
+              mutate(set=set) %>%
+              mutate(replicate=replicate)
           }
 
 
 afr_mks %>%
-  group_by(sampleId=pop) %>%
+  group_by(sampleId=pop, replicate) %>%
   summarise(ancestry = ci(AF)[1],
             lci = ci(AF)[2],
             uci = ci(AF)[3]
@@ -30,22 +38,23 @@ afr_mks %>%
 
 afr_mks.ag$sampleId = as.numeric(afr_mks.ag$sampleId)
 
-files2 <- system(paste("ls /Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/Agnosticpop.*"),
+files2 <- system(paste("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/results/Agnostic.",job,".*", sep = ""),
                 intern = T)
 o =
 foreach(i = c(files2),
         .combine = "rbind")%do%{
     
-    pop=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][2]
-    set=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][1]
-    
-    tmp <- fread(i) %>% t()
-    data.frame(AF=tmp) %>%
-      mutate(pop=pop) %>%
-      mutate(set=set)
+          replicate=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][2]
+          pop=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][4]
+          set=strsplit(strsplit(i,  "\\/")[[1]][8], "\\.")[[1]][1]
+          
+          tmp <- fread(i) %>% t()
+          data.frame(AF=tmp) %>%
+            mutate(pop=pop) %>%
+            mutate(set=set) %>%
+            mutate(replicate=replicate)
       
         }
-
 
 o %>%
   filter(pop == 0) %>%
@@ -65,7 +74,7 @@ SIM.oa.g = foreach(anchor=2:(length(files)-1),
                      message(anchor)
                      o %>%
                        filter(pop == anchor,
-                              set == "Agnosticpop") %>%
+                              set == "Agnostic") %>%
                        mutate(pop="ANCHOR")->
                        ANCHOR
                      
@@ -102,18 +111,23 @@ SIM.oa.g = foreach(anchor=2:(length(files)-1),
 
 SIM.oa.g %>%
   filter(source_pop == "africa") %>%
-  left_join( afr_mks.ag)->
+  left_join( afr_mks.ag) %>%
+  mutate(rep=job)->
   coeffs
 
-coeffs %>%
-  ggplot(aes(
-    x=sampleId,
-    
-  )) + geom_point(aes(y=Estimate)) +
-  geom_smooth(aes(y=Estimate), method = "lm") +
-  geom_point(aes(y=ancestry), color = "red") +
-  geom_errorbar(aes(ymin=lci, ymax=uci), color = "red", width = 0.1) +
-  ggtitle("SLiM simulation", subtitle = "Red dots are the 'true' ancestry")
+system("mkdir ag.results")
+save(coeffs,
+     file = paste("ag.results/",job,".ag.ancestry.Rdata", sep = "" ))
 
+#coeffs %>%
+#  ggplot(aes(
+#    x=sampleId,
+#    
+#  )) + geom_point(aes(y=Estimate)) +
+#  geom_smooth(aes(y=Estimate), method = "lm") +
+#  geom_point(aes(y=ancestry), color = "red") +
+#  geom_errorbar(aes(ymin=lci, ymax=uci), color = "red", width = 0.1) +
+#  ggtitle("SLiM simulation", subtitle = "Red dots are the 'true' ancestry")
+#
 
 

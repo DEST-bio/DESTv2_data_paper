@@ -189,8 +189,8 @@ early() {
 
 //root = "/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/";
 fst = calcFST(p0.genomes, p1.genomes);
-het1 = calcFST(p0.genomes);
-het2 = calcFST(p1.genomes);
+het1 = calcHeterozygosity(p0.genomes);
+het2 = calcHeterozygosity(p1.genomes);
 
 writeFile(
 	paste(root, "/", "FST", "." , sim.cycle,".txt", sep=""),
