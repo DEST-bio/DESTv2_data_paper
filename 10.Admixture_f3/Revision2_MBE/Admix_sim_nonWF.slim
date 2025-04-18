@@ -185,6 +185,19 @@ early() {
 }
 
 
+14900 late() {
+
+//root = "/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/";
+fst = calcFST(p0.genomes, p1.genomes);
+het1 = calcFST(p0.genomes);
+het2 = calcFST(p1.genomes);
+
+writeFile(
+	paste(root, "/", "FST", "." , sim.cycle,".txt", sep=""),
+	paste(fst, het1, het2, sep = ","),
+	append=T);
+
+}
 
 16900 late() {
 
@@ -192,12 +205,12 @@ early() {
 	SubpopID = subpops.id;
 	COUNT=size(SubpopID);
 
-	root = "/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/";
+	//root = "/Users/jcnunez/Library/CloudStorage/OneDrive-UniversityofVermont/Desktop/";
 
 	for (i in 0:(COUNT-1)){
 	Mut4Freq = sim.mutationFrequencies(subpops[i],sim.mutationsOfType(m1));	
 	writeFile(
-	paste(root, "/", "Agnostic.",simID,".pop.", i , "." , sim.cycle,".txt", sep=""),
+	paste(root, "/", "Agnostic.",repId,".pop.", i , "." , sim.cycle,".txt", sep=""),
 	paste(Mut4Freq),
 	append=F);
 	}//for loop
@@ -205,7 +218,7 @@ early() {
 	for (i in 0:(COUNT-1)){
 	AFRFreq = sim.mutationFrequencies(subpops[i],sim.mutationsOfType(m2));	
 	writeFile(
-	paste(root, "/", "Agnostic.",simID,".pop.", i , "." , sim.cycle,".txt", sep=""),
+	paste(root, "/", "AFR.",repId,".pop.", i , "." , sim.cycle,".txt", sep=""),
 	paste(AFRFreq),
 	append=F);
 	}//for loop
