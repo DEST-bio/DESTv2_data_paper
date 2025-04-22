@@ -35,7 +35,7 @@ o.ag %>%
 o.ag %<>% filter(replicate %in% pass.filt)
 
 ### Bring - MOMENTS
-filesM <- system(paste("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output"),
+filesM <- system(paste("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output_noMIG"),
                 intern = T)
 
 o.MO =
@@ -56,10 +56,35 @@ o.MO =
             
           }
 
+
+filesMMIG <- system(paste("ls /gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output"),
+                 intern = T)
+
+o.MOMIG =
+  foreach(i = filesMMIG,
+          .combine = "rbind", .errorhandling = "remove")%do%{
+            
+            message(i)
+            
+            tmp <- fread(
+              paste("/gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output/",i, sep = "")
+            ) 
+            
+            tmp %>%
+              group_by(V1) %>%
+              summarise(MOMIG.Admx = mean(admix_prop)) %>%
+              separate(V1, into = c("etc1","sampleId", "etc2","replicate")) %>%
+              dplyr::select(sampleId, replicate, MOMIG.Admx)
+            
+          }
+
+
 o.ag$sampleId = as.numeric(o.ag$sampleId)
 o.MO$sampleId = as.numeric(o.MO$sampleId)
+o.MOMIG$sampleId = as.numeric(o.MOMIG$sampleId)
 
-left_join(o.ag, o.MO) ->
+left_join(o.ag, o.MO) %>%
+  left_join(o.MOMIG)->
   joint.o.MO.LT
 
 save(joint.o.MO.LT, file = "simulated.SLIM.moments.LM.Rdata")
@@ -86,7 +111,7 @@ cor.test(joint.o.MO.LT$MO.Admx, joint.o.MO.LT$ancestry)
 #0.8013978p-value < 2.2e-16
 
 joint.o.MO.LT %>%
-  dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx) %>%
+  dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx, MOMIG.Admx) %>%
   melt(id = c("sampleId", "replicate" )) %>% 
   ggplot(aes(
     x=as.character(sampleId),
