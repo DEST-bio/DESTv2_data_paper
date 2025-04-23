@@ -10,15 +10,42 @@ require(gmodels)
 
 meta <- fread("https://raw.githubusercontent.com/DEST-bio/DESTv2/refs/heads/main/populationInfo/dest_v2.samps_24Aug2024.xa.csv")
 
-files <- system(paste("ls *_output.admix.txt" ), intern = T)
+files <- system(paste("ls moments_output_NoMigration" ), intern = T)
 
-inf <- foreach(i=files, .combine = "rbind")%do%{
-  tmp <- fread(i)
+inf <- foreach(i=files, .combine = "rbind", .errorhandling = "remove")%do%{
+  tmp <- fread(paste("moments_output_NoMigration/",i, sep = ""))
 }
+inf %<>% 
+  mutate(model = "noMig")
 
-inf %>%
+files2 <- system(paste("ls moments_output_wMigration" ), intern = T)
+
+inf2 <- foreach(i=files2, .combine = "rbind", .errorhandling = "remove")%do%{
+  tmp <- fread(paste("moments_output_wMigration/",i, sep = ""))
+}
+inf2 %<>% 
+  mutate(model = "Mig")
+
+rbind(inf, inf2) ->
+  datin_raw
+
+datin_raw %>%
+  group_by(model) %>%
+  summarise(AIC = mean(AIC))
+
+datin_raw %>%
+  ggplot(aes(
+    x=model,
+    y=AIC
+  )) + geom_boxplot() ->
+  AIC_box
+ggsave(AIC_box, file = "AIC_box.pdf")
+
+
+
+datin_raw %>%
   mutate(sampleId = V1) %>%
-  group_by(sampleId) %>%
+  group_by(sampleId, model) %>%
   summarise(ancestry = ci(admix_prop)[1],
             uci = ci(admix_prop)[2],
             lci = ci(admix_prop)[3]) %>%
@@ -31,6 +58,7 @@ o %>%
   ggplot(aes(
     x=lat,
     y=1-ancestry,
+    color=model
   )) + 
   geom_point() +
   geom_smooth(method = "lm") +

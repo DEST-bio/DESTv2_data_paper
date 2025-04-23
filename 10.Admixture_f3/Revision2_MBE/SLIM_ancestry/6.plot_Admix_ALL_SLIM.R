@@ -45,7 +45,7 @@ o.MO =
             message(i)
             
             tmp <- fread(
-              paste("/gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output/",i, sep = "")
+              paste("/gpfs2/scratch/jcnunez/DEST2.0_analysis/REVISION3_ADMIX/moments_slim_output_noMIG/",i, sep = "")
             ) 
             
             tmp %>%
@@ -92,7 +92,7 @@ load("simulated.SLIM.moments.LM.Rdata")
 
 ###
 joint.o.MO.LT %>%
-  dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx) %>%
+  dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx,MOMIG.Admx) %>%
   melt(id = c("sampleId", "ancestry", "replicate" )) %>%
   group_by(replicate, variable) %>%
   summarize(cor=cor(value, ancestry)) %>%
@@ -109,6 +109,8 @@ cor.test(joint.o.MO.LT$Estimate, joint.o.MO.LT$ancestry)
 #0.7975302 p-value < 2.2e-16
 cor.test(joint.o.MO.LT$MO.Admx, joint.o.MO.LT$ancestry)
 #0.8013978p-value < 2.2e-16
+cor.test(joint.o.MO.LT$MOMIG.Admx, joint.o.MO.LT$ancestry)
+
 
 joint.o.MO.LT %>%
   dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx, MOMIG.Admx) %>%
@@ -128,8 +130,9 @@ ggsave(estimates.plot, file = "estimates.plot.pdf",
 
 joint.o.MO.LT %>%
   mutate(diff_LM = (Estimate-ancestry),
-         diff_MO = (MO.Admx-ancestry)) %>%
-  dplyr::select(sampleId,diff_LM,diff_MO ) %>%
+         diff_MO = (MO.Admx-ancestry),
+         diff_MOMI = (MOMIG.Admx-ancestry) ) %>%
+  dplyr::select(sampleId,diff_LM,diff_MO,diff_MOMI ) %>%
   melt(id = "sampleId") %>%
   ggplot(aes(
     x=as.character(sampleId),
@@ -148,29 +151,14 @@ ggsave(diff.plot, file = "diff.plot.pdf",
 
 joint.o.MO.LT %>%
   mutate(diff_LM = as.numeric(Estimate-ancestry),
-         diff_MO = as.numeric(MO.Admx-ancestry)) %>%
-  dplyr::select(sampleId,diff_LM,diff_MO ) %>%
+         diff_MO = as.numeric(MO.Admx-ancestry),
+         diff_MOMI = (MOMIG.Admx-ancestry)) %>%
+  dplyr::select(sampleId,diff_LM,diff_MO,diff_MOMI ) %>%
   melt(id = "sampleId") %>%
   group_by(variable, sampleId) %>% 
-  summarise(m.var = mean(value, na.rm = T))
+  summarise(m.var = mean(value, na.rm = T)) %>%
+  dcast(sampleId ~ variable)
 
-###
-
-joint.o.MO.LT %>%
-  dplyr::select(sampleId, ancestry, replicate , Estimate,  MO.Admx) %>%
-  melt(id = c("sampleId", "replicate" )) %>% 
-  ggplot(aes(
-    x=(sampleId),
-    y=value,
-    group=replicate,
-    color=variable)) +
-  facet_grid(~variable) +
-  geom_smooth(method = "lm", se = F, alpha = 0.3) +
-  theme_bw()  ->
-  traject.plot
-
-ggsave(traject.plot, file = "traject.plot.pdf",
-       w=6, h=4)
 
 ##
 joint.o.MO.LT %>%
@@ -195,15 +183,25 @@ joint.o.MO.LT %>%
   filter(term == "sampleId") -> ANS_beta
 names(ANS_beta)[c(3,4)] = c("estimate.AN" , "std.error.AN")
 
+joint.o.MO.LT %>%
+  filter(!is.na(MOMIG.Admx)) %>%
+  nest_by(replicate) %>%
+  mutate(mod = list(lm(MOMIG.Admx ~ sampleId, data = data))) %>%
+  reframe(tidy(mod)) %>%
+  filter(term == "sampleId") -> MOMIG_beta
+names(MOMIG_beta)[c(3,4)] = c("estimate.MOMIG" , "std.error.MOMIG")
+
 
 left_join(
 ANS_beta[,c("replicate" ,"estimate.AN" , "std.error.AN")],
 EST_beta[,c("replicate" ,"estimate.ES" , "std.error.ES")]) %>%
-left_join(MO_beta[,c("replicate" ,"estimate.MO" , "std.error.MO")]) ->
+left_join(MO_beta[,c("replicate" ,"estimate.MO" , "std.error.MO")]) %>%
+  left_join(MOMIG_beta[,c("replicate" ,"estimate.MOMIG" , "std.error.MOMIG")])->
   joint.slopes
 
 cor.test(joint.slopes$estimate.AN, joint.slopes$estimate.ES)
 cor.test(joint.slopes$estimate.AN, joint.slopes$estimate.MO)
+cor.test(joint.slopes$estimate.AN, joint.slopes$estimate.MOMIG)
 
 joint.slopes %>%
   ggplot(aes(
@@ -229,8 +227,8 @@ joint.slopes %>%
     y=estimate.MO,
     xmin=estimate.AN-std.error.AN,
     xmax=estimate.AN+std.error.AN,
-    ymin=estimate.ES-std.error.MO,
-    ymax=estimate.ES+std.error.MO,
+    ymin=estimate.MO-std.error.MO,
+    ymax=estimate.MO+std.error.MO,
   )) + geom_point(alpha = 0.2) + 
   geom_errorbar(alpha = 0.2) + 
   geom_errorbarh(alpha = 0.2) + 
@@ -242,9 +240,29 @@ ggsave(betas_plot.MO, file = "betas_plot.MO.pdf",
        w=4, h=4)
 
 
+joint.slopes %>%
+  ggplot(aes(
+    x=estimate.AN,
+    y=estimate.MOMIG,
+    xmin=estimate.AN-std.error.AN,
+    xmax=estimate.AN+std.error.AN,
+    ymin=estimate.MOMIG-std.error.MOMIG,
+    ymax=estimate.MOMIG+std.error.MOMIG,
+  )) + geom_point(alpha = 0.2) + 
+  geom_errorbar(alpha = 0.2) + 
+  geom_errorbarh(alpha = 0.2) + 
+  geom_density2d() + theme_bw() +
+  geom_abline(slope = 1)->
+  betas_plot.MOMIG
+
+ggsave(betas_plot.MOMIG, file = "betas_plot.MOMIG.pdf",
+       w=4, h=4)
+
+
+
 
 joint.slopes %>%
-  dplyr::select(replicate, estimate.AN, estimate.ES, estimate.MO) %>%
+  dplyr::select(replicate, estimate.AN, estimate.ES, estimate.MO,estimate.MOMIG) %>%
   melt(id = "replicate") %>%
   ggplot(aes(
     x=variable,
